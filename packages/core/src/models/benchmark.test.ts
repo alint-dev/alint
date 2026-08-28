@@ -135,15 +135,15 @@ describe('benchmarkModels', () => {
         object: 'chat.completion.chunk',
         system_fingerprint: '',
       }))
-      response.write(sse({
-        choices: [{ delta: {}, finish_reason: 'stop', index: 0 }],
-        created: 0,
-        id: 'benchmark',
-        model: 'fast',
-        object: 'chat.completion.chunk',
-        system_fingerprint: '',
-      }))
       setTimeout(() => {
+        response.write(sse({
+          choices: [{ delta: { content: ' two' }, finish_reason: 'stop', index: 0 }],
+          created: 0,
+          id: 'benchmark',
+          model: 'fast',
+          object: 'chat.completion.chunk',
+          system_fingerprint: '',
+        }))
         response.write(sse({
           choices: [],
           created: 0,
@@ -181,6 +181,116 @@ describe('benchmarkModels', () => {
       expect(result?.nonRepeatMs).toBeGreaterThan(0)
       expect(result?.throughput).toBeGreaterThan(0)
       expect(result?.success).toEqual({ attempted: 3, completed: 3 })
+    }
+    finally {
+      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+    }
+  })
+
+  it('does not report throughput for empty output deltas', async () => {
+    const server = createServer((_request, response) => {
+      response.writeHead(200, { 'content-type': 'text/event-stream' })
+      response.write(sse({
+        choices: [{ delta: { content: '', role: 'assistant' }, finish_reason: 'length', index: 0 }],
+        created: 0,
+        id: 'benchmark',
+        model: 'empty-output',
+        object: 'chat.completion.chunk',
+      }))
+      setTimeout(() => {
+        response.write(sse({
+          choices: [{ delta: { content: '', role: 'assistant' }, finish_reason: 'length', index: 0 }],
+          created: 0,
+          id: 'benchmark',
+          model: 'empty-output',
+          object: 'chat.completion.chunk',
+        }))
+        response.write(sse({
+          choices: [],
+          created: 0,
+          id: 'benchmark',
+          model: 'empty-output',
+          object: 'chat.completion.chunk',
+          usage: { completion_tokens: 128, prompt_tokens: 64, total_tokens: 192 },
+        }))
+        response.end('data: [DONE]\n\n')
+      }, 5)
+    })
+
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+
+    if (address === null || typeof address === 'string') {
+      throw new TypeError('Expected TCP test server address.')
+    }
+
+    try {
+      const [result] = await benchmarkModels({
+        providers: [{
+          endpoint: `http://127.0.0.1:${address.port}/v1/`,
+          id: 'local',
+          models: [{ id: 'empty-output' }],
+          type: 'openai-compatible',
+        }],
+        version: 1,
+      }, { sampleCount: 1, seed: 123 })
+
+      // ROOT CAUSE:
+      //
+      // Some providers send empty text deltas before the usage event.
+      // The benchmark treated the first empty delta as the first output.
+      // It divided all output tokens by the final event interval.
+      // This produced false throughput values above 400,000 tokens per second.
+      expect(result?.throughput).toBeUndefined()
+    }
+    finally {
+      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+    }
+  })
+
+  it('does not report throughput from one non-empty output delta', async () => {
+    const server = createServer((_request, response) => {
+      response.writeHead(200, { 'content-type': 'text/event-stream' })
+      response.write(sse({
+        choices: [{ delta: { content: 'Complete answer', role: 'assistant' }, index: 0 }],
+        created: 0,
+        id: 'benchmark',
+        model: 'buffered-output',
+        object: 'chat.completion.chunk',
+      }))
+      setTimeout(() => {
+        response.write(sse({
+          choices: [],
+          created: 0,
+          id: 'benchmark',
+          model: 'buffered-output',
+          object: 'chat.completion.chunk',
+          usage: { completion_tokens: 32, prompt_tokens: 64, total_tokens: 96 },
+        }))
+        response.end('data: [DONE]\n\n')
+      }, 5)
+    })
+
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+
+    if (address === null || typeof address === 'string') {
+      throw new TypeError('Expected TCP test server address.')
+    }
+
+    try {
+      const [result] = await benchmarkModels({
+        providers: [{
+          endpoint: `http://127.0.0.1:${address.port}/v1/`,
+          id: 'local',
+          models: [{ id: 'buffered-output' }],
+          type: 'openai-compatible',
+        }],
+        version: 1,
+      }, { sampleCount: 1, seed: 123 })
+
+      // One output timestamp cannot show the provider's decode interval.
+      expect(result?.throughput).toBeUndefined()
     }
     finally {
       await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))

@@ -240,6 +240,7 @@ async function measureModel({ model, prompt, signal }: ModelBenchmarkRequest): P
   const messages: Message[] = [{ content: prompt, role: 'user' }]
   const startedAt = performance.now()
   let firstOutputAt: number | undefined
+  let outputDeltaCount = 0
   const result = streamText({
     ...model.params,
     abortSignal: signal,
@@ -264,8 +265,12 @@ async function measureModel({ model, prompt, signal }: ModelBenchmarkRequest): P
 
   try {
     for await (const event of result.eventStream) {
-      if (firstOutputAt === undefined && (event.type === 'reasoning.delta' || event.type === 'text.delta')) {
-        firstOutputAt = performance.now()
+      if (
+        (event.type === 'reasoning.delta' || event.type === 'text.delta')
+        && event.delta.length > 0
+      ) {
+        outputDeltaCount += 1
+        firstOutputAt ??= performance.now()
       }
     }
   }
@@ -282,7 +287,8 @@ async function measureModel({ model, prompt, signal }: ModelBenchmarkRequest): P
 
   return {
     durationMs: endedAt - startedAt,
-    firstOutputMs: firstOutputAt === undefined ? undefined : firstOutputAt - startedAt,
+    // One output timestamp cannot show the provider's decode interval. Providers can buffer the full output in one delta.
+    firstOutputMs: firstOutputAt === undefined || outputDeltaCount < 2 ? undefined : firstOutputAt - startedAt,
     outputTokens: usageResult.value?.outputTokens,
   }
 }
