@@ -203,7 +203,7 @@ class CompletionTurn {
   #cancelled: Error | undefined
   #cancelSession: (() => Promise<void>) | undefined
   #connection: GatewayModelConnection | undefined
-  #connectionDisposed = false
+  #connectionDisposePromise: Promise<void> | undefined
   // Required-tool attempts buffer text until a tool call validates the attempt.
   // A call flushes these chunks before its output; a rejected attempt discards them.
   #deferredText: string[] | undefined
@@ -297,12 +297,15 @@ class CompletionTurn {
   }
 
   async #disposeConnection(): Promise<void> {
-    if (this.#connectionDisposed || this.#connection?.kind !== 'stream') {
+    const connection = this.#connection
+    if (connection?.kind !== 'stream') {
       return
     }
 
-    this.#connectionDisposed = true
-    await this.#connection.dispose?.()
+    // Cancellation and normal completion can request disposal at the same time. Both paths must
+    // await the same work before the gateway removes this turn from its active set.
+    this.#connectionDisposePromise ??= Promise.resolve().then(() => connection.dispose?.())
+    await this.#connectionDisposePromise
   }
 
   #finish(): void {
@@ -440,8 +443,12 @@ class CompletionTurn {
         await this.#bridge.close()
       }
 
-      this.#finish()
-      await this.#disposeConnection()
+      try {
+        await this.#disposeConnection()
+      }
+      finally {
+        this.#finish()
+      }
     }
   }
 }

@@ -29,20 +29,17 @@ async function waitForCacheBody(
   path: string,
   ready: (body: Awaited<ReturnType<typeof readCacheBody>>) => boolean,
 ): Promise<Awaited<ReturnType<typeof readCacheBody>>> {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
+  return vi.waitUntil(async () => {
     try {
       const body = await readCacheBody(path)
-      if (ready(body))
-        return body
+      return ready(body) ? body : false
     }
     catch (error) {
-      if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT')
-        throw error
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT')
+        return false
+      throw error
     }
-    await new Promise(resolve => setTimeout(resolve, 0))
-  }
-
-  throw new Error('Cache checkpoint was not written while the run was active.')
+  }, { timeout: 5_000 })
 }
 
 describe('runAlint', () => {
@@ -4357,6 +4354,7 @@ describe('runAlint', () => {
     expect(Object.keys(cacheBody.entries)).toHaveLength(0)
   })
 
+  // https://github.com/moeru-ai/alint/actions/runs/33186281219/job/98899997470?pr=87
   it('persists a completed source file before the run finishes', async () => {
     const root = await mkdtemp(join(tmpdir(), 'alint-file-cache-checkpoint-'))
     const firstPath = join(root, 'first.txt')
@@ -4392,7 +4390,13 @@ describe('runAlint', () => {
       ),
       cwd: root,
       files: [firstPath, secondPath],
-      runner: { cache: { location: cachePath }, ruleConcurrency: 1 },
+      // ROOT CAUSE:
+      //
+      // Source planning admits each file after its concurrent read and extraction finish.
+      // The second file can enter the scheduler before the first file.
+      // With one slot, the blocked second file prevents the first file from completing.
+      // Two slots let this test observe a completed file without assuming admission order.
+      runner: { cache: { location: cachePath }, ruleConcurrency: 2 },
       setupConfig: createSetupConfig(),
     })
 

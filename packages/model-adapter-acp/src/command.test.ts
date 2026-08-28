@@ -2,12 +2,13 @@ import { mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { createCommandModel, startGateway } from './index'
 
 describe('aCP command gateway', () => {
-  it('serves a tinyexec-started ACP command and stops it on shutdown', async () => {
+  // https://github.com/moeru-ai/alint/actions/runs/33186281219/job/98899997470?pr=87
+  it('serves a tinyexec-started ACP command and waits for cleanup on shutdown', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'alint-acp-command-'))
     const processCwd = await realpath(cwd)
     const agentPath = join(cwd, 'agent.mjs')
@@ -19,10 +20,9 @@ import { writeFileSync } from 'node:fs'
 import { Readable, Writable } from 'node:stream'
 import { agent, methods, ndJsonStream, PROTOCOL_VERSION } from ${JSON.stringify(sdkUrl)}
 
-process.on('SIGTERM', () => {
-  writeFileSync(${JSON.stringify(stoppedPath)}, 'stopped')
-  process.exit(0)
-})
+process.on('exit', () => writeFileSync(${JSON.stringify(stoppedPath)}, 'stopped'))
+// Keep cleanup active long enough for gateway shutdown to observe and await it.
+process.on('SIGTERM', () => setTimeout(() => process.exit(0), 100))
 
 agent({ name: 'command-agent' })
   .onRequest(methods.agent.initialize, () => ({
@@ -74,9 +74,11 @@ agent({ name: 'command-agent' })
       await gateway.shutdown()
     }
 
-    await vi.waitFor(async () => {
-      await expect(readFile(stoppedPath, 'utf8')).resolves.toBe('stopped')
-    })
+    // ROOT CAUSE:
+    //
+    // The test previously recorded only SIGTERM, but the ACP stream can end the command through
+    // stdin EOF first. The exit hook observes both graceful paths and still rejects SIGKILL.
+    await expect(readFile(stoppedPath, 'utf8')).resolves.toBe('stopped')
   })
 
   it.skipIf(!process.env.ALINT_ACP_E2E_COMMAND)('connects to a configured real ACP coding-agent CLI', async () => {
