@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/agent-pi",
   "type": "module",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Pi-backed agent adapter for alint",
   "license": "MIT",
   "repository": {

@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/tools-fs",
   "type": "module",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Filesystem exploration tools for alint agent-powered rules",
   "license": "MIT",
   "repository": {

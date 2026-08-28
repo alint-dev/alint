@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/languages",
   "type": "module",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "First-party Go, Python, and Rust language support for alint",
   "license": "MIT",
   "repository": {

@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/agent-codex-cli",
   "type": "module",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Codex CLI-backed agent adapter for alint",
   "license": "MIT",
   "repository": {
