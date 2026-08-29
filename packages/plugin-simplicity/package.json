@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/plugin-simplicity",
   "type": "module",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Model-backed alint rules for duplicated and needless helper functions",
   "license": "MIT",
   "repository": {

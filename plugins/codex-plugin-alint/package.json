@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/codex-plugin",
   "type": "module",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "scripts": {
     "build": "tsdown --config tsdown.config.ts && tsdown --config tsdown.launcher.config.ts",
