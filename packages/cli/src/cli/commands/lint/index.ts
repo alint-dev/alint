@@ -35,6 +35,7 @@ export const lint = defineCommand({
       },
       context.io,
       context.interceptConsoleOutput,
+      context.signal,
     ),
   alias: ['!'],
   arguments: '[...files]',
@@ -70,6 +71,7 @@ async function runLintCommand(
   options: LintCommandOptions,
   io: CliIo,
   interceptConsoleOutput: (stdout: CliWritable) => () => void,
+  signal: AbortSignal | undefined,
 ): Promise<number> {
   if (options.dirty && files.length > 0) {
     io.stderr.write('The --dirty option does not accept file arguments.\n')
@@ -131,7 +133,6 @@ async function runLintCommand(
     let result: RunResult
 
     try {
-      // TODO: (cli-sigint) Wire SIGINT to SessionRunOptions.signal after the CLI lifecycle owner approves process-level cancellation handling; core cancellation is already available.
       result = await executeLint({
         ...targetSelection,
         cacheOnly: options.cacheOnly,
@@ -141,6 +142,7 @@ async function runLintCommand(
         progress: progress?.reporter,
         runnerOptions: options,
         session,
+        signal,
       })
     }
     catch (error) {

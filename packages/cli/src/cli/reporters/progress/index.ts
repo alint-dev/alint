@@ -58,56 +58,31 @@ export function createCliProgressReporter(options: CliProgressReporterOptions): 
 
 function createRenderingProgressReporter(
   summary: ProgressReporter,
-  renderer: { render: () => void, start: () => void },
+  renderer: { start: () => void },
 ): ProgressReporter {
+  /**
+   * Resets the summary and starts its bounded TTY render interval.
+   *
+   * Triggering workflow:
+   *
+   * `runAlint`
+   *   -> `ProgressReporter.onPrepareStart`
+   *     -> `handlePrepareStart`
+   *       -> `TtyProgressRenderer.start`
+   *
+   * Upstream:
+   * - `runAlint` emits `onPrepareStart` before source discovery.
+   *
+   * Downstream:
+   * - Delegates state reset to `summary.onPrepareStart` and starts the renderer interval.
+   */
+  const handlePrepareStart: NonNullable<ProgressReporter['onPrepareStart']> = (payload) => {
+    summary.onPrepareStart?.(payload)
+    renderer.start()
+  }
+
   return {
-    onDiagnostic: (payload) => {
-      summary.onDiagnostic?.(payload)
-      renderer.render()
-    },
-    onExecuteEnd: (payload) => {
-      summary.onExecuteEnd?.(payload)
-      renderer.render()
-    },
-    onExecuteStart: (payload) => {
-      summary.onExecuteStart?.(payload)
-      renderer.render()
-    },
-    onFileReady: (payload) => {
-      summary.onFileReady?.(payload)
-      renderer.render()
-    },
-    onJobEnd: (payload) => {
-      summary.onJobEnd?.(payload)
-      renderer.render()
-    },
-    onJobQueued: (payload) => {
-      summary.onJobQueued?.(payload)
-      renderer.render()
-    },
-    onJobRetry: (payload) => {
-      summary.onJobRetry?.(payload)
-      renderer.render()
-    },
-    onJobStart: (payload) => {
-      summary.onJobStart?.(payload)
-      renderer.render()
-    },
-    onPrepareEnd: (payload) => {
-      summary.onPrepareEnd?.(payload)
-      renderer.render()
-    },
-    onPrepareStart: (payload) => {
-      summary.onPrepareStart?.(payload)
-      renderer.start()
-    },
-    onRunEnd: (payload) => {
-      summary.onRunEnd?.(payload)
-      renderer.render()
-    },
-    onUsage: (payload) => {
-      summary.onUsage?.(payload)
-      renderer.render()
-    },
+    ...summary,
+    onPrepareStart: handlePrepareStart,
   }
 }

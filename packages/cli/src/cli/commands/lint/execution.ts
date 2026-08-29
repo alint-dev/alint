@@ -18,6 +18,7 @@ export type LintExecutionOptions = SessionTargetSelection & {
   progress?: ProgressReporter
   runnerOptions: LintCommandOptions
   session: RunSession
+  signal?: AbortSignal
 }
 
 /** Runs one session while keeping CLI flags and stats behavior identical for every caller. */
@@ -43,7 +44,7 @@ export async function executeLint(options: LintExecutionOptions): Promise<RunRes
       outputLanguage: options.outputLanguage,
       progress: mergeProgressReporters(options.progress, statsCollector?.reporter),
       runner,
-      signal: options.createSignal?.(),
+      signal: options.signal ?? options.createSignal?.(),
     })
   }
   catch (error) {

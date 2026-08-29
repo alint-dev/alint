@@ -14,6 +14,7 @@ export interface CommandContext {
   interceptConsoleOutput: (stdout: CliWritable) => () => void
   io: CliIo
   setupNoInteractive: boolean
+  signal?: AbortSignal
 }
 
 export interface CommandHelp {

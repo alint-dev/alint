@@ -177,6 +177,36 @@ describe('source planning', () => {
     expect(extractions).toBe(0)
     expect(scheduler.snapshot().execution.planned).toBe(0)
   })
+
+  it('yields during large planning bursts so timer-driven cancellation stops job admission', async () => {
+    const controller = new AbortController()
+    const inputs = Array.from({ length: 1_000 }, (_, index) => createInput(index, `/repo/${index}.custom`, file => [
+      { file, identity: String(index), kind: 'symbol', language: 'custom', text: file.text },
+    ]))
+    const scheduler = new RuleScheduler({
+      clock: () => 1,
+      concurrency: 1,
+      execute: async job => completed(job),
+      progress: createRunProgress(inputs.length),
+      signal: controller.signal,
+    })
+    const abortTimer = setTimeout(() => controller.abort('stop'), 0)
+
+    await planSources(inputs, {
+      cacheStore: createCacheStore(createOwner([])),
+      createRuleRuntimes: () => [createRuntime()],
+      cwd: '/repo',
+      scheduler,
+      signal: controller.signal,
+      src: createSourceRuntime({ readFile: async input => sourceFile(input) }),
+    })
+    await new Promise<void>(resolve => setTimeout(resolve, 10))
+    await scheduler.close()
+    clearTimeout(abortTimer)
+
+    expect(controller.signal.aborted).toBe(true)
+    expect(scheduler.snapshot().execution.planned).toBeLessThan(inputs.length)
+  })
 })
 
 function completed(job: Parameters<ConstructorParameters<typeof RuleScheduler>[0]['execute']>[0]) {

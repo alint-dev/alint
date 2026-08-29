@@ -6,6 +6,8 @@ import type { ProjectFileSnapshot } from '../project'
 import type { AlintFileFailure, ProgressReporter } from '../types'
 import type { PlannedSourceTarget, SourceMetadataValue, SourceRuntime, SourceTarget, SourceTargetMetadata } from './types'
 
+import { setImmediate as yieldToEventLoop } from 'node:timers/promises'
+
 import { errorMessageFrom } from '@moeru/std/error'
 
 import { createTargetIdentityResolver, normalizeCachePath } from '../cache'
@@ -50,82 +52,22 @@ export async function planSource(
   input: PreparedInput,
   options: PlanSourceOptions,
 ): Promise<SourcePlanResult> {
-  if (options.signal?.aborted)
-    return { outcomes: Promise.resolve([]) }
-
-  let file
-  try {
-    file = await options.src.readFile(input.path)
-  }
-  catch (error) {
-    reportFilePlanningComplete(input, 0, options)
-    return { failure: fileFailure(input, 'read', failureMessage(error, 'Failed to read source file.')), outcomes: Promise.resolve([]) }
-  }
-
-  if (options.signal?.aborted)
-    return { outcomes: Promise.resolve([]) }
-
-  let targets: SourceTarget[]
-  try {
-    targets = await input.language.extract(file, {
-      cwd: options.cwd,
-      languageOptions: input.languageOptions,
-      src: options.src,
-    })
-  }
-  catch (error) {
-    reportFilePlanningComplete(input, 0, options)
-    return { failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to extract source targets.')), outcomes: Promise.resolve([]) }
-  }
-
-  const { contentHash } = file
-  let cacheOwner
-  let jobs: RuleJob[]
-  let project: ProjectFileSnapshot | undefined
-  try {
-    project = options.projectSnapshots === false
-      ? undefined
-      : createProjectSnapshot(input, file.language, file.path, contentHash, targets)
-    cacheOwner = options.cacheStore.beginOwner(
-      { kind: 'file', path: file.path },
-      { contentHash },
-    )
-    const baseFile = { contentHash, language: file.language, path: file.path }
-    const executionTargets = createExecutionTargets(input, targets, baseFile, options.ruleRuntimes, options.cwd, cacheOwner)
-    jobs = createSourceJobs(input, executionTargets)
-  }
-  catch (error) {
-    reportFilePlanningComplete(input, 0, options)
-    return { failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to plan source targets.')), outcomes: Promise.resolve([]) }
-  }
-
-  if (options.signal?.aborted) {
-    cacheOwner.commit({ mode: 'merge' })
-    return { outcomes: Promise.resolve([]), project }
-  }
-
-  const batch = options.scheduler.schedule(jobs)
-  reportFilePlanningComplete(input, batch.jobsAdded, options)
-  const outcomes = batch.outcomes.then(async (settled) => {
-    cacheOwner.commit(options.signal?.aborted ? { mode: 'merge' } : undefined)
-    await options.cacheStore.flush()
-    return settled
-  })
-
-  return { outcomes, project }
+  return planSourceWithAdmission(input, options)
 }
 
 /**
- * Starts every input plan independently and preserves input-ordered results.
+ * Starts every input read independently, then batches CPU-heavy extraction and job admission.
  */
 export async function planSources(
   inputs: readonly PreparedInput[],
   options: PlanSourcesOptions,
 ): Promise<SourcePlanResult[]> {
-  return Promise.all(inputs.map(input => planSource(input, {
+  const waitForPlanning = createPlanningAdmission()
+
+  return Promise.all(inputs.map(input => planSourceWithAdmission(input, {
     ...options,
     ruleRuntimes: options.createRuleRuntimes(input),
-  })))
+  }, waitForPlanning)))
 }
 
 function createExecutionTargets(
@@ -187,6 +129,38 @@ function createExecutionTargets(
   })
 }
 
+function createPlanningAdmission(): () => Promise<void> {
+  // NOTICE: This batch keeps source reads concurrent while bounding how long job generation can
+  // monopolize the event loop before timers and process signals get a turn.
+  const batchSize = 32
+  let admitted = 0
+  let pendingYield: Promise<void> | undefined
+
+  return async () => {
+    let currentPendingYield = pendingYield
+    while (currentPendingYield) {
+      await currentPendingYield
+      currentPendingYield = pendingYield
+    }
+
+    admitted += 1
+    if (admitted < batchSize)
+      return
+
+    admitted = 0
+    const currentYield = yieldToEventLoop()
+    pendingYield = currentYield
+
+    try {
+      await currentYield
+    }
+    finally {
+      if (pendingYield === currentYield)
+        pendingYield = undefined
+    }
+  }
+}
+
 function createProjectSnapshot(
   input: PreparedInput,
   language: string,
@@ -240,6 +214,81 @@ function failureMessage(error: unknown, fallback: string): string {
 
 function fileFailure(input: PreparedInput, kind: AlintFileFailure['kind'], message: string): AlintFileFailure {
   return { file: { index: input.fileIndex, path: input.path }, kind, message }
+}
+
+async function planSourceWithAdmission(
+  input: PreparedInput,
+  options: PlanSourceOptions,
+  waitForPlanning?: () => Promise<void>,
+): Promise<SourcePlanResult> {
+  if (options.signal?.aborted)
+    return { outcomes: Promise.resolve([]) }
+
+  let file
+  try {
+    file = await options.src.readFile(input.path)
+  }
+  catch (error) {
+    reportFilePlanningComplete(input, 0, options)
+    return { failure: fileFailure(input, 'read', failureMessage(error, 'Failed to read source file.')), outcomes: Promise.resolve([]) }
+  }
+
+  if (options.signal?.aborted)
+    return { outcomes: Promise.resolve([]) }
+
+  await waitForPlanning?.()
+
+  if (options.signal?.aborted)
+    return { outcomes: Promise.resolve([]) }
+
+  let targets: SourceTarget[]
+  try {
+    targets = await input.language.extract(file, {
+      cwd: options.cwd,
+      languageOptions: input.languageOptions,
+      src: options.src,
+    })
+  }
+  catch (error) {
+    reportFilePlanningComplete(input, 0, options)
+    return { failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to extract source targets.')), outcomes: Promise.resolve([]) }
+  }
+
+  const { contentHash } = file
+  let cacheOwner
+  let jobs: RuleJob[]
+  let project: ProjectFileSnapshot | undefined
+  try {
+    project = options.projectSnapshots === false
+      ? undefined
+      : createProjectSnapshot(input, file.language, file.path, contentHash, targets)
+    cacheOwner = options.cacheStore.beginOwner(
+      { kind: 'file', path: file.path },
+      { contentHash },
+    )
+    const baseFile = { contentHash, language: file.language, path: file.path }
+    const executionTargets = createExecutionTargets(input, targets, baseFile, options.ruleRuntimes, options.cwd, cacheOwner)
+    jobs = createSourceJobs(input, executionTargets)
+  }
+  catch (error) {
+    reportFilePlanningComplete(input, 0, options)
+    return { failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to plan source targets.')), outcomes: Promise.resolve([]) }
+  }
+
+  if (options.signal?.aborted) {
+    cacheOwner.commit({ mode: 'merge' })
+    return { outcomes: Promise.resolve([]), project }
+  }
+
+  const batch = options.scheduler.schedule(jobs)
+  reportFilePlanningComplete(input, batch.jobsAdded, options)
+  const outcomes = batch.outcomes.then(async (settled) => {
+    cacheOwner.commit(options.signal?.aborted ? { mode: 'merge' } : undefined)
+    await options.cacheStore.flush()
+    return settled
+  })
+
+  return { outcomes, project }
 }
 
 function reportFilePlanningComplete(input: PreparedInput, jobsAdded: number, options: PlanSourceOptions): void {

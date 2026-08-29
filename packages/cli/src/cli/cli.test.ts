@@ -291,7 +291,8 @@ async function writeRuleConcurrencyFailureFixture(cwd: string, callKey: string):
                 const state = globalThis[${JSON.stringify(callKey)}]
                 state.active += 1
                 state.maxActive = Math.max(state.maxActive, state.active)
-                await new Promise(resolve => setTimeout(resolve, 40))
+                // Keep the concurrent state alive across the bounded renderer's 120ms frame.
+                await new Promise(resolve => setTimeout(resolve, 180))
                 state.active -= 1
                 if (${index} === 0) throw new Error('controlled handler failure')
               },
@@ -2858,6 +2859,29 @@ export default [
 
       expect(runAlint).toHaveBeenCalledWith(expect.objectContaining({
         runner: { ruleConcurrency: 6 },
+      }))
+    }
+    finally {
+      runAlint.mockRestore()
+    }
+  })
+
+  it('passes the CLI runtime cancellation signal to the core run', async () => {
+    const io = await createTestIo()
+    const runAlint = vi.spyOn(alintCore, 'runAlint')
+    const controller = new AbortController()
+
+    try {
+      await writeProgressFixture(io.cwd)
+
+      await executeCli([
+        'node',
+        'alint',
+        'demo.ts',
+      ], io, { signal: controller.signal })
+
+      expect(runAlint).toHaveBeenCalledWith(expect.objectContaining({
+        signal: controller.signal,
       }))
     }
     finally {
