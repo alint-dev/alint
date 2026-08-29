@@ -12,7 +12,11 @@ import { commandTree, registerCommandTree } from './commands'
 
 export type { CliIo } from './types'
 
-export async function executeCli(argv: string[], io: CliIo): Promise<number> {
+export interface CliRuntimeOptions {
+  signal?: AbortSignal
+}
+
+export async function executeCli(argv: string[], io: CliIo, runtime: CliRuntimeOptions = {}): Promise<number> {
   // cac's built-in `--version` prints `alint/<version> <platform> node-<version>`,
   // but we only need a pure version string here.
   if (argv.includes('--version') || argv.includes('-v')) {
@@ -51,6 +55,7 @@ export async function executeCli(argv: string[], io: CliIo): Promise<number> {
     interceptConsoleOutput,
     io,
     setupNoInteractive,
+    signal: runtime.signal,
   }, setPendingResult, {
     examples: [
       [

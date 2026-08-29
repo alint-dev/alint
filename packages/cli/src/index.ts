@@ -1,5 +1,5 @@
 export { executeCli } from './cli'
-export type { CliIo } from './cli'
+export type { CliIo, CliRuntimeOptions } from './cli'
 export { formatDiagnostics } from './cli/reporters'
 export type { ReporterName } from './cli/reporters'
 export { formatJson } from './cli/reporters/json'

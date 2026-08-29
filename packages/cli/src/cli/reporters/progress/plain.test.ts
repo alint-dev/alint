@@ -113,9 +113,45 @@ describe('createCliProgressReporter', () => {
     expect(progress.reporter.onJobRetry).toBeTypeOf('function')
     expect(() => progress.reporter.onJobRetry?.({ attempt: 1, job: current, maxAttempts: 3, progress: progressSnapshot(counts({ planned: 1, running: 1 })) })).not.toThrow()
 
-    expect(chunks.join('\n')).toContain('⠋ rule/current 0/1 0% [░░░░░░░░░░] eta ? 1 running')
-    expect(chunks.join('\n')).toContain('   └─ src/input.ts > function loadConfig 1/3 retrying elapsed 0.0s')
+    vi.advanceTimersByTime(120)
+
+    expect(chunks.join('\n')).toContain('⠙ rule/current 0/1 0% [░░░░░░░░░░] eta ? 1 running')
+    expect(chunks.join('\n')).toContain('   └─ src/input.ts > function loadConfig 1/3 retrying elapsed')
     expect(chunks.join('')).toContain('rule/current')
+    progress.dispose()
+    vi.useRealTimers()
+  })
+
+  it('coalesces high-frequency progress events into the renderer interval', () => {
+    vi.useFakeTimers()
+    const chunks: string[] = []
+    const progress = createCliProgressReporter({
+      color: false,
+      columns: 80,
+      cwd: '/repo',
+      isTty: true,
+      rows: 10,
+      write: chunk => chunks.push(chunk),
+    })
+
+    progress.reporter.onPrepareStart?.({})
+    const writesAfterStart = chunks.length
+
+    for (let index = 1; index <= 100; index += 1) {
+      const job = { ...JOB, id: `job:${index}`, index }
+      progress.reporter.onJobQueued?.({
+        job,
+        progress: progressSnapshot(counts({ planned: index, queued: index })),
+      })
+    }
+
+    expect(chunks).toHaveLength(writesAfterStart)
+
+    vi.advanceTimersByTime(120)
+
+    expect(chunks).toHaveLength(writesAfterStart + 2)
+    expect(chunks.at(-1)).toContain('0/100 jobs')
+
     progress.dispose()
     vi.useRealTimers()
   })
