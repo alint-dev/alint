@@ -9,6 +9,7 @@ The package default export is the plugin definition. Individual rule definitions
 The bundled `recommended` config enables these rules under the `js` plugin name:
 
 - `js/inline-miniature-normalizer` reports clusters of local helpers that form a private reader or narrowing toolkit.
+- `js/no-config-file-tests` reports standalone tests that restate repository configuration instead of verifying behavior. It skips non-test files before calling the model, but the `files:` glob must include tests and ignored files remain excluded.
 - `js/no-mixed-layers-without-abstraction` reports consuming features that own independently reusable external-integration responsibilities without a stable interface.
 - `js/no-private-schema-toolkit` reports clusters of local helpers that form an ad hoc schema or payload-normalization toolkit.
 - `js/no-redundant-binding` reports local bindings that only rename an unchanged value or reference without adding a useful boundary.
@@ -25,10 +26,6 @@ Five repository-aware rules are registered but intentionally not enabled by `rec
 - `js/no-single-use-materialization` finds a collection produced once and consumed once immediately when the producer and consumer can be fused safely. It is broader than the local `js/no-redundant-binding` check for unchanged aliases.
 - `js/no-test-only-production-wrapper` finds a shallow wrapper declared in production but referenced only by tests and unreachable through package exports.
 - `js/no-overlapping-entrypoints` finds competing package public entrypoints that expose materially the same symbol surface and have unclear canonical ownership. It is not a replacement for `js/no-trivial-wrapper-stack`, which reviews shallow local call chains.
-
-One local, cacheable rule is also registered but not enabled by `recommended`:
-
-- `js/no-config-file-tests` reports a standalone test file whose subject is repository configuration, such as a linter, compiler, bundler, or tool configuration, rather than production behavior. It skips files that are not tests before any model call, but it reports only on test files, so it needs a `files:` glob that reaches them.
 
 ## Repository-aware review requirements
 
@@ -84,32 +81,9 @@ export default defineConfig([
 ])
 ```
 
-### Opt in to the config-file test rule
-
-This rule is not repository-aware and needs no agent adapter, but it reports on test files alone, so the `files:` glob has to reach them. Test files that another config item ignores are not reviewed.
-
-```ts
-import jsPlugin from '@alint-js/plugin-js'
-
-import { defineConfig } from '@alint-js/cli'
-
-export default defineConfig([
-  {
-    files: ['**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}'],
-    plugins: {
-      js: jsPlugin,
-    },
-    rules: {
-      'js/no-config-file-tests': 'warn',
-    },
-  },
-])
-```
-
 ## When to use
 
 - Use the recommended preset for model-assisted JavaScript and TypeScript design review.
-- Opt in to `js/no-config-file-tests` when configuration files have accumulated standalone tests that only restate the values they declare.
 - Opt in to repository-aware rules when cross-file ownership, package surfaces, or control/data-flow contracts need investigation.
 - Use the named rule exports when composing another plugin definition programmatically.
 

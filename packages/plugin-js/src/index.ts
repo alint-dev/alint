@@ -35,6 +35,7 @@ export default definePlugin({
       {
         rules: {
           'js/inline-miniature-normalizer': 'warn',
+          'js/no-config-file-tests': 'warn',
           'js/no-mixed-layers-without-abstraction': 'warn',
           'js/no-private-schema-toolkit': 'warn',
           'js/no-redundant-binding': 'warn',
