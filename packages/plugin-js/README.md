@@ -9,6 +9,7 @@ The package default export is the plugin definition. Individual rule definitions
 The bundled `recommended` config enables these rules under the `js` plugin name:
 
 - `js/inline-miniature-normalizer` reports clusters of local helpers that form a private reader or narrowing toolkit.
+- `js/no-config-file-tests` reports standalone tests that restate repository configuration instead of verifying behavior. It skips non-test files before calling the model, but the `files:` glob must include tests and ignored files remain excluded.
 - `js/no-mixed-layers-without-abstraction` reports consuming features that own independently reusable external-integration responsibilities without a stable interface.
 - `js/no-private-schema-toolkit` reports clusters of local helpers that form an ad hoc schema or payload-normalization toolkit.
 - `js/no-redundant-binding` reports local bindings that only rename an unchanged value or reference without adding a useful boundary.
@@ -29,6 +30,8 @@ Five repository-aware rules are registered but intentionally not enabled by `rec
 ## Repository-aware review requirements
 
 The five opt-in rules require both a configured model and an agent adapter capable of tool calls. They reuse the standard `@alint-js/tools-fs` list, search, and read tools, and ask the agent to include repository evidence with each finding.
+
+`js/no-config-file-tests` is not repository-aware and needs no agent adapter: it judges the test file it is handed, so a configured model is enough.
 
 ## How to use
 
@@ -88,6 +91,7 @@ export default defineConfig([
 
 - Do not use model-backed rules as a deterministic replacement for syntax-aware lint.
 - Do not enable repository-aware rules with a generation-only model or without an agent adapter.
+- Do not use `js/no-config-file-tests` when the configuration module owns logic the repository must verify, such as a custom lint rule, a custom bundler plugin, or a merge or normalization helper. Move that logic into its own module and test the module instead.
 - Do not use `js/no-duplicated-knowledge` for coincidental literals or clones that do not encode one shared decision.
 - Do not use `js/no-overlapping-entrypoints` for documented compatibility aliases or conditional/type-only exports.
 - Do not use `js/no-redundant-catch` when the outer catch changes cleanup, observability, error metadata, cause, identity, or cancellation behavior.

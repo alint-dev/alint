@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import plugin, {
+  configFileTestsRule,
   duplicatedKnowledgeRule,
   overlappingEntrypointsRule,
   redundantCatchRule,
@@ -10,6 +11,7 @@ import plugin, {
 
 const RECOMMENDED_RULES = {
   'js/inline-miniature-normalizer': 'warn',
+  'js/no-config-file-tests': 'warn',
   'js/no-mixed-layers-without-abstraction': 'warn',
   'js/no-private-schema-toolkit': 'warn',
   'js/no-redundant-binding': 'warn',
@@ -35,7 +37,7 @@ describe('@alint-js/plugin-js registry', () => {
     expect(plugin.rules?.['no-test-only-production-wrapper']).toBe(testOnlyProductionWrapperRule)
   })
 
-  it('keeps repository-aware rules opt-in and preserves recommended', () => {
+  it('keeps repository-aware rules opt-in and includes local rules in recommended', () => {
     expect(plugin.configs?.recommended).toEqual([
       {
         rules: RECOMMENDED_RULES,
@@ -49,5 +51,7 @@ describe('@alint-js/plugin-js registry', () => {
     for (const ruleId of REPOSITORY_AWARE_RULE_IDS) {
       expect(RECOMMENDED_RULES).not.toHaveProperty(`js/${ruleId}`)
     }
+
+    expect(plugin.rules?.['no-config-file-tests']).toBe(configFileTestsRule)
   })
 })

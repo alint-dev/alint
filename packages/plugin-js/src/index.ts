@@ -1,6 +1,7 @@
 import { definePlugin } from '@alint-js/plugin'
 
 import { inlineMiniatureNormalizerRule } from './rules/inline-miniature-normalizer'
+import { configFileTestsRule } from './rules/no-config-file-tests'
 import { duplicatedKnowledgeRule } from './rules/no-duplicated-knowledge'
 import { mixedLayersWithoutAbstractionRule } from './rules/no-mixed-layers-without-abstraction'
 import { overlappingEntrypointsRule } from './rules/no-overlapping-entrypoints'
@@ -15,6 +16,7 @@ import { vacuousFunctionRule } from './rules/no-vacuous-function'
 
 export { createJudgeMessages, createReportFindingsToolParameters, judgeFindingSchema, judgeResponseSchema } from './agents/judge'
 export { inlineMiniatureNormalizerRule } from './rules/inline-miniature-normalizer'
+export { configFileTestsRule } from './rules/no-config-file-tests'
 export { duplicatedKnowledgeRule } from './rules/no-duplicated-knowledge'
 export { mixedLayersWithoutAbstractionRule } from './rules/no-mixed-layers-without-abstraction'
 export { overlappingEntrypointsRule } from './rules/no-overlapping-entrypoints'
@@ -33,6 +35,7 @@ export default definePlugin({
       {
         rules: {
           'js/inline-miniature-normalizer': 'warn',
+          'js/no-config-file-tests': 'warn',
           'js/no-mixed-layers-without-abstraction': 'warn',
           'js/no-private-schema-toolkit': 'warn',
           'js/no-redundant-binding': 'warn',
@@ -45,6 +48,7 @@ export default definePlugin({
   },
   rules: {
     'inline-miniature-normalizer': inlineMiniatureNormalizerRule,
+    'no-config-file-tests': configFileTestsRule,
     'no-duplicated-knowledge': duplicatedKnowledgeRule,
     'no-mixed-layers-without-abstraction': mixedLayersWithoutAbstractionRule,
     'no-overlapping-entrypoints': overlappingEntrypointsRule,
