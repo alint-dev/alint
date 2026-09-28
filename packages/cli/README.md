@@ -696,7 +696,7 @@ Rules whose findings depend on inputs their source does not show must declare th
 import prompt from './prompt.md?raw'
 
 defineRule({
-  cacheKey: { prompt, agentVersion: 1 },
+  cacheKey: { agentVersion: 1, prompt },
   create: ctx => ({ /* ... */ }),
 })
 ```
