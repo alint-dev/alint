@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import plugin, {
+  configFileTestsRule,
   duplicatedKnowledgeRule,
   overlappingEntrypointsRule,
   redundantCatchRule,
@@ -49,5 +50,10 @@ describe('@alint-js/plugin-js registry', () => {
     for (const ruleId of REPOSITORY_AWARE_RULE_IDS) {
       expect(RECOMMENDED_RULES).not.toHaveProperty(`js/${ruleId}`)
     }
+  })
+
+  it('registers the config-file test rule opt-in', () => {
+    expect(plugin.rules?.['no-config-file-tests']).toBe(configFileTestsRule)
+    expect(RECOMMENDED_RULES).not.toHaveProperty('js/no-config-file-tests')
   })
 })
