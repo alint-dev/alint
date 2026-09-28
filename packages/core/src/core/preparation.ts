@@ -16,6 +16,7 @@ import { stableHash } from './hash'
 import { createBuiltInLanguageRegistry, registerLanguage, resolveLanguageForPath } from './languages'
 import { recordMissingLanguage, recordUnregistered, unregisteredLanguageSeverity } from './languages/diagnostics'
 import { isTargetLanguageAccepted, resolveRuleLanguages } from './languages/rule-languages'
+import { matchesRuleFilter } from './rule-filter'
 
 export interface PreparationIndex {
   directories: readonly PreparedDirectoryInput[]
@@ -108,10 +109,20 @@ export function createSourceExtractor(
 export function prepareRun(options: RunOptions = {}): PreparationIndex {
   const cwd = options.cwd ?? processCwd()
   const config = options.config ?? []
+  const ruleFilter = options.ruleFilter ?? []
   const files: PreparedInput[] = []
   const directories: PreparedDirectoryInput[] = []
+  const knownRuleIds = new Set<string>()
   const missingLanguages = new Map<string, MissingLanguage>()
   const unregisteredLanguages = new Map<string, UnregisteredLanguage>()
+
+  const prepareRulesFor = (effectiveConfig: EffectiveAlintConfig): PreparedRule[] => {
+    const enabledRules = buildRuleRegistry(effectiveConfig).enabledRules
+    for (const enabledRule of enabledRules)
+      knownRuleIds.add(enabledRule.id)
+
+    return prepareRules(enabledRules, ruleFilter)
+  }
 
   for (const filePath of options.files ?? []) {
     const path = resolve(cwd, filePath)
@@ -122,7 +133,7 @@ export function prepareRun(options: RunOptions = {}): PreparationIndex {
     const effectiveConfig = resolvedConfig.config
     const languageRegistry = createLanguageRegistry(effectiveConfig)
     const language = resolveLanguageForPath(path, languageRegistry, { language: effectiveConfig.language })
-    const rules = prepareRules(effectiveConfig)
+    const rules = prepareRulesFor(effectiveConfig)
 
     recordMissingLanguages(missingLanguages, rules, languageRegistry, path)
 
@@ -166,17 +177,22 @@ export function prepareRun(options: RunOptions = {}): PreparationIndex {
       agent: effectiveConfig.agent,
       configHash: stableHash({ settings: effectiveConfig.settings }),
       directoryIndex: directories.length,
-      rules: prepareRules(effectiveConfig),
+      rules: prepareRulesFor(effectiveConfig),
       settings: effectiveConfig.settings,
       target: { kind: 'directory', path },
     })
   }
 
+  const project = options.projectTargets === false ? undefined : prepareProject(cwd, config, prepareRulesFor)
+
+  if (ruleFilter.length > 0 && !hasPreparedRule(files, directories, project))
+    throw new Error(formatUnmatchedRuleFilter(ruleFilter, knownRuleIds))
+
   return {
     directories,
     files,
     missingLanguages,
-    project: options.projectTargets === false ? undefined : prepareProject(cwd, config),
+    project,
     unregisteredLanguages,
   }
 }
@@ -192,7 +208,31 @@ function createLanguageRegistry(config: EffectiveAlintConfig) {
   return registry
 }
 
-function prepareProject(root: string, config: AlintConfig): PreparedProjectInput | undefined {
+function formatUnmatchedRuleFilter(ruleFilter: readonly string[], knownRuleIds: ReadonlySet<string>): string {
+  const patterns = ruleFilter.map(pattern => `"${pattern}"`).join(', ')
+  const knownIds = [...knownRuleIds].sort()
+  const known = knownIds.length === 0
+    ? 'This run enabled no rule at all. Run `alint config inspect <file>` to see which rules apply to a file.'
+    : `Enabled rules: ${knownIds.slice(0, 20).join(', ')}${knownIds.length > 20 ? ', ...' : ''}.`
+
+  return `No enabled rule matched --rule ${patterns}. ${known}`
+}
+
+function hasPreparedRule(
+  files: readonly PreparedInput[],
+  directories: readonly PreparedDirectoryInput[],
+  project: PreparedProjectInput | undefined,
+): boolean {
+  return files.some(input => input.rules.length > 0)
+    || directories.some(input => input.rules.length > 0)
+    || (project?.rules.length ?? 0) > 0
+}
+
+function prepareProject(
+  root: string,
+  config: AlintConfig,
+  prepareRulesFor: (config: EffectiveAlintConfig) => PreparedRule[],
+): PreparedProjectInput | undefined {
   const resolvedConfig = resolveConfigForProject(root, config, { cwd: root })
   if (resolvedConfig.ignored)
     return undefined
@@ -202,16 +242,19 @@ function prepareProject(root: string, config: AlintConfig): PreparedProjectInput
     agent: effectiveConfig.agent,
     configHash: stableHash({ settings: effectiveConfig.settings }),
     root,
-    rules: prepareRules(effectiveConfig),
+    rules: prepareRulesFor(effectiveConfig),
     settings: effectiveConfig.settings,
   }
 }
 
-function prepareRules(config: EffectiveAlintConfig): PreparedRule[] {
-  return buildRuleRegistry(config).enabledRules.map((enabledRule, ruleIndex) => ({
-    enabledRule,
-    ruleIndex,
-  }))
+/**
+ * Keeps the registry position of every surviving rule: `ruleIndex` is an enabled-registry
+ * position that jobs and progress refs share, so filtering must not renumber the rules that stay.
+ */
+function prepareRules(enabledRules: readonly EnabledRule[], ruleFilter: readonly string[]): PreparedRule[] {
+  return enabledRules
+    .map((enabledRule, ruleIndex) => ({ enabledRule, ruleIndex }))
+    .filter(rule => ruleFilter.length === 0 || matchesRuleFilter(rule.enabledRule, ruleFilter))
 }
 
 function recordMissingLanguages(

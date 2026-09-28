@@ -16,6 +16,7 @@ export type LintExecutionOptions = SessionTargetSelection & {
   modelOverride?: string
   outputLanguage?: string
   progress?: ProgressReporter
+  ruleFilter?: readonly string[]
   runnerOptions: LintCommandOptions
   session: RunSession
   signal?: AbortSignal
@@ -43,6 +44,7 @@ export async function executeLint(options: LintExecutionOptions): Promise<RunRes
       modelOverride: options.modelOverride,
       outputLanguage: options.outputLanguage,
       progress: mergeProgressReporters(options.progress, statsCollector?.reporter),
+      ruleFilter: options.ruleFilter,
       runner,
       signal: options.signal ?? options.createSignal?.(),
     })

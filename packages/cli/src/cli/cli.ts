@@ -44,6 +44,7 @@ export async function executeCli(argv: string[], io: CliIo, runtime: CliRuntimeO
     .option('--model <model>', 'Force a model override')
     .option('-l, --lang <language>', 'Ask model-backed rules to write diagnostics in this language')
     .option('--progress', 'Show run progress')
+    .option('--rule <pattern>', 'Only run rules whose id, name, or glob matches (repeatable, comma-separated)')
     .option('--rule-concurrency <count>', 'Maximum rule executions across the entire run')
     .option('--no-stats', 'Do not record run stats for this run')
     .option('--timeout-ms <ms>', 'Rule execution timeout in milliseconds')

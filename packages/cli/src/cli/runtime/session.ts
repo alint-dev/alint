@@ -51,6 +51,7 @@ interface SessionRunSettings {
   outputLanguage?: string
   progress?: ProgressReporter
   projectTargets?: boolean
+  ruleFilter?: readonly string[]
   runner?: RunnerConfig
   signal?: AbortSignal
 }
@@ -104,6 +105,7 @@ export async function createRunSession(
         outputLanguage: runOptions.outputLanguage,
         progress: runOptions.progress,
         projectTargets: runOptions.projectTargets,
+        ruleFilter: runOptions.ruleFilter,
         runner: runOptions.runner,
         setupConfig,
         signal: runOptions.signal,

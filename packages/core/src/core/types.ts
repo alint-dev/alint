@@ -179,6 +179,15 @@ export interface RunOptions {
    * Defaults to `true`. Pass `false` for runs that target partial subsets of a project.
    */
   projectTargets?: boolean
+  /**
+   * Only run rules whose configured id (`plugin/rule`) or own name (`rule`) matches one of these
+   * glob patterns. Everything else stays unplanned, so a filtered run neither calls its model nor
+   * reports its diagnostics.
+   *
+   * A filter that matches no enabled rule fails the run, because a silent empty run is
+   * indistinguishable from a clean one. Pass the patterns you typed on the command line.
+   */
+  ruleFilter?: readonly string[]
   runner?: RunnerOptions
   setupConfig?: SetupConfig
   /**

@@ -9,6 +9,7 @@ export interface LintCommandOptions {
   model?: string
   outputLanguage?: string
   progress?: boolean
+  rule?: string | string[]
   ruleConcurrency?: string
   stats?: boolean
   timeoutMs?: string
