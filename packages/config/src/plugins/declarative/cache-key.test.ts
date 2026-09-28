@@ -45,7 +45,8 @@ function createSetupConfig(): SetupConfig {
 }
 
 describe('declarative rule cache key', () => {
-  it('re-runs a declarative rule after its instruction changes', async () => {
+  // Report: https://github.com/moeru-ai/alint/issues/91
+  it('re-runs a declarative rule after its instruction changes (Issue #91)', async () => {
     const root = await mkdtemp(join(tmpdir(), 'alint-declarative-cache-'))
     const targetPath = join(root, 'demo.txt')
     const cacheLocation = join(root, '.alintcache')

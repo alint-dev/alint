@@ -70,6 +70,7 @@ describe('matchesRuleFilter', () => {
   })
 })
 
+// Report: https://github.com/moeru-ai/alint/issues/91
 describe('runAlint rule filter', () => {
   const createRules = () => ({
     naming: defineRule({
@@ -112,7 +113,7 @@ describe('runAlint rule filter', () => {
     ])
   })
 
-  it('runs only the rules the filter names', async () => {
+  it('runs only the rules the filter names (Issue #91)', async () => {
     const run = await createRun()
     const result = await run(['company/review'])
 

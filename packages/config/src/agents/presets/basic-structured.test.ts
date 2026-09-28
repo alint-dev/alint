@@ -144,7 +144,8 @@ describe('basic-structured declarative preset', () => {
     expect(rule.create(createRuleContext()).onTargetFile).toEqual(expect.any(Function))
   })
 
-  it('drops findings that only report the target is clean', async () => {
+  // Report: https://github.com/moeru-ai/alint/issues/91
+  it('drops findings that only report the target is clean (Issue #91)', async () => {
     generateStructuredMock.mockResolvedValueOnce({
       findings: [
         { line: 1, message: 'No violations found.' },

@@ -371,7 +371,8 @@ export default [
     ])
   })
 
-  it('merges a nested config and scopes it to its directory', async () => {
+  // Report: https://github.com/moeru-ai/alint/issues/91
+  it('merges a nested config and scopes it to its directory (Issue #91)', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'alint-config-nested-'))
     await mkdir(join(cwd, 'packages', 'app', 'src'), { recursive: true })
     await mkdir(join(cwd, 'src'), { recursive: true })
