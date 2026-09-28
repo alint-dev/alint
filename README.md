@@ -189,6 +189,18 @@ Ask model-backed rules to write diagnostics in a specific language:
 alint --lang zh-CN src
 ```
 
+#### --rule
+
+Run only the rules a filter names, to read one rule's findings without paying for every other rule in the run:
+
+```bash
+alint --rule docs/review-copy src
+alint --rule 'docs/*' src
+alint --rule docs/review-copy,docs/naming src
+```
+
+A pattern matches the configured rule id (`plugin/rule`) or the rule's own name. The flag is repeatable and accepts a comma-separated list. Filtered rules are left unplanned, so the run neither calls their models nor reports their diagnostics. When the filter matches no enabled rule, the run fails and lists the rule ids it did enable, because a silent empty run is indistinguishable from a clean one.
+
 `alint` returns exit code `0` when diagnostics contain no errors, including warning-only runs. It returns `1` when at least one error diagnostic is reported and `2` when the command cannot complete because of a configuration, input, or runtime failure. `alint output inspect` uses the same exit-code behavior for saved results.
 
 ### Inspect Configuration and Output
@@ -421,6 +433,31 @@ export default defineConfig([
 ])
 ```
 
+#### Nested configs
+
+Every `alint.config.*` below the repository root is loaded together with the root config, and each file is scoped to the directory that contains it:
+
+```ts
+// packages/app/alint.config.ts
+import { defineConfig } from '@alint-js/cli'
+
+import { appPlugin } from './alint/plugin'
+
+export default defineConfig([
+  {
+    plugins: { app: appPlugin },
+    rules: { 'app/layer-boundary': 'error' },
+  },
+])
+```
+
+The item above reaches `packages/app/**` only. `files`, `directories`, and `ignores` resolve against the directory of the config that declares them, an item that declares no target patterns covers its whole subtree, and a deeper config overrides an outer one for its own directory. A package that owns a rule therefore needs one file, not an entry in the root config plus the same scope repeated in every tool that reads it.
+
+- Discovery skips hidden directories, `node_modules`, and build output (`build`, `coverage`, `dist`, `out`, `vendor`).
+- `--config <path>` pins exactly one config file and disables discovery, so a CI job can run one specific config.
+- Every config file shares one plugin alias namespace and one plugin lockfile, and `alint plugin install` installs the plugins nested configs declare. Two files that bind one alias to different specifiers fail the load instead of resolving silently to one of them.
+- Keep project-scoped rules (`onTargetProject`) in the root config: the project target sits outside a nested item's base path, so a nested config cannot claim it.
+
 #### Executable and static configs
 
 `alint` supports executable configs (`.js`, `.ts`, `.mjs`, `.cjs`, `.mts`, and `.cts`) and data-only static configs (`.toml`, `.yaml`, `.yml`, `.json`, `.jsonc`, and `.json5`).
@@ -487,6 +524,8 @@ arch = "./rules/architecture"
 ```
 
 `name` becomes the local rule id. `builtInAgent` can be `basic-structured` for a prompt-only structured-output rule or `basic-coding-agent` for a small built-in agent with filesystem tools. `includeFiles` and `excludeFiles` define where diagnostics may be reported; they do not limit what `basic-coding-agent` can inspect.
+
+Editing a rule's `instruction`, `includeFiles`, or `excludeFiles` invalidates the findings it cached: a declarative rule declares those inputs as its cache key, so a changed rule text never replays stale findings.
 
 Run the install command again after changing a source string, moving a local directory, or changing its symlink target. Changes inside the same local directory are loaded by the next CLI process without reinstalling.
 
@@ -650,6 +689,19 @@ defineRule({
   }),
 })
 ```
+
+Rules whose findings depend on inputs their source does not show must declare those inputs as `cacheKey`: an imported prompt, a shared message builder, or the text of a preset that builds the rule. `alint` hashes the rule source and `cacheKey` into every cache entry:
+
+```ts
+import prompt from './prompt.md?raw'
+
+defineRule({
+  cacheKey: { agentVersion: 1, prompt },
+  create: ctx => ({ /* ... */ }),
+})
+```
+
+Without a cache key, editing the prompt changes what the rule asks the model while the cache entry stays valid, and the next run replays the previous findings as cache hits without running the rule at all.
 
 ## Packages
 

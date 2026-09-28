@@ -318,6 +318,46 @@ export default [
 `)
 }
 
+// A run fixture whose rules report without calling a model, so --rule can be asserted end to end.
+async function writeRuleFilterFixture(cwd: string): Promise<void> {
+  await writeFile(join(cwd, 'demo.ts'), 'export function load() {}\n')
+  await writeFile(join(cwd, 'alint.config.ts'), `
+export default [
+  {
+    files: ['**/*.ts'],
+    plugins: {
+      company: {
+        rules: {
+          'kept-rule': {
+            languages: 'any',
+            create: ctx => ({
+              onTargetFunction: target => ctx.report({
+                filePath: target.file.path,
+                message: 'Kept finding',
+              }),
+            }),
+          },
+          'other-rule': {
+            languages: 'any',
+            create: ctx => ({
+              onTargetFunction: target => ctx.report({
+                filePath: target.file.path,
+                message: 'Other finding',
+              }),
+            }),
+          },
+        },
+      },
+    },
+    rules: {
+      'company/kept-rule': 'warn',
+      'company/other-rule': 'warn',
+    },
+  },
+]
+`)
+}
+
 // A run fixture whose rule records inference usage directly via ctx.metering, so a full lint
 // run produces usage records (with an `operation` tag) without any model/provider HTTP.
 async function writeStatsFixture(cwd: string): Promise<void> {
@@ -3558,6 +3598,27 @@ export default [
       join(io.cwd, 'missing.alint.config.ts'),
       'demo.ts',
     ], io)).rejects.toThrow(`Config file "${join(io.cwd, 'missing.alint.config.ts')}" does not exist.`)
+  })
+
+  it('runs only the rule named by --rule', async () => {
+    const io = await createTestIo()
+    await writeRuleFilterFixture(io.cwd)
+
+    const exitCode = await executeCli(['node', 'alint', '--rule', 'company/kept-rule', 'demo.ts'], io)
+
+    expect(exitCode).toBe(0)
+    expect(io.stderrText).toBe('')
+    expect(io.stdoutText).toContain('Kept finding')
+    expect(io.stdoutText).not.toContain('Other finding')
+  })
+
+  it('fails the run when --rule matches no enabled rule', async () => {
+    const io = await createTestIo()
+    await writeRuleFilterFixture(io.cwd)
+
+    await expect(executeCli(['node', 'alint', '--rule', 'company/missing', 'demo.ts'], io)).rejects.toThrow(
+      'No enabled rule matched --rule "company/missing". Enabled rules: company/kept-rule, company/other-rule.',
+    )
   })
 
   it('prints only the bare package version to stdout for --version', async () => {

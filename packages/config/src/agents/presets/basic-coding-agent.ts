@@ -111,7 +111,7 @@ export function createCodingAgent(
       }))
 
       tools.push(rawTool({
-        description: 'Submit all findings and finish the review. Submit an empty findings array when there are no issues.',
+        description: 'Submit all findings and finish the review. Submit an empty findings array when there are no issues, instead of a finding that states the target is already correct.',
         execute: async (input) => {
           report = parse(declarativeFindingResponseSchema, input)
           return report
@@ -135,7 +135,7 @@ export function createCodingAgent(
         instructions: [
           options.instruction,
           'Use the filesystem tools to inspect the project as needed before reaching a conclusion.',
-          `When the review is complete, call ${reportFindingsToolName} exactly once with all findings. Submit an empty findings array when there are no issues.`,
+          `When the review is complete, call ${reportFindingsToolName} exactly once with all findings. Submit an empty findings array when there are no issues, instead of a finding that states the target is already correct.`,
         ].join('\n\n'),
         tools,
         turnId: 'alint',

@@ -33,21 +33,21 @@ export const declarativeFindingSchema = pipe(
     ),
     message: pipe(
       string(),
-      description('Human-readable diagnostic message describing the issue.'),
+      description('Human-readable diagnostic message describing the problem the target must fix. Never describe the absence of a problem.'),
     ),
     suggestion: optional(pipe(
       string(),
       description('Concrete remediation direction for the finding.'),
     )),
   }),
-  description('One declarative rule finding.'),
+  description('One declarative rule finding. Report only a change the reviewed target must make.'),
 )
 
 export const declarativeFindingResponseSchema = pipe(
   object({
     findings: pipe(
       array(declarativeFindingSchema),
-      description('All findings for the declarative rule. Return an empty array when there are no issues.'),
+      description('All findings for the declarative rule. Return an empty array when there are no issues, and never add a finding that only states the target is already correct.'),
     ),
   }),
   description('Structured declarative rule findings.'),

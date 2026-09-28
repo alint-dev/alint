@@ -24,6 +24,7 @@ import { filterResultToChangedLines } from './changed-lines'
 import { findDirtyLintTargets, NoFilesFoundError } from './discovery'
 import { formatCancelledError, formatRunError } from './errors'
 import { executeLint } from './execution'
+import { resolveRuleFilter } from './rule-filter'
 
 export const lint = defineCommand({
   action: (context, files: string[] = [], options: LintCommandOptions) =>
@@ -140,6 +141,7 @@ async function runLintCommand(
         modelOverride: options.model,
         outputLanguage: options.outputLanguage,
         progress: progress?.reporter,
+        ruleFilter: resolveRuleFilter(options.rule),
         runnerOptions: options,
         session,
         signal,

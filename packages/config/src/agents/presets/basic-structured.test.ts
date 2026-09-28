@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { createSourceRuntime } from '@alint-js/core'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createBasicStructuredRule, createStructuredMessages, reportDeclarativeFindings } from './basic-structured'
 
@@ -23,6 +23,10 @@ vi.mock('@alint-js/core/structured-output', async (importOriginal) => {
 })
 
 describe('basic-structured declarative preset', () => {
+  beforeEach(() => {
+    generateStructuredMock.mockReset()
+  })
+
   it('builds messages with instruction, output language, target source, and included files', async () => {
     const root = await mkdtemp(join(tmpdir(), 'alint-structured-messages-'))
     await mkdir(join(root, 'src'), { recursive: true })
@@ -118,6 +122,9 @@ describe('basic-structured declarative preset', () => {
     })
 
     expect(rule.cache).toBe(true)
+    // The rule text is not part of the rule source the run engine hashes, so the rule has to
+    // declare it. Without this key, editing `instruction` replays the previous findings.
+    expect(rule.cacheKey).toMatchObject({ agent: 'basic-structured', instruction: 'Find semantic boundary issues.' })
     expect(rule.create).toEqual(expect.any(Function))
     expect(rule.create(createRuleContext()).onTargetFile).toEqual(expect.any(Function))
   })
@@ -135,6 +142,38 @@ describe('basic-structured declarative preset', () => {
     expect(rule.cache).toBe(false)
     expect(rule.create).toEqual(expect.any(Function))
     expect(rule.create(createRuleContext()).onTargetFile).toEqual(expect.any(Function))
+  })
+
+  // Report: https://github.com/moeru-ai/alint/issues/91
+  it('drops findings that only report the target is clean (Issue #91)', async () => {
+    generateStructuredMock.mockResolvedValueOnce({
+      findings: [
+        { line: 1, message: 'No violations found.' },
+        { line: 3, message: 'move parser', suggestion: 'Create a parser object.' },
+      ],
+    })
+
+    const ctx = createRuleContext()
+    const rule = createBasicStructuredRule({
+      builtInAgent: 'basic-structured',
+      excludeFiles: [],
+      filePath: '/repo/rules/semantic/rule.alint.toml',
+      instruction: 'Find semantic boundary issues.',
+      name: 'semantic-boundary',
+    })
+
+    await rule.create(ctx).onTargetFile?.(createTarget('file'))
+
+    expect(ctx.report).toHaveBeenCalledOnce()
+    expect(ctx.report).toHaveBeenCalledWith({
+      evidence: { suggestion: 'Create a parser object.' },
+      filePath: '/repo/src/main.py',
+      loc: { start: { column: 0, line: 3 } },
+      message: 'move parser',
+    })
+    expect(ctx.logger.debug).toHaveBeenCalledWith('Ignoring declarative finding that reports no issue', {
+      message: 'No violations found.',
+    })
   })
 
   it('runs structured output for a file target', async () => {
