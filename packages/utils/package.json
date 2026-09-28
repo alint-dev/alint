@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/utils",
   "type": "module",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Shared Node.js utilities for alint packages",
   "license": "MIT",
   "repository": {
