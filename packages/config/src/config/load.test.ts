@@ -3,9 +3,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { resolveConfigForFile } from '@alint-js/core'
 import { describe, expect, it } from 'vitest'
 
-import { loadAlintConfig } from './load'
+import { loadAlintConfig, loadStaticConfig } from './load'
 
 function createLockEntry(alias: string, specifier: string, entry: string) {
   const name = specifier.slice(0, specifier.lastIndexOf('@'))
@@ -368,5 +369,157 @@ export default [
         },
       },
     ])
+  })
+
+  it('merges a nested config and scopes it to its directory', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'alint-config-nested-'))
+    await mkdir(join(cwd, 'packages', 'app', 'src'), { recursive: true })
+    await mkdir(join(cwd, 'src'), { recursive: true })
+    await writeFile(join(cwd, 'alint.config.ts'), `
+export default [
+  {
+    files: ['**/*.ts'],
+    plugins: { company: { rules: { shared: {} } } },
+    rules: { 'company/shared': 'warn' },
+  },
+]
+`)
+    await writeFile(join(cwd, 'packages', 'app', 'alint.config.ts'), `
+export default [
+  {
+    plugins: { app: { rules: { 'layer-boundary': {} } } },
+    rules: { 'app/layer-boundary': 'error' },
+  },
+]
+`)
+
+    const config = await loadAlintConfig(cwd)
+    const inside = resolveConfigForFile(join(cwd, 'packages', 'app', 'src', 'main.ts'), config, { cwd })
+    const outside = resolveConfigForFile(join(cwd, 'src', 'main.ts'), config, { cwd })
+
+    expect(config).toEqual([
+      {
+        files: ['**/*.ts'],
+        plugins: { company: { rules: { shared: {} } } },
+        rules: { 'company/shared': 'warn' },
+      },
+      {
+        basePath: 'packages/app',
+        directories: ['**'],
+        files: ['**/*'],
+        plugins: { app: { rules: { 'layer-boundary': {} } } },
+        rules: { 'app/layer-boundary': 'error' },
+      },
+    ])
+    expect(inside.config.rules).toEqual({
+      'app/layer-boundary': 'error',
+      'company/shared': 'warn',
+    })
+    expect(outside.config.rules).toEqual({ 'company/shared': 'warn' })
+    expect(outside.ignored).toBe(false)
+  })
+
+  it('lets a nested config override an outer one for its own directory', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'alint-config-nested-override-'))
+    await mkdir(join(cwd, 'packages', 'app'), { recursive: true })
+    await writeFile(join(cwd, 'alint.config.ts'), `
+export default [
+  {
+    files: ['**/*.ts'],
+    plugins: { company: { rules: { shared: {} } } },
+    rules: { 'company/shared': 'warn' },
+  },
+]
+`)
+    // A nested config can restate an outer item's rules: the plugin alias reaches it through the
+    // outer item, which still matches the package's files.
+    await writeFile(join(cwd, 'packages', 'app', 'alint.config.ts'), `
+export default [
+  {
+    rules: { 'company/shared': 'off' },
+  },
+]
+`)
+
+    const config = await loadAlintConfig(cwd)
+    const inside = resolveConfigForFile(join(cwd, 'packages', 'app', 'main.ts'), config, { cwd })
+
+    expect(inside.config.rules).toEqual({ 'company/shared': 'off' })
+  })
+
+  it('orders nested configs from the outermost directory inwards', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'alint-config-nested-order-'))
+    await mkdir(join(cwd, 'packages', 'app', 'sub'), { recursive: true })
+    await writeFile(join(cwd, 'alint.config.ts'), 'export default []\n')
+    await writeFile(join(cwd, 'packages', 'app', 'alint.config.ts'), 'export default [{ name: \'app\' }]\n')
+    await writeFile(join(cwd, 'packages', 'app', 'sub', 'alint.config.ts'), 'export default [{ name: \'sub\' }]\n')
+
+    const config = await loadStaticConfig(cwd)
+
+    expect(config.groups.map(group => group.item.basePath)).toEqual([
+      'packages/app',
+      'packages/app/sub',
+    ])
+  })
+
+  it('ignores nested config files in hidden, dependency, and build directories', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'alint-config-nested-skipped-'))
+    await mkdir(join(cwd, '.config'), { recursive: true })
+    await mkdir(join(cwd, 'node_modules', 'pkg'), { recursive: true })
+    await mkdir(join(cwd, 'dist', 'pkg'), { recursive: true })
+    await writeFile(join(cwd, 'alint.config.ts'), 'export default []\n')
+
+    for (const directory of ['.config', join('node_modules', 'pkg'), join('dist', 'pkg')]) {
+      await writeFile(join(cwd, directory, 'alint.config.ts'), 'export default [{ name: \'skipped\' }]\n')
+    }
+
+    const config = await loadStaticConfig(cwd)
+
+    expect(config.groups).toEqual([])
+  })
+
+  it('loads only the named config file when the caller passes one', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'alint-config-explicit-'))
+    await mkdir(join(cwd, 'packages', 'app'), { recursive: true })
+    await writeFile(join(cwd, 'alint.config.ts'), 'export default [{ name: \'root\' }]\n')
+    await writeFile(join(cwd, 'packages', 'app', 'alint.config.ts'), 'export default [{ name: \'nested\' }]\n')
+
+    const config = await loadStaticConfig(cwd, 'packages/app/alint.config.ts')
+
+    expect(config.groups.map(group => group.item.name)).toEqual(['nested'])
+  })
+
+  it('rejects one plugin alias pointing at different specifiers across config files', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'alint-config-nested-alias-'))
+    await mkdir(join(cwd, 'packages', 'app'), { recursive: true })
+    await writeFile(join(cwd, 'alint.config.ts'), `
+export default [
+  { plugins: { local: './plugins/root' } },
+]
+`)
+    await writeFile(join(cwd, 'packages', 'app', 'alint.config.ts'), `
+export default [
+  { plugins: { local: './plugins/app' } },
+]
+`)
+
+    await expect(loadStaticConfig(cwd)).rejects.toThrow(
+      /Static plugin "local" is configured in .* and .* with different specifiers/,
+    )
+  })
+
+  it('does not treat a workspace package manifest as a config', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'alint-config-nested-manifest-'))
+    await mkdir(join(cwd, 'packages', 'app'), { recursive: true })
+    await writeFile(join(cwd, 'alint.config.ts'), 'export default []\n')
+    await writeFile(join(cwd, 'packages', 'app', 'package.json'), JSON.stringify({
+      name: '@example/app',
+      version: '1.0.0',
+    }), 'utf8')
+    await writeFile(join(cwd, 'packages', 'app', 'index.ts'), 'export const value = 1\n', 'utf8')
+
+    const config = await loadStaticConfig(cwd)
+
+    expect(config.groups).toEqual([])
   })
 })
