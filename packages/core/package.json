@@ -1,7 +1,7 @@
 {
   "name": "@alint-js/core",
   "type": "module",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Public rule and plugin SDK and run engine for alint",
   "license": "MIT",
   "repository": {
