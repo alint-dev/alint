@@ -9,6 +9,8 @@ import { isAbsolute, relative, resolve } from 'node:path'
 import { formatOutputLanguageInstruction, formatSourceWithLineNumbers, generateStructured } from '@alint-js/core/structured-output'
 import { listFiles } from '@alint-js/tools-fs'
 
+import { createDeclarativeCacheKey } from '../../plugins/declarative/cache-key'
+import { isActionableFinding } from '../../plugins/declarative/findings'
 import { createReportScope } from '../../plugins/declarative/scope'
 import { declarativeFindingResponseSchema } from '../../plugins/declarative/types'
 
@@ -44,6 +46,7 @@ interface SupplementalFile {
 export function createBasicStructuredRule(rule: DeclarativeRuleDefinition): RuleDefinition {
   return {
     cache: rule.includeFiles === undefined || rule.includeFiles.length === 0,
+    cacheKey: createDeclarativeCacheKey(rule),
     create: ctx => ({
       /**
        * Runs one structured declarative review for a planned file.
@@ -153,6 +156,13 @@ export function reportDeclarativeFindings(options: ReportDeclarativeFindingsOpti
   })
 
   for (const finding of options.findings) {
+    if (!isActionableFinding(finding)) {
+      options.ctx.logger.debug('Ignoring declarative finding that reports no issue', {
+        message: finding.message,
+      })
+      continue
+    }
+
     const filePath = resolveFindingFilePath(options.ctx.cwd, options.targetFilePath, finding.filePath)
 
     if (!scope.canReport(filePath)) {
