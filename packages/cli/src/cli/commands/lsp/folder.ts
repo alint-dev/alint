@@ -8,14 +8,15 @@ import { realpath, rm } from 'node:fs/promises'
 import { join, relative, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-import { AlintRunCancelledError, AlintRunError } from '@alint-js/core'
+import { AlintRunCancelledError, AlintRunError, matchesDiscoveryFile } from '@alint-js/core'
 import { errorMessageFrom } from '@moeru/std'
 
 import { createRunSession } from '../../runtime/session'
+import { statPath } from '../lint/discovery'
 import { toLspDiagnostic } from './diagnostics'
 
-/** One config write arrives as several filesystem events. Wait for them before running a pass. */
-const WORKSPACE_PASS_DEBOUNCE_MS = 500
+/** A config write or a checkout arrives as many filesystem events. Wait for them before a pass. */
+const PASS_DEBOUNCE_MS = 500
 
 export interface CreateFolderSessionOptions {
   folderUri: string
@@ -26,23 +27,25 @@ export interface CreateFolderSessionOptions {
 
 export interface FolderSession {
   /**
+   * Deletes the cache file and drops every diagnostic. Returns the document URIs to publish.
+   *
+   * This throws away diagnostics the user paid for. Only an explicit run can produce them again.
+   */
+  clearCache: () => Promise<string[]>
+  /** Whether the URI names a path inside this folder. The folder itself is not inside. */
+  contains: (uri: string) => boolean
+  cwd: string
+  /** Document URI to its diagnostics. A workspace pass replaces the whole map. */
+  readonly diagnostics: ReadonlyMap<string, LspDiagnostic[]>
+  dispose: () => Promise<void>
+  folderUri: string
+  /**
    * Re-reads one file and returns the document URIs to publish.
    *
    * A returned URI can have no diagnostics left, and then the map holds no entry for it. This is
    * the usual result after an edit: the changed target misses the cache and its job is skipped.
    * The caller must publish the empty list, or the editor keeps showing the old diagnostics.
    */
-  /**
-   * Deletes the cache file and drops every diagnostic. Returns the document URIs to publish.
-   *
-   * This throws away diagnostics the user paid for. Only an explicit run can produce them again.
-   */
-  clearCache: () => Promise<string[]>
-  cwd: string
-  /** Document URI to its diagnostics. A workspace pass replaces the whole map. */
-  readonly diagnostics: ReadonlyMap<string, LspDiagnostic[]>
-  dispose: () => Promise<void>
-  folderUri: string
   refreshFile: (uri: string) => Promise<string[]>
   refreshFromCache: () => Promise<void>
   /** Builds a new run session, which is how the config on disk is re-read. */
@@ -57,6 +60,13 @@ export interface FolderSession {
    * once discard each other's results.
    */
   runExplicit: (options: RunExplicitOptions) => Promise<void>
+  /**
+   * Requests a pass over files that changed on disk. Requests that arrive together produce one
+   * pass, which reports its document URIs through `onChanged`.
+   *
+   * A path that no longer exists loses its diagnostics, and so does every path under it.
+   */
+  scheduleFilesPass: (uris: string[]) => void
   /** Requests a whole-workspace pass. Requests that arrive together produce one pass. */
   scheduleWorkspacePass: () => void
 }
@@ -89,6 +99,11 @@ export async function createFolderSession(
   let scheduled: ReturnType<typeof setTimeout> | undefined
   let explicitRun: Promise<void> = Promise.resolve()
   let explicitRunning = false
+  // Run paths reported since the last files pass.
+  const changedPaths = new Set<string>()
+  let filesScheduled: ReturnType<typeof setTimeout> | undefined
+  // Files passes run one at a time. Two at once can finish out of order, and the older read wins.
+  let filesPass: Promise<void> = Promise.resolve()
 
   const replaceMap = (next: Map<string, LspDiagnostic[]>): string[] => {
     // A document that lost its last diagnostic must still be published, as an empty list.
@@ -96,6 +111,104 @@ export async function createFolderSession(
     diagnostics = next
 
     return [...changed]
+  }
+
+  /**
+   * Reads files from the cache and replaces their entries. Returns the document URIs to publish.
+   *
+   * A file whose diagnostics all disappear loses its entry, and its URI is still returned.
+   */
+  const readFiles = async (filePaths: string[]): Promise<string[]> => {
+    const found = groupByUri(await runFromCache(session, { inputs: filePaths }), paths)
+    const changed = new Set([...found.keys()])
+
+    // The pass covers these files, so only their entries may be dropped.
+    for (const filePath of filePaths) {
+      const documentUri = toDocumentUri(filePath, paths)
+
+      if (!found.has(documentUri) && diagnostics.delete(documentUri)) {
+        changed.add(documentUri)
+      }
+    }
+
+    for (const [key, value] of found) {
+      diagnostics.set(key, value)
+    }
+
+    return [...changed]
+  }
+
+  /** Drops the entry for a deleted path, and every entry under it if it was a directory. */
+  const dropDeleted = (filePath: string): string[] => {
+    const documentUri = toDocumentUri(filePath, paths)
+    const dropped = [...diagnostics.keys()]
+      .filter(uri => uri === documentUri || uri.startsWith(`${documentUri}/`))
+
+    for (const uri of dropped) {
+      diagnostics.delete(uri)
+    }
+
+    return dropped
+  }
+
+  const runFilesPass = async (): Promise<void> => {
+    // A cache read during an explicit run publishes older values over the ones the run streams.
+    // The pass waits instead of being dropped, because the run does not re-read changed files.
+    // A run queued during the wait replaces `explicitRun`, so wait again until none was queued.
+    let queued: Promise<void>
+
+    do {
+      queued = explicitRun
+      await queued.catch(() => {})
+    } while (queued !== explicitRun)
+
+    const filePaths = [...changedPaths]
+    const changed = new Set<string>()
+    const readable: string[] = []
+
+    changedPaths.clear()
+
+    for (const filePath of filePaths) {
+      // The disk decides, not the event type. A burst can report a file as deleted and then as
+      // created again.
+      const stats = await statPath(filePath)
+
+      if (stats === undefined) {
+        for (const uri of dropDeleted(filePath)) {
+          changed.add(uri)
+        }
+
+        continue
+      }
+
+      // A directory has no diagnostics of its own. Its files are read when an event names them,
+      // or by the next workspace pass.
+      if (!stats.isFile()) {
+        continue
+      }
+
+      // The client reports every file in the folder. Read the files the workspace pass lints, and
+      // files that have diagnostics, because a project rule can report a file that discovery skips.
+      const discovered = matchesDiscoveryFile(
+        relative(cwd, filePath).replaceAll('\\', '/'),
+        session.config,
+        { cwd },
+      )
+
+      if (discovered || diagnostics.has(toDocumentUri(filePath, paths))) {
+        readable.push(filePath)
+      }
+    }
+
+    if (readable.length > 0) {
+      for (const uri of await readFiles(readable)) {
+        changed.add(uri)
+      }
+    }
+
+    if (changed.size > 0) {
+      options.onChanged?.([...changed])
+    }
   }
 
   const runOnce = async (runOptions: RunExplicitOptions): Promise<void> => {
@@ -157,6 +270,7 @@ export async function createFolderSession(
 
       return replaceMap(new Map())
     },
+    contains: uri => toRunPath(uri, paths) !== undefined,
     cwd,
     get diagnostics() {
       return diagnostics
@@ -166,6 +280,11 @@ export async function createFolderSession(
       if (scheduled !== undefined) {
         clearTimeout(scheduled)
         scheduled = undefined
+      }
+
+      if (filesScheduled !== undefined) {
+        clearTimeout(filesScheduled)
+        filesScheduled = undefined
       }
 
       await session.shutdown()
@@ -178,22 +297,7 @@ export async function createFolderSession(
         return []
       }
 
-      const result = await runFromCache(session, { inputs: [filePath] })
-      const found = groupByUri(result, paths)
-      const changed = new Set([...found.keys()])
-
-      // The pass covers one file, so only that file's entry may change.
-      const documentUri = toDocumentUri(filePath, paths)
-
-      if (!found.has(documentUri) && diagnostics.delete(documentUri)) {
-        changed.add(documentUri)
-      }
-
-      for (const [key, value] of found) {
-        diagnostics.set(key, value)
-      }
-
-      return [...changed]
+      return readFiles([filePath])
     },
     refreshFromCache: async () => {
       if (explicitRunning) {
@@ -218,6 +322,28 @@ export async function createFolderSession(
 
       return explicitRun
     },
+    scheduleFilesPass: (uris) => {
+      for (const uri of uris) {
+        const filePath = toRunPath(uri, paths)
+
+        if (filePath !== undefined) {
+          changedPaths.add(filePath)
+        }
+      }
+
+      if (changedPaths.size === 0 || filesScheduled !== undefined) {
+        return
+      }
+
+      filesScheduled = setTimeout(() => {
+        filesScheduled = undefined
+        filesPass = filesPass
+          .then(runFilesPass)
+          .catch((error) => {
+            options.io.stderr.write(`alint lsp: files pass failed: ${errorMessageFrom(error) ?? 'unknown error'}\n`)
+          })
+      }, PASS_DEBOUNCE_MS)
+    },
     scheduleWorkspacePass: () => {
       if (scheduled !== undefined) {
         return
@@ -238,7 +364,7 @@ export async function createFolderSession(
             options.io.stderr.write(`alint lsp: workspace pass failed: ${errorMessageFrom(error) ?? 'unknown error'}\n`)
           }
         })()
-      }, WORKSPACE_PASS_DEBOUNCE_MS)
+      }, PASS_DEBOUNCE_MS)
     },
   }
 }

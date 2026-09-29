@@ -238,8 +238,11 @@ The server is cache-first. It publishes diagnostics that earlier runs stored, an
 model on its own, so opening a workspace costs nothing. A cold cache shows no diagnostics. Run
 `alint` once to fill it.
 
-Diagnostics appear when the editor opens the workspace, and they refresh when you save a file. The
-server reloads `alint.config.ts` after it changes.
+Diagnostics appear when the editor opens the workspace. They refresh when you save a file, and when
+a file changes on disk outside the editor, for example after `git checkout`. The server reloads
+`alint.config.ts` after it changes. Changes on disk and config reloads need an editor that supports
+dynamic registration for `workspace/didChangeWatchedFiles`. The server opens and closes workspace
+folders as the editor adds and removes them.
 
 Configure the editor to start the command. In Neovim:
 
