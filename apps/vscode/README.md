@@ -59,7 +59,8 @@ The `alint` output channel contains the server log.
 
 ### Available
 
-- Diagnostics on workspace load, refreshed when a file is saved
+- Diagnostics on workspace load, refreshed when a file is saved or changes on disk
+- Workspace folders added to or removed from the window
 - `alint: Run on Current File` and `alint: Run on Workspace`, with progress and a cancel button
 - `alint: Clear Cache`, behind a confirmation
 - Executable resolution: the `alint.path` setting, the workspace install, then `PATH`

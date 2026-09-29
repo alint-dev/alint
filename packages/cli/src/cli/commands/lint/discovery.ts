@@ -132,6 +132,20 @@ export async function findLintTargets(options: FindFilesOptions): Promise<LintTa
   }
 }
 
+/** Returns undefined when nothing is at the path. `ENOTDIR` means a parent in the path is a file. */
+export async function statPath(path: string): Promise<Stats | undefined> {
+  try {
+    return await stat(path)
+  }
+  catch (error) {
+    if (isNodeErrorCode(error, 'ENOENT') || isNodeErrorCode(error, 'ENOTDIR')) {
+      return undefined
+    }
+
+    throw error
+  }
+}
+
 function collectGlobalIgnorePatterns(config: AlintConfig): string[] {
   return normalizeConfig(config).flatMap(item =>
     isGlobalIgnoreItem(item) ? [...item.ignores] : [],
@@ -322,19 +336,6 @@ async function shouldPruneDirectory(path: string, options: WalkFilesOptions): Pr
   }
 
   return await options.gitignore?.ignores(`${path}/`) === true
-}
-
-async function statPath(path: string): Promise<Stats | undefined> {
-  try {
-    return await stat(path)
-  }
-  catch (error) {
-    if (isNodeErrorCode(error, 'ENOENT') || isNodeErrorCode(error, 'ENOTDIR')) {
-      return undefined
-    }
-
-    throw error
-  }
 }
 
 /**

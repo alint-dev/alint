@@ -2,7 +2,7 @@ import type { CliIo } from '../../types'
 
 import process from 'node:process'
 
-import { mkdtemp, readFile, realpath, symlink, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -59,6 +59,32 @@ async function createSymlinkedFolder(): Promise<{ io: CliIo, linkPath: string }>
   await symlink(cwd, linkPath, 'dir')
 
   return { io, linkPath }
+}
+
+/**
+ * Records what each pass reports through `onChanged`.
+ *
+ * A pass reads the filesystem, which fake timers do not drive. Advancing the clock only starts the
+ * pass, so a test calls `next` before it advances the clock and awaits the result after.
+ */
+function recordChanges(): {
+  changed: string[][]
+  next: () => Promise<string[]>
+  onChanged: (uris: string[]) => void
+} {
+  const changed: string[][] = []
+  const waiters: Array<(uris: string[]) => void> = []
+
+  return {
+    changed,
+    next: () => new Promise((resolve) => {
+      waiters.push(resolve)
+    }),
+    onChanged: (uris) => {
+      changed.push(uris)
+      waiters.shift()?.(uris)
+    },
+  }
 }
 
 describe('createFolderSession', () => {
@@ -337,26 +363,15 @@ describe('folderSession.scheduleWorkspacePass', () => {
   it('coalesces a burst of requests into one pass', async () => {
     // One config write arrives as several events. One pass per event repeats the same work.
     const { folderUri, io } = await createFolder()
-    const changed: string[][] = []
-    let passed: (uris: string[]) => void = () => {}
-    // The pass reads the filesystem, which fake timers do not drive. Advancing the clock starts
-    // the pass; this promise waits for it to finish.
-    const nextPass = new Promise<string[]>((resolve) => {
-      passed = resolve
-    })
-    const folder = await createFolderSession({
-      folderUri,
-      io,
-      onChanged: (uris) => {
-        changed.push(uris)
-        passed(uris)
-      },
-    })
+    const changes = recordChanges()
+    const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
 
     vi.useFakeTimers()
 
     try {
+      const passed = changes.next()
+
       folder.scheduleWorkspacePass()
       folder.scheduleWorkspacePass()
       folder.scheduleWorkspacePass()
@@ -364,10 +379,10 @@ describe('folderSession.scheduleWorkspacePass', () => {
       expect(runAlint).not.toHaveBeenCalled()
 
       await vi.advanceTimersByTimeAsync(500)
-      await nextPass
+      await passed
 
       expect(runAlint).toHaveBeenCalledTimes(1)
-      expect(changed).toHaveLength(1)
+      expect(changes.changed).toHaveLength(1)
     }
     finally {
       vi.useRealTimers()
@@ -379,19 +394,8 @@ describe('folderSession.scheduleWorkspacePass', () => {
   it('reports every document the pass touched, including ones it emptied', async () => {
     const { cwd, folderUri, io } = await createFolder()
     const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
-    const changed: string[][] = []
-    let passed: (uris: string[]) => void = () => {}
-    const nextPass = new Promise<string[]>((resolve) => {
-      passed = resolve
-    })
-    const folder = await createFolderSession({
-      folderUri,
-      io,
-      onChanged: (uris) => {
-        changed.push(uris)
-        passed(uris)
-      },
-    })
+    const changes = recordChanges()
+    const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
     const runAlint = vi.spyOn(alintCore, 'runAlint')
       .mockResolvedValueOnce(runResultWith([
         { filePath: join(cwd, 'date.ts'), message: 'first', ruleId: 'r', severity: 'warn' },
@@ -402,11 +406,13 @@ describe('folderSession.scheduleWorkspacePass', () => {
       await folder.refreshFromCache()
 
       vi.useFakeTimers()
+
+      const passed = changes.next()
+
       folder.scheduleWorkspacePass()
       await vi.advanceTimersByTimeAsync(500)
-      await nextPass
 
-      expect(changed.at(-1)).toEqual([dateUri])
+      expect(await passed).toEqual([dateUri])
       expect(folder.diagnostics.has(dateUri)).toBe(false)
     }
     finally {
@@ -434,6 +440,283 @@ describe('folderSession.scheduleWorkspacePass', () => {
     finally {
       vi.useRealTimers()
       runAlint.mockRestore()
+    }
+  })
+})
+
+describe('folderSession.scheduleFilesPass', () => {
+  it('reads a burst of changes in one cache pass', async () => {
+    // A checkout reports hundreds of files, often across several notifications.
+    const { cwd, folderUri, io } = await createFolder()
+    const runCwd = await realpath(cwd)
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
+    const folder = await createFolderSession({ folderUri, io })
+
+    vi.useFakeTimers()
+
+    try {
+      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
+      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'report.ts')).toString()])
+      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
+
+      expect(runAlint).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(500)
+      await vi.waitFor(() => expect(runAlint).toHaveBeenCalled())
+
+      expect(runAlint).toHaveBeenCalledTimes(1)
+      expect(runAlint.mock.calls[0]?.[0]?.files?.toSorted())
+        .toEqual([join(runCwd, 'date.ts'), join(runCwd, 'report.ts')])
+      expect(runAlint.mock.calls[0]?.[0]?.cacheOnly).toBe(true)
+      expect(runAlint.mock.calls[0]?.[0]?.projectTargets).toBe(false)
+      expect(runAlint.mock.calls[0]?.[0]?.runner?.stats).toBe(false)
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+      await folder.dispose()
+    }
+  })
+
+  // Creating a directory symlink needs elevation or Developer Mode on Windows.
+  it.skipIf(process.platform === 'win32')('reads the changed file under the run path, not the path the client sent', async () => {
+    // The client watches the folder it opened. Discovery runs under the resolved path.
+    const { io, linkPath } = await createSymlinkedFolder()
+    const resolvedCwd = await realpath(linkPath)
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
+    const folder = await createFolderSession({ folderUri: pathToFileURL(linkPath).toString(), io })
+
+    vi.useFakeTimers()
+
+    try {
+      folder.scheduleFilesPass([pathToFileURL(join(linkPath, 'date.ts')).toString()])
+      await vi.advanceTimersByTimeAsync(500)
+      await vi.waitFor(() => expect(runAlint).toHaveBeenCalled())
+
+      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([join(resolvedCwd, 'date.ts')])
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+      await folder.dispose()
+    }
+  })
+
+  it('skips a file the config does not discover', async () => {
+    // The client reports every file in the folder. The workspace pass never lints `notes.md`, so a
+    // change to it cannot change a cached diagnostic.
+    const { cwd, folderUri, io } = await createFolder()
+    const runCwd = await realpath(cwd)
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
+    const folder = await createFolderSession({ folderUri, io })
+
+    await writeFile(join(cwd, 'notes.md'), '# notes\n')
+
+    vi.useFakeTimers()
+
+    try {
+      folder.scheduleFilesPass([
+        pathToFileURL(join(cwd, 'notes.md')).toString(),
+        pathToFileURL(join(cwd, 'date.ts')).toString(),
+      ])
+      await vi.advanceTimersByTimeAsync(500)
+      await vi.waitFor(() => expect(runAlint).toHaveBeenCalled())
+
+      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([join(runCwd, 'date.ts')])
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+      await folder.dispose()
+    }
+  })
+
+  it('re-reads a file the config does not discover when it has diagnostics', async () => {
+    // A project rule can report a file that discovery skips. A change to that file makes the
+    // finding stale, and only a pass over the file removes it.
+    const { cwd, folderUri, io } = await createFolder()
+    const notesUri = pathToFileURL(join(cwd, 'notes.md')).toString()
+    const changes = recordChanges()
+    const runAlint = vi.spyOn(alintCore, 'runAlint')
+      .mockResolvedValueOnce(runResultWith([
+        { filePath: join(cwd, 'notes.md'), message: 'stale', ruleId: 'r', severity: 'warn' },
+      ]))
+      .mockResolvedValue(runResultWith([]))
+    const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
+
+    await writeFile(join(cwd, 'notes.md'), '# notes\n')
+
+    try {
+      await folder.refreshFromCache()
+
+      vi.useFakeTimers()
+
+      const passed = changes.next()
+
+      folder.scheduleFilesPass([notesUri])
+      await vi.advanceTimersByTimeAsync(500)
+
+      expect(await passed).toEqual([notesUri])
+      expect(folder.diagnostics.has(notesUri)).toBe(false)
+      expect(runAlint).toHaveBeenCalledTimes(2)
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+      await folder.dispose()
+    }
+  })
+
+  it('reports a deleted file as changed and reads nothing for it', async () => {
+    // A pass cannot refresh a file that is gone. Its entry is dropped, and the caller publishes an
+    // empty list, or the editor keeps the diagnostics of a file that no longer exists.
+    const { cwd, folderUri, io } = await createFolder()
+    const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
+    const changes = recordChanges()
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
+      { filePath: join(cwd, 'date.ts'), message: 'on a deleted file', ruleId: 'r', severity: 'warn' },
+    ]))
+    const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
+
+    try {
+      await folder.refreshFromCache()
+      await rm(join(cwd, 'date.ts'))
+
+      vi.useFakeTimers()
+
+      const passed = changes.next()
+
+      folder.scheduleFilesPass([dateUri])
+      await vi.advanceTimersByTimeAsync(500)
+
+      expect(await passed).toEqual([dateUri])
+      expect(folder.diagnostics.has(dateUri)).toBe(false)
+      expect(runAlint).toHaveBeenCalledTimes(1)
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+      await folder.dispose()
+    }
+  })
+
+  it('drops every diagnostic under a deleted directory', async () => {
+    // A client can report only the directory when it is deleted, not each file inside it.
+    const { cwd, folderUri, io } = await createFolder()
+    const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
+    const nestedUri = pathToFileURL(join(cwd, 'src', 'nested.ts')).toString()
+    const changes = recordChanges()
+
+    await mkdir(join(cwd, 'src'))
+    await writeFile(join(cwd, 'src', 'nested.ts'), 'export const nested = 1\n')
+
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
+      { filePath: join(cwd, 'date.ts'), message: 'kept', ruleId: 'r', severity: 'warn' },
+      { filePath: join(cwd, 'src', 'nested.ts'), message: 'dropped', ruleId: 'r', severity: 'warn' },
+    ]))
+    const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
+
+    try {
+      await folder.refreshFromCache()
+      await rm(join(cwd, 'src'), { recursive: true })
+
+      vi.useFakeTimers()
+
+      const passed = changes.next()
+
+      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'src')).toString()])
+      await vi.advanceTimersByTimeAsync(500)
+
+      expect(await passed).toEqual([nestedUri])
+      expect(folder.diagnostics.has(nestedUri)).toBe(false)
+      expect(folder.diagnostics.get(dateUri)?.[0]?.message).toBe('kept')
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+      await folder.dispose()
+    }
+  })
+
+  it('waits for an explicit run in flight, then reads the cache', async () => {
+    // A cache read during the run would publish older values over the diagnostics the run streams.
+    // Dropping the pass instead would keep diagnostics for code that changed on disk.
+    const { cwd, folderUri, io } = await createFolder()
+    let release: () => void = () => {}
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const runAlint = vi.spyOn(alintCore, 'runAlint')
+      .mockImplementationOnce(async () => {
+        await held
+        return runResultWith([])
+      })
+      .mockResolvedValue(runResultWith([]))
+    const folder = await createFolderSession({ folderUri, io })
+
+    try {
+      const explicit = folder.runExplicit({})
+
+      // Discovery reads the filesystem before the run reaches `runAlint`.
+      await vi.waitFor(() => expect(runAlint).toHaveBeenCalledTimes(1))
+
+      vi.useFakeTimers()
+      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
+      await vi.advanceTimersByTimeAsync(500)
+
+      // The pass has started. Real time lets a pass that does not wait reach `runAlint`.
+      vi.useRealTimers()
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      expect(runAlint).toHaveBeenCalledTimes(1)
+
+      release()
+      await explicit
+      await vi.waitFor(() => expect(runAlint).toHaveBeenCalledTimes(2))
+
+      expect(runAlint.mock.calls[1]?.[0]?.cacheOnly).toBe(true)
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+      await folder.dispose()
+    }
+  })
+
+  it('drops a scheduled pass when the folder is disposed', async () => {
+    const { cwd, folderUri, io } = await createFolder()
+    const folder = await createFolderSession({ folderUri, io })
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
+
+    vi.useFakeTimers()
+
+    try {
+      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
+      await folder.dispose()
+      await vi.advanceTimersByTimeAsync(500)
+
+      expect(runAlint).not.toHaveBeenCalled()
+    }
+    finally {
+      vi.useRealTimers()
+      runAlint.mockRestore()
+    }
+  })
+})
+
+describe('folderSession.contains', () => {
+  it('accepts a file under the folder and rejects a sibling with the same prefix', async () => {
+    // `/work/app-other` starts with `/work/app`. A plain prefix test routes its files to `app`.
+    const { cwd, folderUri, io } = await createFolder()
+    const folder = await createFolderSession({ folderUri, io })
+
+    try {
+      expect(folder.contains(pathToFileURL(join(cwd, 'date.ts')).toString())).toBe(true)
+      expect(folder.contains(pathToFileURL(`${cwd}-other/date.ts`).toString())).toBe(false)
+      expect(folder.contains(folderUri)).toBe(false)
+    }
+    finally {
+      await folder.dispose()
     }
   })
 })

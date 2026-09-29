@@ -1,4 +1,6 @@
 import type {
+  ClientCapabilities,
+  InitializeParams,
   InitializeResult,
   PublishDiagnosticsParams,
   ResponseMessage,
@@ -125,13 +127,16 @@ export function createTestClient(env?: NodeJS.ProcessEnv, cwd = process.cwd()): 
   }
 }
 
-export function initializeParams(folderUri?: string): object {
+export function initializeParams(
+  folderUris: string[] = [],
+  capabilities: ClientCapabilities = {},
+): InitializeParams {
   return {
+    capabilities,
     // A number makes the server poll `process.kill(pid, 0)` every three seconds. LSP permits null
     // for a client that is not a separate process.
-    capabilities: {},
     processId: null,
     rootUri: null,
-    workspaceFolders: folderUri === undefined ? [] : [{ name: 'fixture', uri: folderUri }],
+    workspaceFolders: folderUris.map(uri => ({ name: 'fixture', uri })),
   }
 }
