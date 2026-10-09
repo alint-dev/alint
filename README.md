@@ -229,6 +229,31 @@ alint --format json src > alint-output.json
 alint output inspect alint-output.json
 ```
 
+### GitHub Pull Requests
+
+`alint integrations github` publishes a saved JSON result to GitHub. It adds a check run named `alint` with line annotations, one summary comment on the pull request, and a job summary.
+
+```yaml
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+
+steps:
+  - run: alint --format json src > alint-output.json || [ $? -eq 1 ]
+  - run: alint integrations github alint-output.json
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+```
+
+The lint step accepts exit code `1` because the check run reports error diagnostics. The check run fails when a diagnostic is an error, is neutral when there are only warnings, and passes when there are no findings.
+
+Each run rewrites the same summary comment. A pull request that never had findings gets no comment.
+
+The command reads `GITHUB_REPOSITORY`, `GITHUB_SHA`, and `GITHUB_EVENT_PATH`, which GitHub Actions sets. On a pull request event, the check run goes to the head commit of the pull request. For other events, set `ALINT_GITHUB_SHA` and `ALINT_GITHUB_PULL_REQUEST` to select the commit and the pull request.
+
+A pull request from a fork gets a read-only token, so the command cannot publish there. It returns `2` when GitHub rejects a request.
+
 ### Editor Integration
 
 `alint lsp` runs alint as a language server on stdin and stdout. Any editor with LSP support can

@@ -1,15 +1,11 @@
-import type { RunResult } from '@alint-js/core'
-
 import type { ReporterName } from '../../reporters'
 import type { CliIo } from '../../types'
 
-import { readFile } from 'node:fs/promises'
-
 import { errorMessageFrom } from '@moeru/std'
-import { resolve } from 'pathe'
 
 import { formatDiagnostics } from '../../reporters'
 import { defineCommand } from '../command'
+import { readRunResult } from './run-result'
 
 interface OutputInspectOptions {
   format: ReporterName
@@ -54,29 +50,9 @@ async function inspectOutputFile(
   file: string,
   options: OutputInspectOptions,
 ): Promise<number> {
-  const filePath = resolve(io.cwd, file)
-  let text: string
+  const parsed = await readRunResult(io, file)
 
-  try {
-    text = await readFile(filePath, 'utf8')
-  }
-  catch (error) {
-    io.stderr.write(`Could not read output file "${file}": ${errorMessageFrom(error)}\n`)
-    return 2
-  }
-
-  let parsed: unknown
-
-  try {
-    parsed = JSON.parse(text)
-  }
-  catch (error) {
-    io.stderr.write(`Could not parse output file "${file}": ${errorMessageFrom(error)}\n`)
-    return 2
-  }
-
-  if (!isRunResult(parsed)) {
-    io.stderr.write(`Invalid alint output "${file}": expected a run result with diagnostics and usage.\n`)
+  if (parsed === undefined) {
     return 2
   }
 
@@ -91,57 +67,4 @@ async function inspectOutputFile(
   }
 
   return parsed.diagnostics.some(diagnostic => diagnostic.severity === 'error') ? 1 : 0
-}
-
-function isDiagnostic(value: unknown): boolean {
-  if (!isRecord(value))
-    return false
-
-  if (
-    typeof value.filePath !== 'string'
-    || typeof value.message !== 'string'
-    || typeof value.ruleId !== 'string'
-    || (value.severity !== 'warn' && value.severity !== 'error')
-  ) {
-    return false
-  }
-
-  if (value.loc === undefined)
-    return true
-
-  if (!isRecord(value.loc))
-    return false
-
-  if (value.loc.start === undefined)
-    return true
-
-  if (!isRecord(value.loc.start))
-    return false
-
-  return (
-    (value.loc.start.line === undefined || typeof value.loc.start.line === 'number')
-    && (value.loc.start.column === undefined || typeof value.loc.start.column === 'number')
-  )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function isRunResult(value: unknown): value is RunResult {
-  if (!isRecord(value))
-    return false
-
-  if (!Array.isArray(value.diagnostics) || !value.diagnostics.every(isDiagnostic))
-    return false
-
-  return isUsage(value.usage)
-}
-
-function isUsage(value: unknown): boolean {
-  return isRecord(value)
-    && typeof value.inputTokens === 'number'
-    && typeof value.outputTokens === 'number'
-    && Array.isArray(value.records)
-    && typeof value.totalTokens === 'number'
 }
