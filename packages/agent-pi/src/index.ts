@@ -5,7 +5,7 @@ import type { Model } from '@earendil-works/pi-ai'
 
 import { RetryableAgentError } from '@alint-js/core/agent'
 import { Agent } from '@earendil-works/pi-agent-core'
-import { Type } from '@earendil-works/pi-ai'
+import { streamSimple } from '@earendil-works/pi-ai/api/openai-completions'
 
 export interface PiAdapterOptions {
   run: (request: AgentRequest) => Promise<PiMessage[]>
@@ -55,7 +55,10 @@ export function createPiAdapter(options: Partial<PiAdapterOptions> = {}): AgentA
         )
       }
 
-      return { answer: extractPiText(assistant), usage: undefined }
+      return {
+        answer: extractPiText(assistant),
+        usage: undefined,
+      }
     }
     catch (error) {
       if (request.signal?.aborted)
@@ -72,7 +75,12 @@ export function createPiModel(model: ResolvedModel): Model<'openai-completions'>
     api: 'openai-completions',
     baseUrl: model.provider.endpoint,
     contextWindow: model.contextWindow ?? 32768,
-    cost: { cacheRead: 0, cacheWrite: 0, input: 0, output: 0 },
+    cost: {
+      cacheRead: 0,
+      cacheWrite: 0,
+      input: 0,
+      output: 0,
+    },
     id: model.id,
     input: ['text'],
     maxTokens: 4096,
@@ -107,12 +115,17 @@ export function toPiTools(tools: AgentTool[]): PiTool[] {
   return tools.map((agentTool): PiTool => ({
     description: agentTool.description,
     execute: async (_toolCallId: string, params: unknown) => ({
-      content: [{ text: String(await agentTool.execute(params)), type: 'text' }],
+      content: [
+        {
+          text: String(await agentTool.execute(params)),
+          type: 'text',
+        },
+      ],
       details: undefined,
     }),
     label: agentTool.name,
     name: agentTool.name,
-    parameters: Type.Unsafe(agentTool.parameters),
+    parameters: agentTool.parameters,
   } as PiTool))
 }
 
@@ -124,13 +137,18 @@ function isTextPart(part: unknown): part is { text: string, type: 'text' } {
 }
 
 async function runPiAgent(request: AgentRequest): Promise<PiMessage[]> {
+  const model = createPiModel(request.model)
   const agent = new Agent({
     getApiKey: () => apiKeyFromModel(request.model),
     initialState: {
-      model: createPiModel(request.model),
+      model,
       systemPrompt: request.instructions,
       tools: toPiTools(request.tools),
     },
+    // pi 1.x no longer picks a transport from `model.api`. Every alint model is an OpenAI-compatible
+    // endpoint, so the agent's only model is the one built above and is streamed through that API
+    // directly, without registering a provider.
+    streamFn: (_model, context, options) => streamSimple(model, context, options),
   })
   const abort = () => agent.abort()
   request.signal?.addEventListener('abort', abort, { once: true })

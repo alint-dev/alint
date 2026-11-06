@@ -1,6 +1,5 @@
-import type { Readable } from 'node:stream'
-
 import type { PackageJson } from '@package-json/types'
+import type { ExtractEvents, Header } from 'tar-stream'
 
 import type { RegistryPluginSpecifier } from '../../spec'
 import type { ParsedRegistryPluginLockEntry, RegistryPluginLockEntry } from '../../types'
@@ -11,7 +10,7 @@ import { randomUUID } from 'node:crypto'
 import { createWriteStream } from 'node:fs'
 import { mkdir, readFile, realpath, rename, rm } from 'node:fs/promises'
 import { dirname, isAbsolute, join, posix, relative, resolve as resolvePath } from 'node:path'
-import { Readable as NodeReadable } from 'node:stream'
+import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createGunzip } from 'node:zlib'
 
@@ -46,6 +45,10 @@ interface NpmMetadata {
   }>
 }
 
+// `tar-stream` ships its own types since 3.2 but does not export the entry stream type, so it is read
+// off the `entry` event. It is a `streamx` Readable, not a Node one.
+type TarEntry = ExtractEvents['entry'][1]
+
 export function createLockEntry(
   installed: InstalledPackageSource,
   options: LockEntryOptions,
@@ -65,7 +68,9 @@ export function createLockEntry(
 
 export async function install(options: InstallOptions): Promise<InstalledPackageSource> {
   const { name, segments, version } = options.specifier
-  const npmRegistry = options.npmRegistry.endsWith('/') ? options.npmRegistry : `${options.npmRegistry}/`
+  const npmRegistry = options.npmRegistry.endsWith('/')
+    ? options.npmRegistry
+    : `${options.npmRegistry}/`
   const metadataUrl = `${npmRegistry.replace(/\/$/u, '')}/${options.specifier.registryPath}`
   const metadata = await ofetch<NpmMetadata>(metadataUrl)
   const dist = metadata.versions?.[version]?.dist
@@ -118,7 +123,9 @@ export async function resolve(entry: ParsedRegistryPluginLockEntry): Promise<Plu
   const projectRoot = resolvePath(entry.cwd)
   const pluginRoot = join(projectRoot, '.alint', 'plugins', 'store')
   const rawEntryPath = entry.lockEntry.entry
-  const resolvedEntry = isAbsolute(rawEntryPath) ? resolvePath(rawEntryPath) : resolvePath(projectRoot, rawEntryPath)
+  const resolvedEntry = isAbsolute(rawEntryPath)
+    ? resolvePath(rawEntryPath)
+    : resolvePath(projectRoot, rawEntryPath)
 
   if (!isPathInside(resolvedEntry, projectRoot)) {
     throw new Error(`Plugin lock entry "${entry.alias}" resolves outside the project root.`)
@@ -146,10 +153,15 @@ export async function resolve(entry: ParsedRegistryPluginLockEntry): Promise<Plu
   }
 
   JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8'))
-  return { alias: entry.alias, cache: 'default', entry: resolvedEntry, kind: 'module' }
+  return {
+    alias: entry.alias,
+    cache: 'default',
+    entry: resolvedEntry,
+    kind: 'module',
+  }
 }
 
-async function extractEntry(packageDir: string, header: tar.Headers, stream: Readable): Promise<void> {
+async function extractEntry(packageDir: string, header: Header, stream: TarEntry): Promise<void> {
   const entryName = header.name
 
   if (!entryName.startsWith('package/')) {
@@ -197,7 +209,7 @@ async function extractTarball(tarball: Buffer, packageDir: string): Promise<void
   extract.on('entry', (header, stream, next) => {
     void extractEntry(packageDir, header, stream).then(() => next()).catch(error => extract.destroy(error))
   })
-  await pipeline(NodeReadable.from(tarball), createGunzip(), extract)
+  await pipeline(Readable.from(tarball), createGunzip(), extract)
 }
 
 function getLockedPackageDir(projectRoot: string, pluginRoot: string, entry: ParsedRegistryPluginLockEntry): string {

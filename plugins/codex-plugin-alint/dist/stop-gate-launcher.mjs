@@ -6,7 +6,7 @@ import { chmodSync, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync,
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-//#region ../../node_modules/.pnpm/@moeru+std@0.1.0-beta.20/node_modules/@moeru/std/dist/error/index.js
+// ../../node_modules/.pnpm/@moeru+std@0.1.0-beta.20/node_modules/@moeru/std/dist/error/index.js
 const isError = (err) => {
 	if ("isError" in Error && Error.isError(new DOMException())) return Error.isError(err);
 	if (err === null || typeof err !== "object" && typeof err !== "function") return false;
@@ -20,8 +20,7 @@ const isErrorLike = (err) => {
 	return "message" in err && typeof err.message === "string" && "name" in err && typeof err.name === "string";
 };
 const errorMessageFrom = (err) => isErrorLike(err) ? err.message : err == null ? void 0 : String(err);
-//#endregion
-//#region src/fatal-diagnostic.ts
+// src/fatal-diagnostic.ts
 const budgetBytes = 10485760;
 const directory = join(tmpdir(), "alint-stop-gate", "fatal");
 const terminalPunctuation = /[.!?]$/u;
@@ -86,8 +85,7 @@ function enforceBudget() {
 		total -= diagnostic.size;
 	}
 }
-//#endregion
-//#region src/stop-gate-launcher.ts
+// src/stop-gate-launcher.ts
 const stderrExcerptLimitBytes = 4096;
 const stderrTruncationMarker = "\n... child stderr truncated ...\n";
 const childFatalPrefix = "alint-plugin: Stop Gate hook runtime error.";
@@ -168,5 +166,4 @@ async function run() {
 	];
 	reportFatalFailure("Stop Gate child process exited before returning a hook decision", new Error(details.join("\n")));
 }
-//#endregion
 export {};

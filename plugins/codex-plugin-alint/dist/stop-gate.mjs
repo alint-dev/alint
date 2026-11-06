@@ -6,11 +6,12 @@ import { tmpdir } from "node:os";
 import { basename, delimiter, dirname, join, normalize, resolve } from "node:path";
 import { access, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { pipeline } from "node:stream/promises";
 import { PassThrough } from "node:stream";
 import readline from "node:readline";
 import { randomUUID } from "node:crypto";
-//#region ../../node_modules/.pnpm/@moeru+std@0.1.0-beta.20/node_modules/@moeru/std/dist/error/index.js
+// ../../node_modules/.pnpm/@moeru+std@0.1.0-beta.20/node_modules/@moeru/std/dist/error/index.js
 const isError = (err) => {
 	if ("isError" in Error && Error.isError(new DOMException())) return Error.isError(err);
 	if (err === null || typeof err !== "object" && typeof err !== "function") return false;
@@ -24,8 +25,7 @@ const isErrorLike = (err) => {
 	return "message" in err && typeof err.message === "string" && "name" in err && typeof err.name === "string";
 };
 const errorMessageFrom = (err) => isErrorLike(err) ? err.message : err == null ? void 0 : String(err);
-//#endregion
-//#region src/fatal-diagnostic.ts
+// src/fatal-diagnostic.ts
 const budgetBytes = 10485760;
 const directory = join(tmpdir(), "alint-stop-gate", "fatal");
 const terminalPunctuation = /[.!?]$/u;
@@ -157,8 +157,7 @@ function updateState(state, now, patch) {
 		updatedAt: now.toISOString()
 	};
 }
-//#endregion
-//#region ../../node_modules/.pnpm/tinyexec@1.3.0/node_modules/tinyexec/dist/main.mjs
+// ../../node_modules/.pnpm/tinyexec@1.3.1/node_modules/tinyexec/dist/main.mjs
 const isPathLikePattern = /^path$/i;
 const defaultEnvPathInfo = {
 	key: "PATH",
@@ -179,7 +178,7 @@ function getPathFromEnv(env) {
 function addNodeBinToPath(cwd, path) {
 	const parts = path.value.split(delimiter);
 	const nodeBinPaths = [];
-	let currentPath = cwd;
+	let currentPath = typeof cwd === "string" ? cwd : fileURLToPath(cwd, { windows: false });
 	let lastPath;
 	do {
 		nodeBinPaths.push(resolve(currentPath, "node_modules", ".bin"));
@@ -305,7 +304,8 @@ function resolveCommand(command, options) {
 	let pathExt = env.PATHEXT ? env.PATHEXT.split(delimiter) : defaultPathExt;
 	if (command.includes(".") && pathExt[0] !== "") pathExt = ["", ...pathExt];
 	for (const extensions of [pathExt, noPathExt]) for (const path of pathEnv) {
-		const dest = resolve(cwd$3, path.startsWith("\"") && path.endsWith("\"") && path.length > 1 ? path.slice(1, -1) : path, command);
+		const unquoted = path.startsWith("\"") && path.endsWith("\"") && path.length > 1 ? path.slice(1, -1) : path;
+		const dest = resolve(cwd$3, unquoted, command);
 		for (const ext of extensions) {
 			const destWithExt = dest + ext;
 			try {
@@ -447,12 +447,12 @@ var ExecProcess = class {
 	_streamOut;
 	_streamErr;
 	spawn() {
-		const cwd$1 = cwd();
 		const options = this._options;
 		const nodeOptions = {
 			...defaultNodeOptions,
 			...options.nodeOptions
 		};
+		const cwd$1 = nodeOptions?.cwd ?? cwd();
 		const signals = [];
 		this._resetState();
 		if (options.timeout !== void 0) signals.push(AbortSignal.timeout(options.timeout));
@@ -497,8 +497,7 @@ const x = (command, args, userOptions) => {
 	return proc;
 };
 const exec = x;
-//#endregion
-//#region src/repository.ts
+// src/repository.ts
 const startupTimeoutMs$1 = 6e4;
 const stderrExcerptLimitBytes$1 = 4096;
 const stderrTruncationMarker$1 = "\n... stderr truncated ...\n";
@@ -545,13 +544,11 @@ function truncateStderr$1(stderr) {
 	while (tailStart < bytes.length && ((bytes[tailStart] ?? 0) & 192) === 128) tailStart += 1;
 	return `${bytes.toString("utf8", 0, headEnd)}${stderrTruncationMarker$1}${bytes.toString("utf8", tailStart)}`;
 }
-//#endregion
-//#region ../../packages/utils/dist/node.mjs
+// ../../packages/utils/dist/node.mjs
 function isNodeErrorCode(error, code) {
 	return error instanceof Error && "code" in error && error.code === code;
 }
-//#endregion
-//#region src/protocol.ts
+// src/protocol.ts
 const startupTimeoutMs = 6e4;
 const maximumStopGateTimeoutMs = 861e5;
 const stderrExcerptLimitBytes = 4096;
@@ -715,8 +712,7 @@ function truncateStderr(stderr) {
 	while (tailStart < bytes.length && ((bytes[tailStart] ?? 0) & 192) === 128) tailStart += 1;
 	return `${bytes.toString("utf8", 0, headEnd)}${stderrTruncationMarker}${bytes.toString("utf8", tailStart)}`;
 }
-//#endregion
-//#region src/resolve-command.ts
+// src/resolve-command.ts
 async function resolveCommands(gitRoot) {
 	const commands = [];
 	const local = join(gitRoot, "node_modules", ".bin", process$1.platform === "win32" ? "alint.cmd" : "alint");
@@ -788,8 +784,7 @@ async function readPackageManagerField(gitRoot) {
 		throw error;
 	}
 }
-//#endregion
-//#region src/runner.ts
+// src/runner.ts
 async function resolveAlintStopGate(gitRoot) {
 	const commands = await resolveCommands(gitRoot);
 	const startupDeadline = Date.now() + startupTimeoutMs;
@@ -804,8 +799,7 @@ async function resolveAlintStopGate(gitRoot) {
 	}
 	throw new Error(["Could not find an alint CLI that supports `integrations stop-gate`.", "Ask the user for approval before installing or updating @alint-js/cli in this repository."].join(" "));
 }
-//#endregion
-//#region src/state.ts
+// src/state.ts
 const retentionMs = 31536e6;
 const stateSchemaVersion = 2;
 function createStateStore(pluginDataDirectory, now = () => /* @__PURE__ */ new Date()) {
@@ -870,8 +864,7 @@ async function pruneExpiredStates(directory, nowMs) {
 		if (nowMs - (await stat(path)).mtimeMs > retentionMs) await rm(path, { force: true });
 	}
 }
-//#endregion
-//#region src/stop-gate.ts
+// src/stop-gate.ts
 function emit(decision) {
 	if (Object.keys(decision).length > 0) writeSync(process$1.stdout.fd, `${JSON.stringify(decision)}\n`);
 }
@@ -944,5 +937,4 @@ async function runForInput(input, sessionId, state) {
 	if (state.lintRounds >= 9) return { decision: lintLimitDecision(state) };
 	return { envelope: await stopGate.run(sessionId) };
 }
-//#endregion
 export {};

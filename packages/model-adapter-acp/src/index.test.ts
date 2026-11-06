@@ -5,9 +5,9 @@ import type {
   PromptResponse,
   StopReason,
   Usage,
-} from '@agentclientprotocol/sdk'
+} from '@agentclientprotocol/sdk/unstable'
 
-import { agent, methods, PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
+import { agent, methods, PROTOCOL_VERSION } from '@agentclientprotocol/sdk/unstable'
 import { defineConfig, definePlugin, defineRule, runAlint } from '@alint-js/core'
 import { generateStructured } from '@alint-js/core/structured-output'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -23,7 +23,10 @@ const completionChunkSchema = object({
     delta: object({
       content: optional(string()),
       tool_calls: optional(array(object({
-        function: object({ arguments: string(), name: string() }),
+        function: object({
+          arguments: string(),
+          name: string(),
+        }),
         id: string(),
         index: number(),
         type: literal('function'),
@@ -54,14 +57,21 @@ describe('aCP OpenAI gateway', () => {
   it('returns an ACP agent message as an OpenAI chat completion', async () => {
     const prompts: ContentBlock[][] = []
     const app = createGateway({
-      models: [{
-        id: 'reviewer',
-        name: 'Review Agent',
-        openConnection: () => ({ agent: textAgent('Looks good.', prompts), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'reviewer',
+          name: 'Review Agent',
+          openConnection: () => ({
+            agent: textAgent('Looks good.', prompts),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const response = await fetch(new URL('/v1/chat/completions', server.url), {
       body: JSON.stringify({
@@ -77,11 +87,13 @@ describe('aCP OpenAI gateway', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toMatchObject({
-      choices: [{
-        finish_reason: 'stop',
-        index: 0,
-        message: { content: 'Looks good.', role: 'assistant' },
-      }],
+      choices: [
+        {
+          finish_reason: 'stop',
+          index: 0,
+          message: { content: 'Looks good.', role: 'assistant' },
+        },
+      ],
       model: 'reviewer',
       object: 'chat.completion',
     })
@@ -95,20 +107,29 @@ describe('aCP OpenAI gateway', () => {
   it('forwards unknown OpenAI and provider extension fields to the ACP session', async () => {
     const sessionRequests: Array<Record<string, unknown>> = []
     const app = createGateway({
-      models: [{
-        id: 'reviewer',
-        name: 'Review Agent',
-        openConnection: () => ({ agent: forwardingAgent(sessionRequests), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'reviewer',
+          name: 'Review Agent',
+          openConnection: () => ({
+            agent: forwardingAgent(sessionRequests),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const response = await fetch(new URL('/v1/chat/completions', server.url), {
       body: JSON.stringify({
         extra_args: { reasoning_effort: 'high' },
         max_tokens: 1_024,
-        messages: [{ content: 'Review this file.', role: 'user' }],
+        messages: [
+          { content: 'Review this file.', role: 'user' },
+        ],
         model: 'reviewer',
         top_p: 0.9,
       }),
@@ -118,7 +139,11 @@ describe('aCP OpenAI gateway', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toMatchObject({
-      choices: [{ message: { content: 'Accepted.' } }],
+      choices: [
+        {
+          message: { content: 'Accepted.' },
+        },
+      ],
     })
     expect(sessionRequests).toHaveLength(1)
     expect(sessionRequests[0]).toMatchObject({
@@ -132,50 +157,65 @@ describe('aCP OpenAI gateway', () => {
 
   it('lists configured ACP agents as OpenAI models', async () => {
     const app = createGateway({
-      models: [{
-        id: 'reviewer',
-        name: 'Review Agent',
-        openConnection: () => ({ agent: textAgent('unused', []), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'reviewer',
+          name: 'Review Agent',
+          openConnection: () => ({
+            agent: textAgent('unused', []),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const response = await fetch(new URL('/v1/models', server.url))
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
-      data: [{
-        created: 0,
-        id: 'reviewer',
-        object: 'model',
-        owned_by: 'Review Agent',
-      }],
+      data: [
+        {
+          created: 0,
+          id: 'reviewer',
+          object: 'model',
+          owned_by: 'Review Agent',
+        },
+      ],
       object: 'list',
     })
   })
 
   it('streams ACP text and usage as OpenAI SSE chunks', async () => {
     const app = createGateway({
-      models: [{
-        id: 'reviewer',
-        name: 'Review Agent',
-        openConnection: () => ({
-          agent: textAgent('Streaming text.', [], {
-            inputTokens: 12,
-            outputTokens: 3,
-            totalTokens: 15,
+      models: [
+        {
+          id: 'reviewer',
+          name: 'Review Agent',
+          openConnection: () => ({
+            agent: textAgent('Streaming text.', [], {
+              inputTokens: 12,
+              outputTokens: 3,
+              totalTokens: 15,
+            }),
+            kind: 'agent-app',
           }),
-          kind: 'agent-app',
-        }),
-      }],
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const response = await fetch(new URL('/v1/chat/completions', server.url), {
       body: JSON.stringify({
-        messages: [{ content: 'Stream a review.', role: 'user' }],
+        messages: [
+          { content: 'Stream a review.', role: 'user' },
+        ],
         model: 'reviewer',
         stream: true,
       }),
@@ -202,29 +242,42 @@ describe('aCP OpenAI gateway', () => {
     const prompts: ContentBlock[][] = []
     const verifyStrictSchema = !initialStream && !continuationStream
     const app = createGateway({
-      models: [{
-        id: 'tool-user',
-        name: 'Tool User',
-        openConnection: () => ({ agent: toolAgent({ prompts, verifyStrictSchema }), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'tool-user',
+          name: 'Tool User',
+          openConnection: () => ({
+            agent: toolAgent({ prompts, verifyStrictSchema }),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
-    const messages = [{ content: 'Find duplicated helpers.', role: 'user' }]
-    const tools = [{
-      function: {
-        description: 'Search repository text.',
-        name: 'search',
-        parameters: {
-          additionalProperties: false,
-          properties: { query: { type: 'string' } },
-          required: ['query'],
-          type: 'object',
+    servers.push({
+      close: () => server.close(true),
+    })
+    const messages = [
+      { content: 'Find duplicated helpers.', role: 'user' },
+    ]
+    const tools = [
+      {
+        function: {
+          description: 'Search repository text.',
+          name: 'search',
+          parameters: {
+            additionalProperties: false,
+            properties: {
+              query: { type: 'string' },
+            },
+            required: ['query'],
+            type: 'object',
+          },
+          strict: true,
         },
-        strict: true,
+        type: 'function',
       },
-      type: 'function',
-    }]
+    ]
 
     const firstResponse = await fetch(new URL('/v1/chat/completions', server.url), {
       body: JSON.stringify({
@@ -253,7 +306,11 @@ describe('aCP OpenAI gateway', () => {
       body: JSON.stringify({
         messages: [
           ...messages,
-          { content: null, role: 'assistant', tool_calls: [toolCall] },
+          {
+            content: null,
+            role: 'assistant',
+            tool_calls: [toolCall],
+          },
           { content: 'src/a.ts\nsrc/b.ts', role: 'tool', tool_call_id: toolCall.id },
         ],
         model: 'tool-user',
@@ -273,17 +330,26 @@ describe('aCP OpenAI gateway', () => {
 
   it('allows ACP permission requests that identify an OpenAI request tool', async () => {
     const app = createGateway({
-      models: [{
-        id: 'permission-agent',
-        name: 'Permission Agent',
-        openConnection: () => ({ agent: permissionAgent(true), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'permission-agent',
+          name: 'Permission Agent',
+          openConnection: () => ({
+            agent: permissionAgent(true),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const completion = await postCompletion(server.url!, {
-      messages: [{ content: 'Use the request tool.', role: 'user' }],
+      messages: [
+        { content: 'Use the request tool.', role: 'user' },
+      ],
       model: 'permission-agent',
     })
 
@@ -292,17 +358,26 @@ describe('aCP OpenAI gateway', () => {
 
   it('denies ACP permission requests for agent side effects', async () => {
     const app = createGateway({
-      models: [{
-        id: 'permission-agent',
-        name: 'Permission Agent',
-        openConnection: () => ({ agent: permissionAgent(false), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'permission-agent',
+          name: 'Permission Agent',
+          openConnection: () => ({
+            agent: permissionAgent(false),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const completion = await postCompletion(server.url!, {
-      messages: [{ content: 'Change a file.', role: 'user' }],
+      messages: [
+        { content: 'Change a file.', role: 'user' },
+      ],
       model: 'permission-agent',
     })
 
@@ -313,25 +388,41 @@ describe('aCP OpenAI gateway', () => {
     const cancelled = vi.fn()
     const app = createGateway({
       continuationTtlMs: 20,
-      models: [{
-        id: 'tool-user',
-        name: 'Tool User',
-        openConnection: () => ({ agent: toolAgent({ cancelled }), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'tool-user',
+          name: 'Tool User',
+          openConnection: () => ({
+            agent: toolAgent({ cancelled }),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const first = await postCompletion(server.url!, {
-      messages: [{ content: 'Search and wait.', role: 'user' }],
+      messages: [
+        { content: 'Search and wait.', role: 'user' },
+      ],
       model: 'tool-user',
-      tools: [{
-        function: {
-          name: 'search',
-          parameters: { properties: { query: { type: 'string' } }, type: 'object' },
+      tools: [
+        {
+          function: {
+            name: 'search',
+            parameters: {
+              properties: {
+                query: { type: 'string' },
+              },
+              type: 'object',
+            },
+          },
+          type: 'function',
         },
-        type: 'function',
-      }],
+      ],
     })
 
     expect(first.choices[0].finish_reason).toBe('tool_calls')
@@ -342,7 +433,11 @@ describe('aCP OpenAI gateway', () => {
       body: JSON.stringify({
         messages: [
           { content: 'Search and wait.', role: 'user' },
-          { content: null, role: 'assistant', tool_calls: [toolCall] },
+          {
+            content: null,
+            role: 'assistant',
+            tool_calls: [toolCall],
+          },
           { content: 'too late', role: 'tool', tool_call_id: toolCall.id },
         ],
         model: 'tool-user',
@@ -363,25 +458,42 @@ describe('aCP OpenAI gateway', () => {
         {
           id: 'tool-user',
           name: 'Tool User',
-          openConnection: () => ({ agent: toolAgent(), kind: 'agent-app' }),
+          openConnection: () => ({
+            agent: toolAgent(),
+            kind: 'agent-app',
+          }),
         },
         {
           id: 'other-agent',
           name: 'Other Agent',
-          openConnection: () => ({ agent: textAgent('wrong agent', []), kind: 'agent-app' }),
+          openConnection: () => ({
+            agent: textAgent('wrong agent', []),
+            kind: 'agent-app',
+          }),
         },
       ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
-    const original = [{ content: 'Find duplicated helpers.', role: 'user' }]
-    const tools = [{
-      function: {
-        name: 'search',
-        parameters: { properties: { query: { type: 'string' } }, type: 'object' },
+    servers.push({
+      close: () => server.close(true),
+    })
+    const original = [
+      { content: 'Find duplicated helpers.', role: 'user' },
+    ]
+    const tools = [
+      {
+        function: {
+          name: 'search',
+          parameters: {
+            properties: {
+              query: { type: 'string' },
+            },
+            type: 'object',
+          },
+        },
+        type: 'function',
       },
-      type: 'function',
-    }]
+    ]
     const first = await postCompletion(server.url!, { messages: original, model: 'tool-user', tools })
     const toolCall = first.choices[0].message.tool_calls[0]
     const resultMessage = { content: 'src/a.ts', role: 'tool', tool_call_id: toolCall.id }
@@ -390,7 +502,11 @@ describe('aCP OpenAI gateway', () => {
       body: JSON.stringify({
         messages: [
           ...original,
-          { content: null, role: 'assistant', tool_calls: [toolCall] },
+          {
+            content: null,
+            role: 'assistant',
+            tool_calls: [toolCall],
+          },
           resultMessage,
         ],
         model: 'other-agent',
@@ -405,7 +521,11 @@ describe('aCP OpenAI gateway', () => {
     const resumed = await postCompletion(server.url!, {
       messages: [
         ...original,
-        { content: null, role: 'assistant', tool_calls: [toolCall] },
+        {
+          content: null,
+          role: 'assistant',
+          tool_calls: [toolCall],
+        },
         resultMessage,
       ],
       model: 'tool-user',
@@ -420,19 +540,28 @@ describe('aCP OpenAI gateway', () => {
     { parallel_tool_calls: true },
   ])('rejects unsupported OpenAI request options: %j', async (unsupported) => {
     const app = createGateway({
-      models: [{
-        id: 'reviewer',
-        name: 'Review Agent',
-        openConnection: () => ({ agent: textAgent('unused', []), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'reviewer',
+          name: 'Review Agent',
+          openConnection: () => ({
+            agent: textAgent('unused', []),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const response = await fetch(new URL('/v1/chat/completions', server.url), {
       body: JSON.stringify({
         ...unsupported,
-        messages: [{ content: 'Review.', role: 'user' }],
+        messages: [
+          { content: 'Review.', role: 'user' },
+        ],
         model: 'reviewer',
       }),
       headers: { 'content-type': 'application/json' },
@@ -447,23 +576,37 @@ describe('aCP OpenAI gateway', () => {
 
   it('maps an ACP-cancelled prompt to an OpenAI provider error', async () => {
     const app = createGateway({
-      models: [{
-        id: 'reviewer',
-        name: 'Review Agent',
-        openConnection: () => ({ agent: textAgent('', [], undefined, 'cancelled'), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'reviewer',
+          name: 'Review Agent',
+          openConnection: () => ({
+            agent: textAgent('', [], undefined, 'cancelled'),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const response = await fetch(new URL('/v1/chat/completions', server.url), {
-      body: JSON.stringify({ messages: [{ content: 'Review.', role: 'user' }], model: 'reviewer' }),
+      body: JSON.stringify({
+        messages: [
+          { content: 'Review.', role: 'user' },
+        ],
+        model: 'reviewer',
+      }),
       headers: { 'content-type': 'application/json' },
       method: 'POST',
     })
 
     expect(response.status).toBe(500)
-    expect(await response.json()).toMatchObject({ error: { type: 'server_error' } })
+    expect(await response.json()).toMatchObject({
+      error: { type: 'server_error' },
+    })
   })
 
   it.each([
@@ -471,31 +614,44 @@ describe('aCP OpenAI gateway', () => {
     { stream: true },
   ])('discards text from a rejected required-tool attempt when streaming=$stream', async ({ stream }) => {
     const app = createGateway({
-      models: [{
-        id: 'tool-user',
-        name: 'Tool User',
-        openConnection: () => ({
-          agent: toolAgent({ skipFirstToolCall: true, textBeforeToolCall: 'Calling search.' }),
-          kind: 'agent-app',
-        }),
-      }],
+      models: [
+        {
+          id: 'tool-user',
+          name: 'Tool User',
+          openConnection: () => ({
+            agent: toolAgent({ skipFirstToolCall: true, textBeforeToolCall: 'Calling search.' }),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
 
     const response = await fetch(new URL('/v1/chat/completions', server.url), {
       body: JSON.stringify({
-        messages: [{ content: 'Use search.', role: 'user' }],
+        messages: [
+          { content: 'Use search.', role: 'user' },
+        ],
         model: 'tool-user',
         stream,
         tool_choice: 'required',
-        tools: [{
-          function: {
-            name: 'search',
-            parameters: { properties: { query: { type: 'string' } }, type: 'object' },
+        tools: [
+          {
+            function: {
+              name: 'search',
+              parameters: {
+                properties: {
+                  query: { type: 'string' },
+                },
+                type: 'object',
+              },
+            },
+            type: 'function',
           },
-          type: 'function',
-        }],
+        ],
       }),
       headers: { 'content-type': 'application/json' },
       method: 'POST',
@@ -512,18 +668,27 @@ describe('aCP OpenAI gateway', () => {
     const cancelled = vi.fn()
     const prompted = vi.fn()
     const app = createGateway({
-      models: [{
-        id: 'waiting',
-        name: 'Waiting Agent',
-        openConnection: () => ({ agent: blockingAgent(prompted, cancelled), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'waiting',
+          name: 'Waiting Agent',
+          openConnection: () => ({
+            agent: blockingAgent(prompted, cancelled),
+            kind: 'agent-app',
+          }),
+        },
+      ],
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    servers.push({ close: () => server.close(true) })
+    servers.push({
+      close: () => server.close(true),
+    })
     const controller = new AbortController()
     const pending = fetch(new URL('/v1/chat/completions', server.url), {
       body: JSON.stringify({
-        messages: [{ content: 'Wait.', role: 'user' }],
+        messages: [
+          { content: 'Wait.', role: 'user' },
+        ],
         model: 'waiting',
       }),
       headers: { 'content-type': 'application/json' },
@@ -545,11 +710,16 @@ describe('alint ACP gateway end to end', () => {
     const diagnostics: string[] = []
     const app = createGateway({
       continuationTtlMs: 5_000,
-      models: [{
-        id: 'acp-reviewer',
-        name: 'ACP Reviewer',
-        openConnection: () => ({ agent: structuredAgent(), kind: 'agent-app' }),
-      }],
+      models: [
+        {
+          id: 'acp-reviewer',
+          name: 'ACP Reviewer',
+          openConnection: () => ({
+            agent: structuredAgent(),
+            kind: 'agent-app',
+          }),
+        },
+      ],
       onCompatibilityDiagnostic: diagnostic => diagnostics.push(diagnostic.field),
     })
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
@@ -583,7 +753,9 @@ describe('alint ACP gateway end to end', () => {
             files: ['**/*.ts'],
             language: 'typescript',
             plugins: {
-              e2e: definePlugin({ rules: { review: rule } }),
+              e2e: definePlugin({
+                rules: { review: rule },
+              }),
             },
             rules: { 'e2e/review': 'warn' },
           },
@@ -593,31 +765,37 @@ describe('alint ACP gateway end to end', () => {
         projectTargets: false,
         runner: { cache: false },
         setupConfig: {
-          providers: [{
-            endpoint: new URL('/v1/', server.url).href,
-            id: 'acp',
-            models: [{
-              aliases: ['default'],
-              capabilities: ['tool-call'],
-              id: 'acp-reviewer',
-              name: 'ACP Reviewer',
-              size: 'small',
-            }],
-            type: 'openai-compatible',
-          }],
+          providers: [
+            {
+              endpoint: new URL('/v1/', server.url).href,
+              id: 'acp',
+              models: [
+                {
+                  aliases: ['default'],
+                  capabilities: ['tool-call'],
+                  id: 'acp-reviewer',
+                  name: 'ACP Reviewer',
+                  size: 'small',
+                },
+              ],
+              type: 'openai-compatible',
+            },
+          ],
           version: 1,
         },
       })
 
-      expect(result.diagnostics).toMatchObject([{
-        message: 'Split this function.',
-        model: {
-          providerId: 'acp',
-          resolvedId: 'acp-reviewer',
+      expect(result.diagnostics).toMatchObject([
+        {
+          message: 'Split this function.',
+          model: {
+            providerId: 'acp',
+            resolvedId: 'acp-reviewer',
+          },
+          ruleId: 'e2e/review',
+          severity: 'warn',
         },
-        ruleId: 'e2e/review',
-        severity: 'warn',
-      }])
+      ])
       expect(result.execution).toMatchObject({
         completed: 1,
         failed: 0,
@@ -662,7 +840,9 @@ function blockingAgent(prompted: () => void, cancelled: () => void): AgentApp {
       agentCapabilities: { loadSession: false },
       protocolVersion: PROTOCOL_VERSION,
     }))
-    .onRequest(methods.agent.session.new, () => ({ sessionId: crypto.randomUUID() }))
+    .onRequest(methods.agent.session.new, () => ({
+      sessionId: crypto.randomUUID(),
+    }))
     .onRequest(methods.agent.session.prompt, () => {
       prompted()
       return new Promise<PromptResponse>((resolve) => {
@@ -683,7 +863,9 @@ function forwardingAgent(sessionRequests: Array<Record<string, unknown>>): Agent
     }))
     .onRequest(methods.agent.session.new, ({ params }) => {
       sessionRequests.push({ ...params })
-      return { sessionId: crypto.randomUUID() }
+      return {
+        sessionId: crypto.randomUUID(),
+      }
     })
     .onRequest(methods.agent.session.prompt, async ({ client, params }) => {
       await client.notify(methods.client.session.update, {
@@ -730,10 +912,16 @@ function permissionAgent(requestTool: boolean): AgentApp {
       agentCapabilities: { loadSession: false },
       protocolVersion: PROTOCOL_VERSION,
     }))
-    .onRequest(methods.agent.session.new, () => ({ sessionId: crypto.randomUUID() }))
+    .onRequest(methods.agent.session.new, () => ({
+      sessionId: crypto.randomUUID(),
+    }))
     .onRequest(methods.agent.session.prompt, async ({ client, params }) => {
       const response = await client.request(methods.client.session.requestPermission, {
-        ...(requestTool ? { _meta: { is_mcp_tool_approval: true } } : {}),
+        ...(requestTool
+          ? {
+              _meta: { is_mcp_tool_approval: true },
+            }
+          : {}),
         options: [
           { kind: 'allow_once', name: 'Allow', optionId: 'allow_once' },
           { kind: 'reject_once', name: 'Reject', optionId: 'reject_once' },
@@ -777,12 +965,17 @@ function structuredAgent(): AgentApp {
 
   return agent({ name: 'structured-agent' })
     .onRequest(methods.agent.initialize, () => ({
-      agentCapabilities: { loadSession: false, mcpCapabilities: { http: true } },
+      agentCapabilities: {
+        loadSession: false,
+        mcpCapabilities: { http: true },
+      },
       protocolVersion: PROTOCOL_VERSION,
     }))
     .onRequest(methods.agent.session.new, ({ params }) => {
       mcpServer = params.mcpServers[0]
-      return { sessionId: crypto.randomUUID() }
+      return {
+        sessionId: crypto.randomUUID(),
+      }
     })
     .onRequest(methods.agent.session.prompt, async () => {
       if (!mcpServer || !('type' in mcpServer) || mcpServer.type !== 'http') {
@@ -806,11 +999,13 @@ function structuredAgent(): AgentApp {
 
         await mcp.callTool({
           arguments: {
-            findings: [{
-              line: 1,
-              message: 'Split this function.',
-              severity: 'warn',
-            }],
+            findings: [
+              {
+                line: 1,
+                message: 'Split this function.',
+                severity: 'warn',
+              },
+            ],
           },
           name: reportTool.name,
         })
@@ -837,7 +1032,9 @@ function textAgent(
       agentCapabilities: { loadSession: false },
       protocolVersion: PROTOCOL_VERSION,
     }))
-    .onRequest(methods.agent.session.new, () => ({ sessionId: crypto.randomUUID() }))
+    .onRequest(methods.agent.session.new, () => ({
+      sessionId: crypto.randomUUID(),
+    }))
     .onRequest(methods.agent.session.prompt, async ({ client, params }) => {
       prompts.push(params.prompt)
       await client.notify(methods.client.session.update, {
@@ -864,12 +1061,17 @@ function toolAgent(options: ToolAgentOptions = {}): AgentApp {
 
   return agent({ name: 'tool-agent' })
     .onRequest(methods.agent.initialize, () => ({
-      agentCapabilities: { loadSession: false, mcpCapabilities: { http: true } },
+      agentCapabilities: {
+        loadSession: false,
+        mcpCapabilities: { http: true },
+      },
       protocolVersion: PROTOCOL_VERSION,
     }))
     .onRequest(methods.agent.session.new, ({ params }) => {
       mcpServer = params.mcpServers[0]
-      return { sessionId: crypto.randomUUID() }
+      return {
+        sessionId: crypto.randomUUID(),
+      }
     })
     .onNotification(methods.agent.session.cancel, () => cancelled())
     .onRequest(methods.agent.session.prompt, async ({ client, params }) => {
@@ -901,7 +1103,9 @@ function toolAgent(options: ToolAgentOptions = {}): AgentApp {
       expect(listed.tools.map(tool => tool.name)).toEqual(['search'])
       if (verifyStrictSchema) {
         expect(listed.tools[0].inputSchema.type).toBe('object')
-        expect(listed.tools[0].inputSchema.properties).toEqual({ query: { type: 'string' } })
+        expect(listed.tools[0].inputSchema.properties).toEqual({
+          query: { type: 'string' },
+        })
         expect(listed.tools[0].inputSchema.required).toEqual(['query'])
         expect(listed.tools[0].inputSchema.additionalProperties).toBe(false)
       }
@@ -914,8 +1118,13 @@ function toolAgent(options: ToolAgentOptions = {}): AgentApp {
           },
         })
       }
-      const result = await mcp.callTool({ arguments: { query: 'clamp' }, name: 'search' })
-      const content = Array.isArray(result.content) ? result.content[0] : undefined
+      const result = await mcp.callTool({
+        arguments: { query: 'clamp' },
+        name: 'search',
+      })
+      const content = Array.isArray(result.content)
+        ? result.content[0]
+        : undefined
       const text = content && typeof content === 'object' && 'type' in content && content.type === 'text' && 'text' in content
         ? String(content.text)
         : 'missing result'
