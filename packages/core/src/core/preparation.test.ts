@@ -8,40 +8,50 @@ import { createBuiltInLanguageRegistry, registerLanguage, resolveLanguageForPath
 import { prepareRun } from './preparation'
 
 const fileRule = defineRule({
-  create: () => ({ onTargetFile: () => {} }),
+  create: () => ({
+    onTargetFile: () => {},
+  }),
 })
 const directoryRule = defineRule({
-  create: () => ({ onTargetDirectory: () => {} }),
+  create: () => ({
+    onTargetDirectory: () => {},
+  }),
 })
 const projectRule = defineRule({
-  create: () => ({ onTargetProject: () => {} }),
+  create: () => ({
+    onTargetProject: () => {},
+  }),
 })
 
 function createConfig(
   extras: Record<string, unknown> = {},
   languages: Record<string, LanguageDefinition> = {},
 ) {
-  return [{
-    ...extras,
-    plugins: {
-      company: definePlugin({
-        configs: {
-          marker: { settings: { marker: 'PREPARATION_CONFIG_MARKER' } },
-        },
-        languages,
-        rules: {
-          directory: directoryRule,
-          file: fileRule,
-          project: projectRule,
-        },
-      }),
+  return [
+    {
+      ...extras,
+      plugins: {
+        company: definePlugin({
+          configs: {
+            marker: {
+              settings: { marker: 'PREPARATION_CONFIG_MARKER' },
+            },
+          },
+          languages,
+          rules: {
+            directory: directoryRule,
+            file: fileRule,
+            project: projectRule,
+          },
+        }),
+      },
+      rules: {
+        'company/directory': 'warn' as const,
+        'company/file': 'warn' as const,
+        'company/project': 'warn' as const,
+      },
     },
-    rules: {
-      'company/directory': 'warn' as const,
-      'company/file': 'warn' as const,
-      'company/project': 'warn' as const,
-    },
-  }]
+  ]
 }
 
 describe('prepareRun', () => {
@@ -91,30 +101,53 @@ describe('prepareRun', () => {
         fileIndex: 0,
         language: 'typescript',
         path: '/repo/src/b.ts',
-        rules: [[0, 'company/directory'], [1, 'company/file'], [2, 'company/project']],
+        rules: [
+          [0, 'company/directory'],
+          [1, 'company/file'],
+          [2, 'company/project'],
+        ],
       },
       {
         fileIndex: 1,
         language: 'typescript',
         path: '/repo/src/a.ts',
-        rules: [[0, 'company/directory'], [1, 'company/file'], [2, 'company/project']],
+        rules: [
+          [0, 'company/directory'],
+          [1, 'company/file'],
+          [2, 'company/project'],
+        ],
       },
     ])
     expect(preparation.directories.map(input => ({
       directoryIndex: input.directoryIndex,
       rules: input.rules.map(rule => [rule.ruleIndex, rule.enabledRule.id]),
       target: input.target,
-    }))).toEqual([{
-      directoryIndex: 0,
-      rules: [[0, 'company/directory'], [1, 'company/file'], [2, 'company/project']],
-      target: { kind: 'directory', path: '/repo/packages/core' },
-    }])
+    }))).toEqual([
+      {
+        directoryIndex: 0,
+        rules: [
+          [0, 'company/directory'],
+          [1, 'company/file'],
+          [2, 'company/project'],
+        ],
+        target: { kind: 'directory', path: '/repo/packages/core' },
+      },
+    ])
     expect(preparation.project).toMatchObject({
       root: '/repo',
       rules: [
-        { enabledRule: { id: 'company/directory' }, ruleIndex: 0 },
-        { enabledRule: { id: 'company/file' }, ruleIndex: 1 },
-        { enabledRule: { id: 'company/project' }, ruleIndex: 2 },
+        {
+          enabledRule: { id: 'company/directory' },
+          ruleIndex: 0,
+        },
+        {
+          enabledRule: { id: 'company/file' },
+          ruleIndex: 1,
+        },
+        {
+          enabledRule: { id: 'company/project' },
+          ruleIndex: 2,
+        },
       ],
     })
   })
@@ -122,7 +155,9 @@ describe('prepareRun', () => {
   it('filters ignored inputs before assigning contiguous indexes', () => {
     const preparation = prepareRun({
       config: [
-        { ignores: ['ignored/**', 'ignored-directory'] },
+        {
+          ignores: ['ignored/**', 'ignored-directory'],
+        },
         ...createConfig(),
       ],
       cwd: '/repo',
@@ -143,7 +178,9 @@ describe('prepareRun', () => {
 
     const ignoredProject = prepareRun({
       config: [
-        { ignores: ['**'] },
+        {
+          ignores: ['**'],
+        },
         ...createConfig(),
       ],
       cwd: '/repo/generated',
@@ -160,20 +197,30 @@ describe('prepareRun', () => {
     }
     const config = createConfig({}, { markdown: markdownLanguage })
 
-    const preparation = prepareRun({ config, cwd: '/repo', files: ['README.mdx'] })
+    const preparation = prepareRun({
+      config,
+      cwd: '/repo',
+      files: ['README.mdx'],
+    })
 
     expect(preparation.files[0]?.language).toBe(markdownLanguage)
   })
 
   it('hashes the effective file and aggregate configuration inputs', () => {
     const first = prepareRun({
-      config: createConfig({ languageOptions: { jsx: false }, settings: { mode: 'first' } }),
+      config: createConfig({
+        languageOptions: { jsx: false },
+        settings: { mode: 'first' },
+      }),
       cwd: '/repo',
       directories: ['src'],
       files: ['src/a.ts'],
     })
     const second = prepareRun({
-      config: createConfig({ languageOptions: { jsx: true }, settings: { mode: 'second' } }),
+      config: createConfig({
+        languageOptions: { jsx: true },
+        settings: { mode: 'second' },
+      }),
       cwd: '/repo',
       directories: ['src'],
       files: ['src/a.ts'],
@@ -186,8 +233,12 @@ describe('prepareRun', () => {
       resolvedLanguage: 'typescript',
       settings: { mode: 'first' },
     }))
-    expect(first.directories[0]?.configHash).toBe(stableHash({ settings: { mode: 'first' } }))
-    expect(first.project?.configHash).toBe(stableHash({ settings: { mode: 'first' } }))
+    expect(first.directories[0]?.configHash).toBe(stableHash({
+      settings: { mode: 'first' },
+    }))
+    expect(first.project?.configHash).toBe(stableHash({
+      settings: { mode: 'first' },
+    }))
     expect(second.files[0]?.configHash).not.toBe(first.files[0]?.configHash)
     expect(second.directories[0]?.configHash).not.toBe(first.directories[0]?.configHash)
     expect(second.project?.configHash).not.toBe(first.project?.configHash)
@@ -206,7 +257,11 @@ describe('resolveLanguageForPath', () => {
 
   it('resolves registered languages and rejects unknown overrides', () => {
     const registry = createBuiltInLanguageRegistry()
-    const language: LanguageDefinition = { extensions: ['.go'], extract: () => [], name: 'go' }
+    const language: LanguageDefinition = {
+      extensions: ['.go'],
+      extract: () => [],
+      name: 'go',
+    }
     registerLanguage(registry, language)
 
     expect(resolveLanguageForPath('/repo/main.go', registry, {})).toBe(language)

@@ -4,7 +4,12 @@ import { describe, expect, it } from 'vitest'
 
 import { createStatsCollector, mergeProgressReporters, resolveStatsWrite } from './stats'
 
-const EMPTY_USAGE = { inputTokens: 0, outputTokens: 0, records: [], totalTokens: 0 }
+const EMPTY_USAGE = {
+  inputTokens: 0,
+  outputTokens: 0,
+  records: [],
+  totalTokens: 0,
+}
 
 describe('resolveStatsWrite', () => {
   it('uses the default stats directory', () => {
@@ -36,10 +41,22 @@ describe('createStatsCollector', () => {
     })
     collector.reporter.onRunEnd?.(runEnd({
       endedAt: 1500,
-      execution: counts({ cached: 1, cancelled: 1, completed: 1, failed: 2, planned: 5 }),
+      execution: counts({
+        cached: 1,
+        cancelled: 1,
+        completed: 1,
+        failed: 2,
+        planned: 5,
+      }),
     }))
 
-    expect(collector.counts).toEqual({ cached: 1, cancelled: 1, completed: 1, failed: 2, planned: 5 })
+    expect(collector.counts).toEqual({
+      cached: 1,
+      cancelled: 1,
+      completed: 1,
+      failed: 2,
+      planned: 5,
+    })
     expect(collector.durationMs()).toBe(500)
   })
 
@@ -50,7 +67,9 @@ describe('createStatsCollector', () => {
 
 describe('mergeProgressReporters', () => {
   it('returns the sole reporter or undefined', () => {
-    const reporter = { onPrepareStart: () => {} }
+    const reporter = {
+      onPrepareStart: () => {},
+    }
     expect(mergeProgressReporters(undefined, reporter)).toBe(reporter)
     expect(mergeProgressReporters()).toBeUndefined()
   })
@@ -58,8 +77,12 @@ describe('mergeProgressReporters', () => {
   it('fans payloads out to both reporters', () => {
     const events: string[] = []
     const merged = mergeProgressReporters(
-      { onRunEnd: () => events.push('base') },
-      { onRunEnd: () => events.push('extra') },
+      {
+        onRunEnd: () => events.push('base'),
+      },
+      {
+        onRunEnd: () => events.push('extra'),
+      },
     )
 
     merged?.onRunEnd?.(runEnd())
@@ -83,9 +106,18 @@ describe('mergeProgressReporters', () => {
     merged?.onPrepareStart?.({})
     merged?.onPrepareEnd?.({ filesTotal: 1 })
     merged?.onExecuteStart?.({ progress: initial })
-    merged?.onFileReady?.({ fileIndex: 0, inputPath: '/repo/a.ts', jobsAdded: 0, progress: initial })
-    merged?.onPlanningEnd?.({ progress: { ...initial, planningComplete: true } })
-    merged?.onExecuteEnd?.({ progress: { ...initial, planningComplete: true } })
+    merged?.onFileReady?.({
+      fileIndex: 0,
+      inputPath: '/repo/a.ts',
+      jobsAdded: 0,
+      progress: initial,
+    })
+    merged?.onPlanningEnd?.({
+      progress: { ...initial, planningComplete: true },
+    })
+    merged?.onExecuteEnd?.({
+      progress: { ...initial, planningComplete: true },
+    })
 
     expect(events).toEqual([
       'base:prepare:start',
@@ -105,10 +137,19 @@ describe('mergeProgressReporters', () => {
 
   it('forwards retry progress to both reporters', () => {
     const events: string[] = []
-    const payload = { attempt: 1, job: jobStart().job, maxAttempts: 3, progress: progress(counts({ planned: 1, running: 1 })) }
+    const payload = {
+      attempt: 1,
+      job: jobStart().job,
+      maxAttempts: 3,
+      progress: progress(counts({ planned: 1, running: 1 })),
+    }
     const merged = mergeProgressReporters(
-      { onJobRetry: retry => events.push(`base:${retry.attempt}/${retry.maxAttempts}`) },
-      { onJobRetry: retry => events.push(`extra:${retry.job.ruleId}`) },
+      {
+        onJobRetry: retry => events.push(`base:${retry.attempt}/${retry.maxAttempts}`),
+      },
+      {
+        onJobRetry: retry => events.push(`extra:${retry.job.ruleId}`),
+      },
     )
 
     merged?.onJobRetry?.(payload)
@@ -150,7 +191,9 @@ describe('mergeProgressReporters', () => {
           throwValue(null)
         },
       },
-      { onRunEnd: () => events.push('extra') },
+      {
+        onRunEnd: () => events.push('extra'),
+      },
     )
 
     expect(() => merged?.onRunEnd?.(runEnd())).toThrow(new Error('Unknown progress reporter error.'))
@@ -159,7 +202,17 @@ describe('mergeProgressReporters', () => {
 })
 
 function counts(overrides: Partial<RunEndPayload['execution']>): RunEndPayload['execution'] {
-  return { cached: 0, cancelled: 0, completed: 0, failed: 0, planned: 0, queued: 0, running: 0, skipped: 0, ...overrides }
+  return {
+    cached: 0,
+    cancelled: 0,
+    completed: 0,
+    failed: 0,
+    planned: 0,
+    queued: 0,
+    running: 0,
+    skipped: 0,
+    ...overrides,
+  }
 }
 
 function jobStart(): JobStartPayload {
@@ -177,7 +230,15 @@ function jobStart(): JobStartPayload {
 
 function progress(execution: RunEndPayload['execution'], final = false): RunEndPayload['progress'] {
   const jobsCompleted = execution.cached + execution.cancelled + execution.completed + execution.failed + execution.skipped
-  return { execution, filesPlanned: 0, filesTotal: 0, jobsCompleted, jobsStarted: jobsCompleted + execution.running, jobsTotal: execution.planned, planningComplete: final }
+  return {
+    execution,
+    filesPlanned: 0,
+    filesTotal: 0,
+    jobsCompleted,
+    jobsStarted: jobsCompleted + execution.running,
+    jobsTotal: execution.planned,
+    planningComplete: final,
+  }
 }
 
 function runEnd(overrides: Partial<RunEndPayload> = {}): RunEndPayload {

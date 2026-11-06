@@ -45,7 +45,9 @@ export function parsePluginSpecifier(
 
   if (isAbsolute(value) || win32.isAbsolute(value)) {
     return {
-      directory: isAbsolute(value) ? normalize(value) : win32.normalize(value),
+      directory: isAbsolute(value)
+        ? normalize(value)
+        : win32.normalize(value),
       raw: value,
       type: 'directory',
     }
@@ -88,7 +90,9 @@ export function parsePluginSpecifier(
 
 function normalizeDirectoryIdentity(directory: string): string {
   // Parse-layer identity stays lexical and case-preserving; resolvers own physical realpath canonicalization.
-  return isAbsolute(directory) ? normalize(directory) : win32.normalize(directory)
+  return isAbsolute(directory)
+    ? normalize(directory)
+    : win32.normalize(directory)
 }
 
 function parsePackageNameSegments(name: string): string[] {

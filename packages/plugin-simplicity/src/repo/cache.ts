@@ -86,7 +86,10 @@ async function loadDecisions(
   options: { cwd: string, enabled: boolean },
 ): Promise<DecisionCache> {
   if (!options.enabled) {
-    return { get: () => undefined, set: async () => {} }
+    return {
+      get: () => undefined,
+      set: async () => {},
+    }
   }
 
   const location = join(options.cwd, '.alint', 'simplicity', 'decisions.json')
@@ -99,7 +102,9 @@ async function loadDecisions(
       const remembered = decisions[relative(options.cwd, filePath)]
 
       // A stale entry is ignored, not dropped: the run about to ask again overwrites it.
-      return remembered?.key === key ? remembered.findings : undefined
+      return remembered?.key === key
+        ? remembered.findings
+        : undefined
     },
     set: async (filePath, key, findings) => {
       decisions[relative(options.cwd, filePath)] = { findings, key }
@@ -119,7 +124,10 @@ async function loadReviews(
   options: { cwd: string, enabled: boolean, fingerprint: string },
 ): Promise<ReviewCache> {
   if (!options.enabled) {
-    return { get: () => undefined, set: async () => {} }
+    return {
+      get: () => undefined,
+      set: async () => {},
+    }
   }
 
   const location = join(options.cwd, '.alint', 'simplicity', 'reviews.json')

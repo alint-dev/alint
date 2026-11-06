@@ -20,7 +20,9 @@ function startServer(env: NodeJS.ProcessEnv, folderPath: string): TestClient {
   client.send({
     id: 1,
     method: 'initialize',
-    params: initializeParams([pathToFileURL(folderPath).toString()]),
+    params: initializeParams([
+      pathToFileURL(folderPath).toString(),
+    ]),
   })
   client.send({ method: 'initialized', params: {} })
 
@@ -46,10 +48,18 @@ async function warmSymlinkedProject(): Promise<{ cwd: string, env: NodeJS.Proces
   await writeFixtureProject(cwd)
 
   let stdoutText = ''
-  const warmExitCode = await executeCli(['node', 'alint', '--format', 'json', 'demo.ts'], {
+  const warmExitCode = await executeCli([
+    'node',
+    'alint',
+    '--format',
+    'json',
+    'demo.ts',
+  ], {
     cwd,
     env,
-    stderr: { write: () => true },
+    stderr: {
+      write: () => true,
+    },
     stdout: {
       write: (chunk) => {
         stdoutText += chunk
@@ -153,7 +163,11 @@ describe('alint lsp against a warm cache', () => {
     // Type 2 is FileChangeType.Changed and type 3 is FileChangeType.Deleted.
     const report = (type: number): void => client.send({
       method: 'workspace/didChangeWatchedFiles',
-      params: { changes: [{ type, uri: demoUri }] },
+      params: {
+        changes: [
+          { type, uri: demoUri },
+        ],
+      },
     })
 
     await client.receive()

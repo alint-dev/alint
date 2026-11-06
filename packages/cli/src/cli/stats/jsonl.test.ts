@@ -11,12 +11,26 @@ import { createJsonlStatsStore } from './jsonl'
 function input(cwd: string, overrides: Partial<RunStatInput> = {}): RunStatInput {
   return {
     cwd,
-    ruleCounts: { cached: 0, cancelled: 0, completed: 1, failed: 0, planned: 1 },
+    ruleCounts: {
+      cached: 0,
+      cancelled: 0,
+      completed: 1,
+      failed: 0,
+      planned: 1,
+    },
     usage: {
       inTok: 100,
       outTok: 20,
       records: [
-        { inTok: 100, modelId: 'gpt-4o', operation: 'judge', outTok: 20, providerId: 'openai', ruleId: 'r1', totalTok: 120 },
+        {
+          inTok: 100,
+          modelId: 'gpt-4o',
+          operation: 'judge',
+          outTok: 20,
+          providerId: 'openai',
+          ruleId: 'r1',
+          totalTok: 120,
+        },
       ],
       totalTok: 120,
     },
@@ -25,7 +39,10 @@ function input(cwd: string, overrides: Partial<RunStatInput> = {}): RunStatInput
 }
 
 function statLine(ts: number, cwd: string, overrides: Partial<RunStatInput> = {}): string {
-  return `${JSON.stringify({ ts, ...input(cwd, overrides) })}\n`
+  return `${JSON.stringify({
+    ts,
+    ...input(cwd, overrides),
+  })}\n`
 }
 
 function statsFileName(ts: number): string {
@@ -108,7 +125,16 @@ describe('createJsonlStatsStore', () => {
       usage: {
         inTok: 10,
         outTok: 2,
-        records: [{ inTok: 10, modelId: 'm', outTok: 2, providerId: 'openai', ruleId: 'r9', totalTok: 12 }],
+        records: [
+          {
+            inTok: 10,
+            modelId: 'm',
+            outTok: 2,
+            providerId: 'openai',
+            ruleId: 'r9',
+            totalTok: 12,
+          },
+        ],
         totalTok: 12,
       },
     }))
@@ -153,13 +179,30 @@ describe('createJsonlStatsStore', () => {
         inTok: 30,
         outTok: 6,
         records: [
-          { inTok: 20, modelId: 'm', outTok: 4, providerId: 'openai', ruleId: 'r1', totalTok: 24 },
-          { inTok: 10, modelId: 'm', outTok: 2, providerId: 'openai', ruleId: 'r2', totalTok: 12 },
+          {
+            inTok: 20,
+            modelId: 'm',
+            outTok: 4,
+            providerId: 'openai',
+            ruleId: 'r1',
+            totalTok: 24,
+          },
+          {
+            inTok: 10,
+            modelId: 'm',
+            outTok: 2,
+            providerId: 'openai',
+            ruleId: 'r2',
+            totalTok: 12,
+          },
         ],
         totalTok: 36,
       },
     }))
-    const agg = await store.query({ by: 'rule', rules: ['r1'] })
+    const agg = await store.query({
+      by: 'rule',
+      rules: ['r1'],
+    })
 
     expect(agg.rows.map(row => row.key)).toEqual(['r1'])
     expect(agg.totalTok).toBe(24)
@@ -256,14 +299,31 @@ describe('createJsonlStatsStore', () => {
         inTok: 30,
         outTok: 6,
         records: [
-          { inTok: 20, modelId: 'm', outTok: 4, providerId: 'openai', ruleId: 'r1', totalTok: 24 },
-          { inTok: 10, modelId: 'm', outTok: 2, providerId: 'openai', ruleId: 'r2', totalTok: 12 },
+          {
+            inTok: 20,
+            modelId: 'm',
+            outTok: 4,
+            providerId: 'openai',
+            ruleId: 'r1',
+            totalTok: 24,
+          },
+          {
+            inTok: 10,
+            modelId: 'm',
+            outTok: 2,
+            providerId: 'openai',
+            ruleId: 'r2',
+            totalTok: 12,
+          },
         ],
         totalTok: 36,
       },
     }))
     const all = await store.querySeries({ interval: 'day' })
-    const onlyR1 = await store.querySeries({ interval: 'day', rules: ['r1'] })
+    const onlyR1 = await store.querySeries({
+      interval: 'day',
+      rules: ['r1'],
+    })
 
     expect(all.totalTok).toBe(36)
     expect(onlyR1.totalTok).toBe(24)

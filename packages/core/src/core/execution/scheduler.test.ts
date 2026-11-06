@@ -32,8 +32,14 @@ describe('ruleScheduler', () => {
       progress,
     })
 
-    const first = scheduler.schedule([createJob('a1', 1), createJob('a2', 2)])
-    const second = scheduler.schedule([createJob('b1', 3), createJob('b2', 4)])
+    const first = scheduler.schedule([
+      createJob('a1', 1),
+      createJob('a2', 2),
+    ])
+    const second = scheduler.schedule([
+      createJob('b1', 3),
+      createJob('b2', 4),
+    ])
 
     await until(() => starts.length === 2)
     expect(starts).toEqual(['a1', 'b1'])
@@ -54,7 +60,12 @@ describe('ruleScheduler', () => {
     expect(firstOutcomes.map(outcome => outcome.jobRef.id)).toEqual(['a1', 'a2'])
     expect(secondOutcomes.map(outcome => outcome.jobRef.id)).toEqual(['b1', 'b2'])
     expect(progress.snapshot()).toMatchObject({
-      execution: { completed: 4, planned: 4, queued: 0, running: 0 },
+      execution: {
+        completed: 4,
+        planned: 4,
+        queued: 0,
+        running: 0,
+      },
     })
   })
 
@@ -74,16 +85,26 @@ describe('ruleScheduler', () => {
       progress: createRunProgress(0),
     })
 
-    const first = scheduler.schedule([createJob('a1', 1), createJob('a2', 2), createJob('a3', 3)])
+    const first = scheduler.schedule([
+      createJob('a1', 1),
+      createJob('a2', 2),
+      createJob('a3', 3),
+    ])
     await until(() => starts.length === 1)
-    const second = scheduler.schedule([createJob('b1', 4)])
+    const second = scheduler.schedule([
+      createJob('b1', 4),
+    ])
 
     releases.get('a1')?.()
     await until(() => starts.length === 2)
     releases.get('a2')?.()
     await until(() => starts.length === 3)
-    const third = scheduler.schedule([createJob('c1', 5)])
-    const fourth = scheduler.schedule([createJob('d1', 6)])
+    const third = scheduler.schedule([
+      createJob('c1', 5),
+    ])
+    const fourth = scheduler.schedule([
+      createJob('d1', 6),
+    ])
 
     releases.get('b1')?.()
     await until(() => starts.length === 4)
@@ -94,7 +115,12 @@ describe('ruleScheduler', () => {
     releases.get('c1')?.()
     await until(() => starts.length === 6)
     releases.get('d1')?.()
-    await Promise.all([first.outcomes, second.outcomes, third.outcomes, fourth.outcomes])
+    await Promise.all([
+      first.outcomes,
+      second.outcomes,
+      third.outcomes,
+      fourth.outcomes,
+    ])
     await scheduler.close()
 
     expect(starts).toEqual(['a1', 'a2', 'b1', 'a3', 'c1', 'd1'])
@@ -134,7 +160,9 @@ describe('ruleScheduler', () => {
 
     controller.abort('stop')
     await until(() => ends.length === 2)
-    const afterAbort = scheduler.schedule([createJob('late', 5)])
+    const afterAbort = scheduler.schedule([
+      createJob('late', 5),
+    ])
     const closing = scheduler.close()
     let closed = false
     void closing.then(() => {
@@ -147,7 +175,12 @@ describe('ruleScheduler', () => {
     expect(afterAbort.jobsAdded).toBe(0)
     await expect(afterAbort.outcomes).resolves.toEqual([])
     expect(progress.snapshot()).toMatchObject({
-      execution: { cancelled: 2, planned: 4, queued: 0, running: 2 },
+      execution: {
+        cancelled: 2,
+        planned: 4,
+        queued: 0,
+        running: 2,
+      },
     })
     expect(closed).toBe(false)
 
@@ -158,7 +191,12 @@ describe('ruleScheduler', () => {
 
     expect(ends).toEqual(['a3', 'a4', 'a1', 'a2'])
     expect(progress.snapshot()).toMatchObject({
-      execution: { cancelled: 4, planned: 4, queued: 0, running: 0 },
+      execution: {
+        cancelled: 4,
+        planned: 4,
+        queued: 0,
+        running: 0,
+      },
     })
   })
 
@@ -171,15 +209,29 @@ describe('ruleScheduler', () => {
       execute: async () => { throw sentinel },
       progress,
     })
-    const batch = scheduler.schedule([createJob('a1', 1), createJob('a2', 2)])
+    const batch = scheduler.schedule([
+      createJob('a1', 1),
+      createJob('a2', 2),
+    ])
 
     await expect(batch.outcomes).resolves.toMatchObject([
-      { jobRef: { id: 'a1' }, state: 'cancelled' },
-      { jobRef: { id: 'a2' }, state: 'cancelled' },
+      {
+        jobRef: { id: 'a1' },
+        state: 'cancelled',
+      },
+      {
+        jobRef: { id: 'a2' },
+        state: 'cancelled',
+      },
     ])
     await expect(scheduler.close()).rejects.toBe(sentinel)
     expect(progress.snapshot()).toMatchObject({
-      execution: { cancelled: 2, planned: 2, queued: 0, running: 0 },
+      execution: {
+        cancelled: 2,
+        planned: 2,
+        queued: 0,
+        running: 0,
+      },
     })
   })
 
@@ -194,17 +246,31 @@ describe('ruleScheduler', () => {
       },
       progress,
     })
-    const batch = scheduler.schedule([createJob('a1', 1), createJob('a2', 2)])
+    const batch = scheduler.schedule([
+      createJob('a1', 1),
+      createJob('a2', 2),
+    ])
 
     await expect(batch.outcomes).resolves.toMatchObject([
-      { jobRef: { id: 'a1' }, state: 'cancelled' },
-      { jobRef: { id: 'a2' }, state: 'cancelled' },
+      {
+        jobRef: { id: 'a1' },
+        state: 'cancelled',
+      },
+      {
+        jobRef: { id: 'a2' },
+        state: 'cancelled',
+      },
     ])
     const closeResult = await rejectionResult(scheduler.close())
 
     expect(closeResult).toEqual({ reason: undefined, rejected: true, resolved: false })
     expect(progress.snapshot()).toMatchObject({
-      execution: { cancelled: 2, planned: 2, queued: 0, running: 0 },
+      execution: {
+        cancelled: 2,
+        planned: 2,
+        queued: 0,
+        running: 0,
+      },
     })
   })
 
@@ -222,17 +288,31 @@ describe('ruleScheduler', () => {
         },
       },
     })
-    const batch = scheduler.schedule([createJob('a1', 1), createJob('a2', 2)])
+    const batch = scheduler.schedule([
+      createJob('a1', 1),
+      createJob('a2', 2),
+    ])
 
     await expect(batch.outcomes).resolves.toMatchObject([
-      { jobRef: { id: 'a1' }, state: 'cancelled' },
-      { jobRef: { id: 'a2' }, state: 'cancelled' },
+      {
+        jobRef: { id: 'a1' },
+        state: 'cancelled',
+      },
+      {
+        jobRef: { id: 'a2' },
+        state: 'cancelled',
+      },
     ])
     const closeResult = await rejectionResult(scheduler.close())
 
     expect(closeResult).toEqual({ reason: undefined, rejected: true, resolved: false })
     expect(progress.snapshot()).toMatchObject({
-      execution: { cancelled: 2, planned: 2, queued: 0, running: 0 },
+      execution: {
+        cancelled: 2,
+        planned: 2,
+        queued: 0,
+        running: 0,
+      },
     })
   })
 
@@ -255,7 +335,9 @@ describe('ruleScheduler', () => {
       signal: controller.signal,
     })
     const batches = Array.from({ length: 5_000 }, (_, index) => {
-      return scheduler.schedule([createJob(`job-${index}`, index + 1)])
+      return scheduler.schedule([
+        createJob(`job-${index}`, index + 1),
+      ])
     })
 
     controller.abort('stop')
@@ -267,7 +349,12 @@ describe('ruleScheduler', () => {
     expect(reporterErrors).toHaveLength(5_000)
     expect(closeResult).toEqual({ reason: reporterErrors[0], rejected: true, resolved: false })
     expect(progress.snapshot()).toMatchObject({
-      execution: { cancelled: 5_000, planned: 5_000, queued: 0, running: 0 },
+      execution: {
+        cancelled: 5_000,
+        planned: 5_000,
+        queued: 0,
+        running: 0,
+      },
     })
   })
 
@@ -291,7 +378,10 @@ function completedOutcome(job: RuleJob): RuleJobOutcome {
   return {
     cache: 'miss',
     diagnostics: [],
-    jobRef: { ...job.jobRef, target: { ...job.jobRef.target } },
+    jobRef: {
+      ...job.jobRef,
+      target: { ...job.jobRef.target },
+    },
     orderKey: { ...job.orderKey },
     state: 'completed',
     usage: [],
@@ -299,7 +389,9 @@ function completedOutcome(job: RuleJob): RuleJobOutcome {
 }
 
 function createJob(id: string, index: number): RuleJob {
-  const rule = defineRule({ create: () => ({}) })
+  const rule = defineRule({
+    create: () => ({}),
+  })
   const runtime: RuleRuntime = {
     cacheable: false,
     enabledRule: {
@@ -323,7 +415,12 @@ function createJob(id: string, index: number): RuleJob {
       ruleId: 'company/review',
       target: { identity: id, kind: 'file' },
     },
-    orderKey: { inputIndex: index, ruleIndex: 0, scope: 'source', targetIndex: 0 },
+    orderKey: {
+      inputIndex: index,
+      ruleIndex: 0,
+      scope: 'source',
+      targetIndex: 0,
+    },
     target: {
       cacheTargetHash: `target-${id}`,
       configHash: 'config-hash',

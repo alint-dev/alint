@@ -38,8 +38,12 @@ const modelSchema = pipe(
   variant('driver', [acpModelSchema, providerModelSchema]),
   transform(({ context_window: contextWindow, default_params: defaultParams, ...model }): ModelConfig => ({
     ...model,
-    ...(contextWindow === undefined ? {} : { contextWindow }),
-    ...(defaultParams === undefined ? {} : { defaultParams }),
+    ...(contextWindow === undefined
+      ? {}
+      : { contextWindow }),
+    ...(defaultParams === undefined
+      ? {}
+      : { defaultParams }),
   })),
 )
 const providerSchema = pipe(
@@ -102,7 +106,9 @@ const runnerStatsSchema = union([
     }),
     transform(({ retention_months: retentionMonths, ...stats }) => ({
       ...stats,
-      ...(retentionMonths === undefined ? {} : { retentionMonths }),
+      ...(retentionMonths === undefined
+        ? {}
+        : { retentionMonths }),
     })),
   ),
 ])
@@ -125,9 +131,15 @@ const runnerSchema = pipe(
     ...runner
   }): RunnerConfig => ({
     ...runner,
-    ...(agentRetries === undefined ? {} : { agentRetries }),
-    ...(ruleConcurrency === undefined ? {} : { ruleConcurrency }),
-    ...(timeoutMs === undefined ? {} : { timeoutMs }),
+    ...(agentRetries === undefined
+      ? {}
+      : { agentRetries }),
+    ...(ruleConcurrency === undefined
+      ? {}
+      : { ruleConcurrency }),
+    ...(timeoutMs === undefined
+      ? {}
+      : { timeoutMs }),
   })),
 )
 
@@ -139,7 +151,9 @@ const setupConfigSchema = pipe(
   }),
   transform(({ runner, ...config }): SetupConfig => ({
     ...config,
-    ...(runner === undefined ? {} : { runner }),
+    ...(runner === undefined
+      ? {}
+      : { runner }),
   })),
 )
 

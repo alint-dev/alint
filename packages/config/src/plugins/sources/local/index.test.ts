@@ -101,7 +101,10 @@ describe('local plugin source', () => {
     const pluginRoot = join(projectRoot, 'rules', 'empty')
     await mkdir(pluginRoot, { recursive: true })
 
-    await expect(install({ alias: 'empty', specifier: createDirectorySpecifier(pluginRoot) }))
+    await expect(install({
+      alias: 'empty',
+      specifier: createDirectorySpecifier(pluginRoot),
+    }))
       .rejects
       .toThrow('Directory plugin "empty" must contain package.json or rule.alint.* files.')
   })
@@ -116,7 +119,10 @@ describe('local plugin source', () => {
       'instruction = "Find issues."',
     ].join('\n'), 'utf8')
 
-    await expect(install({ alias: 'invalid', specifier: createDirectorySpecifier(pluginRoot) }))
+    await expect(install({
+      alias: 'invalid',
+      specifier: createDirectorySpecifier(pluginRoot),
+    }))
       .rejects
       .toThrow('Unknown builtInAgent "unknown-agent"')
   })
@@ -172,7 +178,10 @@ writeFileSync(${JSON.stringify(markerPath)}, '')
 throw new Error('entry must not be imported during installation')
 `, 'utf8')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .resolves
       .toMatchObject({ type: 'directory' })
     await expect(access(markerPath))
@@ -184,7 +193,10 @@ throw new Error('entry must not be imported during installation')
     const projectRoot = await createTempProject()
     const packageDir = join(projectRoot, 'missing')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .rejects
       .toThrow(`Directory plugin "local" does not exist at "${packageDir}".`)
   })
@@ -194,7 +206,10 @@ throw new Error('entry must not be imported during installation')
     const packagePath = join(projectRoot, 'plugin.mjs')
     await writeFile(packagePath, 'export default {}\n', 'utf8')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packagePath) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packagePath),
+    }))
       .rejects
       .toThrow(`Directory plugin "local" path "${packagePath}" is not a directory.`)
   })
@@ -205,7 +220,10 @@ throw new Error('entry must not be imported during installation')
     await mkdir(packageDir)
     await writeFile(join(packageDir, 'package.json'), '{invalid', 'utf8')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .rejects
       .toThrow(`Directory plugin "local" has an unreadable or invalid package.json at "${join(await realpath(packageDir), 'package.json')}"`)
   })
@@ -216,7 +234,10 @@ throw new Error('entry must not be imported during installation')
     await mkdir(packageDir)
     await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: 'local-plugin' }), 'utf8')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .rejects
       .toThrow('Package "local-plugin" does not define a resolvable "." export.')
   })
@@ -231,7 +252,10 @@ throw new Error('entry must not be imported during installation')
       type: 'module',
     }), 'utf8')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .rejects
       .toThrow('Directory plugin "local" entry "dist/index.mjs" does not exist. Build the package and try again.')
   })
@@ -246,7 +270,10 @@ throw new Error('entry must not be imported during installation')
       type: 'module',
     }), 'utf8')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .rejects
       .toThrow('Directory plugin "local" entry "dist" is not a regular file.')
   })
@@ -261,7 +288,10 @@ throw new Error('entry must not be imported during installation')
       type: 'module',
     }), 'utf8')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .rejects
       .toThrow('Directory plugin "local" root export escapes the package directory.')
   })
@@ -275,7 +305,10 @@ throw new Error('entry must not be imported during installation')
     await rm(join(packageDir, 'dist', 'index.mjs'))
     await symlink(join(outsideRoot, 'index.mjs'), join(packageDir, 'dist', 'index.mjs'), 'file')
 
-    await expect(install({ alias: 'local', specifier: createDirectorySpecifier(packageDir) }))
+    await expect(install({
+      alias: 'local',
+      specifier: createDirectorySpecifier(packageDir),
+    }))
       .rejects
       .toThrow('Directory plugin "local" entry physically escapes the package directory.')
   })
@@ -306,7 +339,17 @@ throw new Error('entry must not be imported during installation')
     await symlink(firstRoot, linkPath, 'dir')
     const specifier = createDirectorySpecifier(linkPath, './local-plugin')
     const lockEntry = await install({ alias: 'local', specifier })
-    const lock = parsePluginLockFile({ plugins: { local: { alias: 'local', path: lockEntry.path, specifier: specifier.raw, type: 'directory' } }, version: 2 }, { cwd: projectRoot })
+    const lock = parsePluginLockFile({
+      plugins: {
+        local: {
+          alias: 'local',
+          path: lockEntry.path,
+          specifier: specifier.raw,
+          type: 'directory',
+        },
+      },
+      version: 2,
+    }, { cwd: projectRoot })
 
     await rm(linkPath)
     await symlink(secondRoot, linkPath, 'dir')
@@ -331,7 +374,17 @@ throw new Error('entry must not be imported during installation')
     const originalSpecifier = createDirectorySpecifier(packageDir, './local-plugin')
     const lockEntry = await install({ alias: 'local', specifier: originalSpecifier })
     const currentSpecifier = createDirectorySpecifier(loopPath, './local-plugin')
-    const lock = parsePluginLockFile({ plugins: { local: { alias: 'local', path: lockEntry.path, specifier: originalSpecifier.raw, type: 'directory' } }, version: 2 }, { cwd: projectRoot })
+    const lock = parsePluginLockFile({
+      plugins: {
+        local: {
+          alias: 'local',
+          path: lockEntry.path,
+          specifier: originalSpecifier.raw,
+          type: 'directory',
+        },
+      },
+      version: 2,
+    }, { cwd: projectRoot })
 
     const parsedEntry = lock.get({ alias: 'local', specifier: currentSpecifier })
 

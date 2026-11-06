@@ -52,8 +52,12 @@ export async function normalizeSetupConfig(
     let activeProvider: ProviderDefinition | undefined
 
     for (const model of provider.models) {
-      const driver = isAcpModel(model) ? 'acp' : 'provider'
-      const normalizedModel = cloneModel(isAcpModel(model) ? modelFromAcpModel(model) : model)
+      const driver = isAcpModel(model)
+        ? 'acp'
+        : 'provider'
+      const normalizedModel = cloneModel(isAcpModel(model)
+        ? modelFromAcpModel(model)
+        : model)
 
       if (driver === activeDriver && activeProvider !== undefined) {
         activeProvider.models.push(normalizedModel)
@@ -71,7 +75,11 @@ export async function normalizeSetupConfig(
 
   return {
     providers,
-    ...(config.runner === undefined ? {} : { runner: cloneRunner(config.runner) }),
+    ...(config.runner === undefined
+      ? {}
+      : {
+          runner: cloneRunner(config.runner),
+        }),
     version: 1,
   }
 }
@@ -79,28 +87,48 @@ export async function normalizeSetupConfig(
 function cloneAcpModel(model: AcpModelConfig): AcpModelConfig {
   return {
     ...model,
-    aliases: model.aliases ? [...model.aliases] : undefined,
-    args: model.args ? [...model.args] : undefined,
-    capabilities: model.capabilities ? [...model.capabilities] : undefined,
-    defaultParams: model.defaultParams ? { ...model.defaultParams } : undefined,
-    env: model.env ? { ...model.env } : undefined,
+    aliases: model.aliases
+      ? [...model.aliases]
+      : undefined,
+    args: model.args
+      ? [...model.args]
+      : undefined,
+    capabilities: model.capabilities
+      ? [...model.capabilities]
+      : undefined,
+    defaultParams: model.defaultParams
+      ? { ...model.defaultParams }
+      : undefined,
+    env: model.env
+      ? { ...model.env }
+      : undefined,
   }
 }
 
 function cloneModel(model: SetupModelDefinition): SetupModelDefinition {
   return {
     ...model,
-    aliases: model.aliases ? [...model.aliases] : undefined,
-    capabilities: model.capabilities ? [...model.capabilities] : undefined,
-    defaultParams: model.defaultParams ? { ...model.defaultParams } : undefined,
+    aliases: model.aliases
+      ? [...model.aliases]
+      : undefined,
+    capabilities: model.capabilities
+      ? [...model.capabilities]
+      : undefined,
+    defaultParams: model.defaultParams
+      ? { ...model.defaultParams }
+      : undefined,
   }
 }
 
 function cloneRunner(runner: RunnerConfig): RunnerConfig {
   return {
     ...runner,
-    cache: typeof runner.cache === 'object' ? { ...runner.cache } : runner.cache,
-    stats: typeof runner.stats === 'object' ? { ...runner.stats } : runner.stats,
+    cache: typeof runner.cache === 'object'
+      ? { ...runner.cache }
+      : runner.cache,
+    stats: typeof runner.stats === 'object'
+      ? { ...runner.stats }
+      : runner.stats,
   }
 }
 
@@ -110,7 +138,9 @@ function providerFromAdapter(
 ): ProviderDefinition {
   return {
     ...provider,
-    headers: provider.headers ? { ...provider.headers } : undefined,
+    headers: provider.headers
+      ? { ...provider.headers }
+      : undefined,
     id,
     models: [],
   }
@@ -127,7 +157,9 @@ function providerFromConfig(provider: ProviderConfig): ProviderDefinition {
 
   return {
     endpoint: provider.endpoint,
-    headers: provider.headers ? { ...provider.headers } : undefined,
+    headers: provider.headers
+      ? { ...provider.headers }
+      : undefined,
     id: provider.id,
     models: [],
     type: provider.type,

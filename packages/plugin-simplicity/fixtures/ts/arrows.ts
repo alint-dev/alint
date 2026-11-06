@@ -30,7 +30,12 @@ const isString = (value: unknown): value is string => typeof value === 'string'
 // makes `stringify` and `isString` alike in every fact the rule hands over, and the
 // decisions still differ.
 export function summarize(text: string, extra: string, value: unknown): string {
-  const rows = [...trimLines(text), ...cleanRows(extra)]
+  const rows = [
+    ...trimLines(text),
+    ...cleanRows(extra),
+  ]
 
-  return `${rows.length}: ${isString(value) ? value : stringify(value)}`
+  return `${rows.length}: ${isString(value)
+    ? value
+    : stringify(value)}`
 }

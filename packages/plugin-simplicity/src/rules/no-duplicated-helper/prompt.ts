@@ -97,6 +97,8 @@ export function buildDuplicatedHelperPrompt(options: {
           ...candidates.map(candidate => `--- ${candidate.id}  (${candidate.name}, ${candidate.language})\n${candidate.text}`),
         ].join('\n'),
     '',
-    `Work through the ${helpers.length === 1 ? 'helper' : `${helpers.length} helpers`} one at a time, following the procedure.`,
+    `Work through the ${helpers.length === 1
+      ? 'helper'
+      : `${helpers.length} helpers`} one at a time, following the procedure.`,
   ].join('\n')
 }

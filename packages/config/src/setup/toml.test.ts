@@ -25,36 +25,44 @@ CODEX_HOME = "/tmp/codex"
 `)
 
     expect(config).toEqual({
-      providers: [{
-        id: 'coding-agents',
-        models: [{
-          aliases: ['default'],
-          args: ['--profile', 'alint'],
-          capabilities: ['tool-call'],
-          command: 'codex-acp',
-          cwd: '.',
-          driver: 'acp',
-          env: { CODEX_HOME: '/tmp/codex' },
-          id: 'codex',
-          name: 'Codex',
-        }],
-      }],
+      providers: [
+        {
+          id: 'coding-agents',
+          models: [
+            {
+              aliases: ['default'],
+              args: ['--profile', 'alint'],
+              capabilities: ['tool-call'],
+              command: 'codex-acp',
+              cwd: '.',
+              driver: 'acp',
+              env: { CODEX_HOME: '/tmp/codex' },
+              id: 'codex',
+              name: 'Codex',
+            },
+          ],
+        },
+      ],
       version: 1,
     })
   })
 
   it('stringifies ACP-driven provider models', () => {
     const toml = stringifySetupConfigToml({
-      providers: [{
-        id: 'acp',
-        models: [{
-          args: ['--acp'],
-          command: 'coding-agent',
-          driver: 'acp',
-          env: { AGENT_PROFILE: 'review' },
-          id: 'reviewer',
-        }],
-      }],
+      providers: [
+        {
+          id: 'acp',
+          models: [
+            {
+              args: ['--acp'],
+              command: 'coding-agent',
+              driver: 'acp',
+              env: { AGENT_PROFILE: 'review' },
+              id: 'reviewer',
+            },
+          ],
+        },
+      ],
       version: 1,
     })
 
@@ -179,7 +187,9 @@ id = "qwen"
         {
           endpoint: 'http://localhost:11434/v1',
           id: 'local',
-          models: [{ id: 'qwen' }],
+          models: [
+            { id: 'qwen' },
+          ],
           type: 'openai-compatible',
         },
       ],

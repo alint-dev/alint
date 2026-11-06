@@ -35,7 +35,10 @@ function createStderrExcerpt(): { append: (chunk: Buffer) => void, text: () => s
 
       if (head.byteLength < headLimit) {
         const headBytes = Math.min(headLimit - head.byteLength, remaining.byteLength)
-        head = Buffer.concat([head, remaining.subarray(0, headBytes)])
+        head = Buffer.concat([
+          head,
+          remaining.subarray(0, headBytes),
+        ])
         remaining = remaining.subarray(headBytes)
       }
 
@@ -103,9 +106,15 @@ async function run(): Promise<void> {
   const details = [
     `exit code: ${result.code ?? 'none'}`,
     `signal: ${result.signal ?? 'none'}`,
-    ...(spawnError === undefined ? [] : [`spawn error: ${spawnError}`]),
-    ...(forwardingError === undefined ? [] : [`stderr forwarding error: ${forwardingError}`]),
-    `stderr:\n${stderrText.length === 0 ? '(none)' : stderrText}`,
+    ...(spawnError === undefined
+      ? []
+      : [`spawn error: ${spawnError}`]),
+    ...(forwardingError === undefined
+      ? []
+      : [`stderr forwarding error: ${forwardingError}`]),
+    `stderr:\n${stderrText.length === 0
+      ? '(none)'
+      : stderrText}`,
   ]
 
   reportFatalFailure(

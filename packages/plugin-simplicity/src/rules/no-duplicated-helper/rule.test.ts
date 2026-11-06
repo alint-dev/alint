@@ -45,7 +45,9 @@ function createRun(
     contextFor: (settings = {}): RuleContext => createFixtureContext({
       agent,
       cwd,
-      logger: { debug: (...args) => void debug.push(args.join(' ')) },
+      logger: {
+        debug: (...args) => void debug.push(args.join(' ')),
+      },
       report: diagnostic => void diagnostics.push(diagnostic),
       settings,
       src,
@@ -60,7 +62,10 @@ function createRun(
 async function createWorkspace(): Promise<string> {
   const cwd = await mkdtemp(join(tmpdir(), 'simplicity-'))
 
-  await cp(FIXTURES_DIR, cwd, { filter: source => basename(source) !== '.alint', recursive: true })
+  await cp(FIXTURES_DIR, cwd, {
+    filter: source => basename(source) !== '.alint',
+    recursive: true,
+  })
 
   return cwd
 }
@@ -77,7 +82,13 @@ async function lint(run: Run, relativePath: string, settings?: Record<string, un
   await duplicatedHelperRule.create(run.contextFor(settings)).onTargetFile?.(target)
 }
 
-const AST_ONLY = { simplicity: { cache: false, ignores: ['alint.config.ts'], judge: false } }
+const AST_ONLY = {
+  simplicity: {
+    cache: false,
+    ignores: ['alint.config.ts'],
+    judge: false,
+  },
+}
 
 describe('no-duplicated-helper, the AST approach', () => {
   it('reports a character-for-character copy, in every language, with no agent and no tokens', async () => {
@@ -125,7 +136,12 @@ describe('no-duplicated-helper, the AST approach', () => {
   })
 
   it('says nothing about two accessors that share a shape and nothing else, in every language', async () => {
-    for (const file of ['ts/accessors.ts', 'rust/accessors.rs', 'go/accessors.go', 'python/accessors.py']) {
+    for (const file of [
+      'ts/accessors.ts',
+      'rust/accessors.rs',
+      'go/accessors.go',
+      'python/accessors.py',
+    ]) {
       const run = createRun()
       await lint(run, file, AST_ONLY)
 
@@ -158,7 +174,12 @@ describe('no-duplicated-helper, the agentic approach', () => {
     const run = createRun()
 
     // Every helper in `archive.ts` is an exact copy, so there is nothing left to ask.
-    await lint(run, 'ts/archive.ts', { simplicity: { cache: false, ignores: ['alint.config.ts'] } })
+    await lint(run, 'ts/archive.ts', {
+      simplicity: {
+        cache: false,
+        ignores: ['alint.config.ts'],
+      },
+    })
 
     expect(run.diagnostics).toHaveLength(1)
     expect(run.agentRequests).toHaveLength(0)
@@ -168,7 +189,12 @@ describe('no-duplicated-helper, the agentic approach', () => {
     const index = await createFixtureIndex()
     const run = createRun()
 
-    await lint(run, 'ts/reimplemented.ts', { simplicity: { cache: false, ignores: ['alint.config.ts'] } })
+    await lint(run, 'ts/reimplemented.ts', {
+      simplicity: {
+        cache: false,
+        ignores: ['alint.config.ts'],
+      },
+    })
 
     expect(run.agentRequests).toHaveLength(1)
     expect(run.agentRequests[0].prompt).toContain(fixtureHelper(index, 'ts/reimplemented.ts', 'isNodeErrorCode').id)
@@ -183,7 +209,12 @@ describe('no-duplicated-helper, the agentic approach', () => {
       expect(listed).toContain('python/store.py')
     })
 
-    await lint(run, 'ts/reimplemented.ts', { simplicity: { cache: false, ignores: ['alint.config.ts'] } })
+    await lint(run, 'ts/reimplemented.ts', {
+      simplicity: {
+        cache: false,
+        ignores: ['alint.config.ts'],
+      },
+    })
 
     expect(run.agentRequests).toHaveLength(1)
   })
@@ -205,7 +236,12 @@ describe('no-duplicated-helper, the agentic approach', () => {
       })
     })
 
-    await lint(run, 'ts/reimplemented.ts', { simplicity: { cache: false, ignores: ['alint.config.ts'] } })
+    await lint(run, 'ts/reimplemented.ts', {
+      simplicity: {
+        cache: false,
+        ignores: ['alint.config.ts'],
+      },
+    })
 
     expect(run.diagnostics).toHaveLength(1)
 
@@ -221,7 +257,12 @@ describe('no-duplicated-helper, the agentic approach', () => {
   it('reports nothing when the agent decides nothing qualifies', async () => {
     const run = createRun()
 
-    await lint(run, 'ts/walk.ts', { simplicity: { cache: false, ignores: ['alint.config.ts'] } })
+    await lint(run, 'ts/walk.ts', {
+      simplicity: {
+        cache: false,
+        ignores: ['alint.config.ts'],
+      },
+    })
 
     expect(run.agentRequests).toHaveLength(1)
     expect(run.diagnostics).toStrictEqual([])
@@ -233,14 +274,24 @@ describe('no-duplicated-helper, the agentic approach', () => {
     })
 
     // `walk.ts` has nothing for the fingerprints, so a failed agent leaves it silent.
-    await lint(failing, 'ts/walk.ts', { simplicity: { cache: false, ignores: ['alint.config.ts'] } })
+    await lint(failing, 'ts/walk.ts', {
+      simplicity: {
+        cache: false,
+        ignores: ['alint.config.ts'],
+      },
+    })
     expect(failing.diagnostics).toStrictEqual([])
     expect(failing.debug.join('\n')).toContain('the model is down')
 
     const store = createRun(() => {
       throw new Error('the model is down')
     })
-    await lint(store, 'ts/store.ts', { simplicity: { cache: false, ignores: ['alint.config.ts'] } })
+    await lint(store, 'ts/store.ts', {
+      simplicity: {
+        cache: false,
+        ignores: ['alint.config.ts'],
+      },
+    })
     expect(store.diagnostics).toHaveLength(1)
     expect(store.diagnostics[0].evidence).toMatchObject({ match: 'exact' })
   })
@@ -250,7 +301,11 @@ describe('no-duplicated-helper, the agentic approach', () => {
     const index = await createFixtureIndex()
 
     try {
-      const settings = { simplicity: { ignores: ['alint.config.ts'] } }
+      const settings = {
+        simplicity: {
+          ignores: ['alint.config.ts'],
+        },
+      }
       const answer = async (tools: Map<string, AgentTool>) => {
         await tools.get('report_duplicate')!.execute({
           helperId: fixtureHelper(index, 'ts/reimplemented.ts', 'isNodeErrorCode').id,
@@ -294,7 +349,11 @@ describe('no-duplicated-helper, files it will not touch', () => {
     const run = createRun()
 
     await duplicatedHelperRule.create(run.contextFor(AST_ONLY)).onTargetFile?.({
-      file: { contentHash: 'unused', language: 'plaintext', path: resolve(FIXTURES_DIR, 'README.md') },
+      file: {
+        contentHash: 'unused',
+        language: 'plaintext',
+        path: resolve(FIXTURES_DIR, 'README.md'),
+      },
       identity: 'file',
       kind: 'file',
       language: 'plaintext',
@@ -304,9 +363,13 @@ describe('no-duplicated-helper, files it will not touch', () => {
   })
 
   it('rejects settings it cannot read', () => {
-    expect(() => duplicatedHelperRule.create(createRun().contextFor({ simplicity: { maxLines: 0 } })))
+    expect(() => duplicatedHelperRule.create(createRun().contextFor({
+      simplicity: { maxLines: 0 },
+    })))
       .toThrow('simplicity/no-duplicated-helper: invalid "settings.simplicity": "maxLines"')
-    expect(() => duplicatedHelperRule.create(createRun().contextFor({ simplicity: { judge: 'no' } })))
+    expect(() => duplicatedHelperRule.create(createRun().contextFor({
+      simplicity: { judge: 'no' },
+    })))
       .toThrow('"judge"')
     expect(() => duplicatedHelperRule.create(createRun().contextFor({ simplicity: [] })))
       .toThrow('invalid "settings.simplicity"')

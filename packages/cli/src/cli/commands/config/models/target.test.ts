@@ -19,7 +19,9 @@ function setupConfig(): SetupConfig {
       {
         endpoint: 'https://second.example/v1',
         id: 'second',
-        models: [{ id: 'qwen', name: 'Qwen' }],
+        models: [
+          { id: 'qwen', name: 'Qwen' },
+        ],
         type: 'openai-compatible',
       },
     ],

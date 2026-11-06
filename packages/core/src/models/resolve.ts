@@ -56,7 +56,9 @@ export function resolveModel(
       }
 
       if (matchingCandidates.length > 1) {
-        const choices = [...matchesByCanonical.keys()]
+        const choices = [
+          ...matchesByCanonical.keys(),
+        ]
 
         throw new Error(
           `Ambiguous model "${request}".\nSpecify a provider-qualified model:\n${choices.map(choice => `  ${choice}`).join('\n')}`,
@@ -161,8 +163,12 @@ function toResolvedModel(
   const { model, provider } = candidate
 
   return {
-    aliases: [...(model.aliases ?? [])],
-    capabilities: [...(model.capabilities ?? [])],
+    aliases: [
+      ...(model.aliases ?? []),
+    ],
+    capabilities: [
+      ...(model.capabilities ?? []),
+    ],
     contextWindow: model.contextWindow,
     id: model.id,
     name: model.name ?? model.id,
@@ -172,7 +178,9 @@ function toResolvedModel(
     },
     provider: {
       endpoint: provider.endpoint,
-      headers: { ...(provider.headers ?? {}) },
+      headers: {
+        ...(provider.headers ?? {}),
+      },
       id: provider.id,
       type: provider.type,
     },

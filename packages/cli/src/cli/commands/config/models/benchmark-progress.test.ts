@@ -13,12 +13,16 @@ describe('createModelBenchmarkProgressDisplay', () => {
     const display = createModelBenchmarkProgressDisplay({
       color: false,
       config: {
-        providers: [{
-          endpoint: 'https://example.test/v1',
-          id: 'remote',
-          models: [{ id: 'model' }],
-          type: 'openai-compatible',
-        }],
+        providers: [
+          {
+            endpoint: 'https://example.test/v1',
+            id: 'remote',
+            models: [
+              { id: 'model' },
+            ],
+            type: 'openai-compatible',
+          },
+        ],
         version: 1,
       },
       output: {
@@ -29,16 +33,18 @@ describe('createModelBenchmarkProgressDisplay', () => {
     })
 
     display.update({
-      active: [{
-        modelId: 'model',
-        modelIndex: 0,
-        phase: 'repeat',
-        providerId: 'remote',
-        sample: 0,
-        samples: 3,
-        success: { attempted: 1, completed: 0 },
-        warmup: true,
-      }],
+      active: [
+        {
+          modelId: 'model',
+          modelIndex: 0,
+          phase: 'repeat',
+          providerId: 'remote',
+          sample: 0,
+          samples: 3,
+          success: { attempted: 1, completed: 0 },
+          warmup: true,
+        },
+      ],
       modelsTotal: 1,
       results: [],
     })
@@ -51,16 +57,18 @@ describe('createModelBenchmarkProgressDisplay', () => {
     expect(chunks).toHaveLength(warmupWrites)
 
     display.update({
-      active: [{
-        modelId: 'model',
-        modelIndex: 0,
-        phase: 'repeat',
-        providerId: 'remote',
-        sample: 1,
-        samples: 3,
-        success: { attempted: 2, completed: 1 },
-        warmup: false,
-      }],
+      active: [
+        {
+          modelId: 'model',
+          modelIndex: 0,
+          phase: 'repeat',
+          providerId: 'remote',
+          sample: 1,
+          samples: 3,
+          success: { attempted: 2, completed: 1 },
+          warmup: false,
+        },
+      ],
       modelsTotal: 1,
       results: [],
     })

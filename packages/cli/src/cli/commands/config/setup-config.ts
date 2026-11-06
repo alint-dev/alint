@@ -45,7 +45,9 @@ export async function loadRunSetupConfig(io: CliIo): Promise<{
 }
 
 export async function loadScopedSetupConfig(io: CliIo, local: boolean | undefined): Promise<ScopedSetupConfig> {
-  const scope: SetupConfigScope = local === true ? 'local' : 'global'
+  const scope: SetupConfigScope = local === true
+    ? 'local'
+    : 'global'
   const path = scope === 'local'
     ? getProjectSetupConfigPath(io.cwd)
     : getGlobalSetupConfigPath(io.env ?? process.env)

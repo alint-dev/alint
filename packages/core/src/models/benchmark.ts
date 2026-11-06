@@ -237,7 +237,9 @@ function currentProgress(
 }
 
 async function measureModel({ model, prompt, signal }: ModelBenchmarkRequest): Promise<ModelBenchmarkMeasurement> {
-  const messages: Message[] = [{ content: prompt, role: 'user' }]
+  const messages: Message[] = [
+    { content: prompt, role: 'user' },
+  ]
   const startedAt = performance.now()
   let firstOutputAt: number | undefined
   let outputDeltaCount = 0
@@ -288,7 +290,9 @@ async function measureModel({ model, prompt, signal }: ModelBenchmarkRequest): P
   return {
     durationMs: endedAt - startedAt,
     // One output timestamp cannot show the provider's decode interval. Providers can buffer the full output in one delta.
-    firstOutputMs: firstOutputAt === undefined || outputDeltaCount < 2 ? undefined : firstOutputAt - startedAt,
+    firstOutputMs: firstOutputAt === undefined || outputDeltaCount < 2
+      ? undefined
+      : firstOutputAt - startedAt,
     outputTokens: usageResult.value?.outputTokens,
   }
 }
@@ -304,7 +308,9 @@ function median(values: readonly number[]): number {
 
 function medianOptional(values: readonly (number | undefined)[]): number | undefined {
   const present = values.filter((value): value is number => value !== undefined)
-  return present.length === 0 ? undefined : median(present)
+  return present.length === 0
+    ? undefined
+    : median(present)
 }
 
 function reportProgress(
@@ -314,7 +320,9 @@ function reportProgress(
   active: ReadonlyMap<number, ModelBenchmarkActive>,
 ): void {
   options.onProgress?.({
-    active: [...active.values()]
+    active: [
+      ...active.values(),
+    ]
       .sort((left, right) => left.modelIndex - right.modelIndex)
       .map(current => ({
         ...current,
@@ -403,7 +411,10 @@ const corpusLines = [
 
 function sampleCorpus(seed: number): string {
   const offset = Math.abs(seed) % corpusLines.length
-  const rotated = [...corpusLines.slice(offset), ...corpusLines.slice(0, offset)].join('\n')
+  const rotated = [
+    ...corpusLines.slice(offset),
+    ...corpusLines.slice(0, offset),
+  ].join('\n')
 
   // Repeat the representative source to cross common prompt-cache minimums; the nonce still makes
   // non-repeat samples unique from their first token while repeat samples remain byte-identical.

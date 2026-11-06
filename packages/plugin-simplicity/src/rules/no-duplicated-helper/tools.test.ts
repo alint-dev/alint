@@ -150,7 +150,10 @@ describe('find_similar', () => {
   })
 
   it('only ranks helpers of the same language', async () => {
-    const output = await call('find_similar', { id: idOf('python/store.py', 'is_missing'), limit: 20 })
+    const output = await call('find_similar', {
+      id: idOf('python/store.py', 'is_missing'),
+      limit: 20,
+    })
 
     expect(output).not.toContain('.ts:')
     expect(output).not.toContain('.go:')

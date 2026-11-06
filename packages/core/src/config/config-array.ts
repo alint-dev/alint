@@ -153,7 +153,10 @@ function expandExtends(
     const childMatcherScopes = itemMatcherScope
       ? [...state.inheritedMatcherScopes, itemMatcherScope]
       : state.inheritedMatcherScopes
-    const plugins = { ...state.plugins, ...item.plugins }
+    const plugins = {
+      ...state.plugins,
+      ...item.plugins,
+    }
 
     for (const extension of item.extends ?? []) {
       if (typeof extension === 'string') {
@@ -314,8 +317,12 @@ function matchesPattern(
     return pattern.every(entry => matchesPattern(filePath, entry, cwd, basePath, matchDirectoryRoot))
   }
 
-  const base = basePath ? resolve(cwd, basePath) : cwd
-  const relativePath = relative(base, isAbsolute(filePath) ? filePath : resolve(cwd, filePath)).replaceAll('\\', '/')
+  const base = basePath
+    ? resolve(cwd, basePath)
+    : cwd
+  const relativePath = relative(base, isAbsolute(filePath)
+    ? filePath
+    : resolve(cwd, filePath)).replaceAll('\\', '/')
 
   if (relativePath === '..' || relativePath.startsWith('../')) {
     return false
@@ -355,7 +362,10 @@ function mergeConfig(config: EffectiveAlintConfig, item: AlintConfigItem): void 
   }
 
   if (item.runner !== undefined) {
-    config.runner = { ...config.runner, ...item.runner }
+    config.runner = {
+      ...config.runner,
+      ...item.runner,
+    }
   }
 }
 
@@ -368,7 +378,9 @@ function normalizeConfigItems(
   }
 
   return input.flatMap(item =>
-    isConfigArrayInput(item) ? normalizeConfigItems(item, [...arrayStack, input]) : [item],
+    isConfigArrayInput(item)
+      ? normalizeConfigItems(item, [...arrayStack, input])
+      : [item],
   )
 }
 

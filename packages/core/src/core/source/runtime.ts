@@ -173,7 +173,9 @@ function inferLanguage(path: string): SourceFile['language'] {
 }
 
 async function readSourceFile(input: BaseSourceFile | string): Promise<SourceFile> {
-  const path = typeof input === 'string' ? input : input.path
+  const path = typeof input === 'string'
+    ? input
+    : input.path
   const file = createSourceFile(path, await readFile(path, 'utf8'))
   if (typeof input !== 'string') {
     if (file.contentHash !== input.contentHash)

@@ -45,7 +45,9 @@ export class ToolBridge {
 
     this.#server = new ProtocolServer(
       { name: 'alint-openai-tools', version: '0.3.2' },
-      { capabilities: { tools: {} } },
+      {
+        capabilities: { tools: {} },
+      },
     )
     this.#transport = new WebStandardStreamableHTTPServerTransport({
       enableJsonResponse: true,
@@ -77,7 +79,9 @@ export class ToolBridge {
 
   config(origin: string): McpServer {
     return {
-      headers: [{ name: 'authorization', value: `Bearer ${this.token}` }],
+      headers: [
+        { name: 'authorization', value: `Bearer ${this.token}` },
+      ],
       name: 'openai-request-tools',
       type: 'http',
       url: new URL(`/_alint/mcp/${this.id}`, origin).href,
@@ -128,10 +132,16 @@ export class ToolBridge {
       this.#deferred.set(id, { reject, resolve })
     })
 
-    this.#onCall({ arguments: JSON.stringify(arguments_), id, name })
+    this.#onCall({
+      arguments: JSON.stringify(arguments_),
+      id,
+      name,
+    })
 
     return {
-      content: [{ text: await content, type: 'text' as const }],
+      content: [
+        { text: await content, type: 'text' as const },
+      ],
     }
   }
 }

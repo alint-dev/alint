@@ -222,7 +222,9 @@ function createFunctionTarget(node: AstNode, state: VisitState): SourceTarget | 
   }
 
   const source = sliceRange(state.file, range)
-  const functionNode = node.type === 'MethodDefinition' ? asAstNode(node.value) : node
+  const functionNode = node.type === 'MethodDefinition'
+    ? asAstNode(node.value)
+    : node
   const name = getNodeName(node) ?? getNodeName(functionNode) ?? state.inferredNames.get(node)
   const exported = isExportedTarget(node, state)
 
@@ -378,7 +380,9 @@ function visit(node: AstNode | AstNode[] | null | undefined, state: VisitState):
   else if (isFunctionNode(node) || node.type === 'MethodDefinition') {
     addFunctionTarget(node, state)
 
-    const methodValue = node.type === 'MethodDefinition' ? asAstNode(node.value) : undefined
+    const methodValue = node.type === 'MethodDefinition'
+      ? asAstNode(node.value)
+      : undefined
 
     if (methodValue) {
       state.seenFunctions.add(methodValue)

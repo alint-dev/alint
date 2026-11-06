@@ -12,7 +12,12 @@ import { pythonSemanticBoundaryPrompt } from './prompt'
 export const pythonSemanticBoundaryFindingSchema = pipe(
   object({
     category: pipe(
-      picklist(['semantic-boundary', 'typed-boundary', 'domain-model', 'testability']),
+      picklist([
+        'semantic-boundary',
+        'typed-boundary',
+        'domain-model',
+        'testability',
+      ]),
       description('Finding category. Use exactly one of semantic-boundary, typed-boundary, domain-model, or testability.'),
     ),
     confidence: pipe(
@@ -131,7 +136,9 @@ export function createPythonSemanticBoundaryMessages(
     {
       content: [
         formatOutputLanguageInstruction(outputLanguage),
-        context ? `Supplemental project context:\n\n${context}` : undefined,
+        context
+          ? `Supplemental project context:\n\n${context}`
+          : undefined,
         `Python code with line numbers:\n\n${formatSourceWithLineNumbers(source)}`,
       ].filter(Boolean).join('\n\n'),
       role: 'user' as const,
@@ -154,7 +161,9 @@ export function reportPythonSemanticBoundaryFindings(
     const evidence = {
       category: finding.category,
       confidence: finding.confidence,
-      ...(finding.relatedDeclarations ? { relatedDeclarations: finding.relatedDeclarations } : {}),
+      ...(finding.relatedDeclarations
+        ? { relatedDeclarations: finding.relatedDeclarations }
+        : {}),
       suggestion: finding.suggestion,
     }
 

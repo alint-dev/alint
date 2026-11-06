@@ -42,7 +42,8 @@ describe('static plugin installation', () => {
     const pack = tar.pack()
     const chunks: Buffer[] = []
 
-    pack.on('data', chunk => chunks.push(Buffer.from(chunk)))
+    // `streamx` types `data` as `unknown`; `tar-stream` packs emit Buffers.
+    pack.on('data', chunk => chunks.push(chunk as Buffer))
 
     for (const [name, content] of Object.entries(entries)) {
       pack.entry({ name }, content)
@@ -90,7 +91,9 @@ describe('static plugin installation', () => {
         versions: {
           '0.3.1': {
             dist: {
-              ...(integrity === null ? {} : { integrity }),
+              ...(integrity === null
+                ? {}
+                : { integrity }),
               tarball: `http://${host}/plugin-python-0.3.1.tgz`,
             },
           },
@@ -197,7 +200,11 @@ local = "../plugins/local-plugin"
     })
     await expect(readFile(join(projectRoot, '.alint', 'plugins', 'lock.json'), 'utf8')).resolves.toContain('"local"')
     await expect(loadAlintConfig(projectRoot, join('configs', 'alint.config.toml'))).resolves.toEqual([
-      { plugins: { local: { rules: {} } } },
+      {
+        plugins: {
+          local: { rules: {} },
+        },
+      },
     ])
   })
 
@@ -214,7 +221,10 @@ export default [{ plugins: {
     const result = await installStaticPlugins({ cwd: projectRoot })
 
     expect(result.installedLocalDirectoryCount).toBe(1)
-    expect(result.lock.plugins.direct).toMatchObject({ path: relative(projectRoot, pluginRoot), type: 'directory' })
+    expect(result.lock.plugins.direct).toMatchObject({
+      path: relative(projectRoot, pluginRoot),
+      type: 'directory',
+    })
     expect(result.lock.plugins.linked).toEqual({
       alias: 'linked',
       path: relative(projectRoot, pluginRoot),
@@ -223,7 +233,12 @@ export default [{ plugins: {
     })
     expect(Object.keys(result.lock.plugins)).toEqual(['direct', 'linked'])
     await expect(loadAlintConfig(projectRoot)).resolves.toEqual([
-      { plugins: { direct: { rules: {} }, linked: { rules: {} } } },
+      {
+        plugins: {
+          direct: { rules: {} },
+          linked: { rules: {} },
+        },
+      },
     ])
   })
 
@@ -259,7 +274,9 @@ export default [
     expect(registry.tarballRequests()).toBe(1)
     expect(Object.keys(result.lock.plugins)).toEqual(['python', 'py'])
     expect(result.lock.plugins.python).toMatchObject({
-      entry: result.lock.plugins.py?.type === 'registry' ? result.lock.plugins.py.entry : undefined,
+      entry: result.lock.plugins.py?.type === 'registry'
+        ? result.lock.plugins.py.entry
+        : undefined,
       type: 'registry',
     })
   })

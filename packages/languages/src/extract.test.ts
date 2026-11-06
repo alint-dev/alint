@@ -161,9 +161,24 @@ describe('python', () => {
 // function to two statements, and hide it from any rule looking for trivial functions.
 describe('a comment is not a statement', () => {
   it.each([
-    [goLanguage, 'f.go', 'func f(e E) int {\n\treturn len(e.Name)\n}', 'func f(e E) int {\n\t// why\n\treturn len(e.Name)\n}'],
-    [rustLanguage, 'f.rs', 'fn f(e: &E) -> usize {\n    e.name.len()\n}', 'fn f(e: &E) -> usize {\n    // why\n    e.name.len()\n}'],
-    [pythonLanguage, 'f.py', 'def f(e):\n    return len(e.name)', 'def f(e):\n    # why\n    return len(e.name)'],
+    [
+      goLanguage,
+      'f.go',
+      'func f(e E) int {\n\treturn len(e.Name)\n}',
+      'func f(e E) int {\n\t// why\n\treturn len(e.Name)\n}',
+    ],
+    [
+      rustLanguage,
+      'f.rs',
+      'fn f(e: &E) -> usize {\n    e.name.len()\n}',
+      'fn f(e: &E) -> usize {\n    // why\n    e.name.len()\n}',
+    ],
+    [
+      pythonLanguage,
+      'f.py',
+      'def f(e):\n    return len(e.name)',
+      'def f(e):\n    # why\n    return len(e.name)',
+    ],
   ] as const)('does not count a comment in a $0.name body', async (language, path, plain, commented) => {
     const [bare] = functionsOf(await targetsOf(language, `/repo/${path}`, plain))
     const [documented] = functionsOf(await targetsOf(language, `/repo/${path}`, commented))

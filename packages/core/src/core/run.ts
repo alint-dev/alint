@@ -65,15 +65,24 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
   const prepareStartedAt = clock()
   options.progress?.onPrepareStart?.({ startedAt: prepareStartedAt })
   const preparation = prepareRun(options)
-  options.progress?.onPrepareEnd?.({ endedAt: clock(), filesTotal: preparation.files.length, startedAt: prepareStartedAt })
+  options.progress?.onPrepareEnd?.({
+    endedAt: clock(),
+    filesTotal: preparation.files.length,
+    startedAt: prepareStartedAt,
+  })
 
   const runProgress = createRunProgress(preparation.files.length)
   const runStartedAt = clock()
-  options.progress?.onExecuteStart?.({ progress: runProgress.snapshot(), startedAt: runStartedAt })
+  options.progress?.onExecuteStart?.({
+    progress: runProgress.snapshot(),
+    startedAt: runStartedAt,
+  })
   const cwd = options.cwd ?? processCwd()
   const config = options.config ?? []
   const setupConfig: SetupConfig = options.setupConfig ?? { providers: [], version: 1 }
-  const src = createSourceRuntime({ extract: createSourceExtractor(cwd, config, () => src) })
+  const src = createSourceRuntime({
+    extract: createSourceExtractor(cwd, config, () => src),
+  })
   const normalizedCacheConfig = normalizeRunnerCacheConfig(options.runner?.cache, cwd)
   const cacheStore = await createCacheStore({
     cwd,
@@ -83,7 +92,9 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
   })
   const cacheContext: CacheRunContext = {
     modelHash: stableHash({
-      defaultModel: options.modelOverride === undefined ? options.defaultModel : undefined,
+      defaultModel: options.modelOverride === undefined
+        ? options.defaultModel
+        : undefined,
       modelOverride: options.modelOverride,
       outputLanguage: options.outputLanguage,
       setupConfig,
@@ -123,7 +134,9 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
   let admissionFailed = false
 
   try {
-    const projectRuntimes = preparation.project ? createRuntimes(preparation.project) : []
+    const projectRuntimes = preparation.project
+      ? createRuntimes(preparation.project)
+      : []
     const projectBuilder = preparation.project && projectRuntimes.some(runtime => runtime.handlers.onTargetWith || runtime.handlers.onTargetProject)
       ? new ProjectIndexBuilder(preparation.project.root)
       : undefined
@@ -166,7 +179,9 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
         const projectOwner = project.owner
         const batch = scheduler.schedule(project.jobs)
         pendingOutcomes.push(batch.outcomes.then((settled) => {
-          projectOwner?.commit({ mode: options.signal?.aborted ? 'merge' : 'replace' })
+          projectOwner?.commit({
+            mode: options.signal?.aborted ? 'merge' : 'replace',
+          })
           return settled
         }))
       }
@@ -213,7 +228,9 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
     throw infrastructureError
 
   outcomes.sort((left, right) => compareJobOrder(left.orderKey, right.orderKey))
-  const ruleFailures = outcomes.flatMap(outcome => outcome.state === 'failed' ? [outcome.failure] : [])
+  const ruleFailures = outcomes.flatMap(outcome => outcome.state === 'failed'
+    ? [outcome.failure]
+    : [])
   const failures: AlintRunFailure[] = [
     ...fileFailures.sort((left, right) => left.file.index - right.file.index),
     ...ruleFailures,
@@ -230,7 +247,10 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
     usage: runUsage(outcomes),
   }
 
-  options.progress?.onExecuteEnd?.({ endedAt: clock(), progress: runProgress.snapshot() })
+  options.progress?.onExecuteEnd?.({
+    endedAt: clock(),
+    progress: runProgress.snapshot(),
+  })
   options.progress?.onRunEnd?.({
     diagnostics: snapshotDiagnostics(result.diagnostics),
     endedAt: clock(),
@@ -249,8 +269,12 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
   if (failures.length > 0) {
     const hasFileFailure = fileFailures.length > 0
     const message = hasFileFailure
-      ? `${failures.length} alint execution${failures.length === 1 ? '' : 's'} failed.`
-      : `${failures.length} rule execution${failures.length === 1 ? '' : 's'} failed.`
+      ? `${failures.length} alint execution${failures.length === 1
+        ? ''
+        : 's'} failed.`
+      : `${failures.length} rule execution${failures.length === 1
+        ? ''
+        : 's'} failed.`
     throw new AlintRunError(message, result, {
       cause: new AggregateError(failures.map(failure => new Error(failure.message)), 'Alint execution failures.'),
       failures,
@@ -261,7 +285,16 @@ export async function runAlint(options: RunOptions = {}): Promise<RunResult> {
 }
 
 function executionCounts(outcomes: RuleJobOutcome[]): RunResult['execution'] {
-  const counts: RunResult['execution'] = { cached: 0, cancelled: 0, completed: 0, failed: 0, planned: outcomes.length, queued: 0, running: 0, skipped: 0 }
+  const counts: RunResult['execution'] = {
+    cached: 0,
+    cancelled: 0,
+    completed: 0,
+    failed: 0,
+    planned: outcomes.length,
+    queued: 0,
+    running: 0,
+    skipped: 0,
+  }
   for (const outcome of outcomes)
     counts[outcome.state] += 1
   return counts
@@ -270,15 +303,32 @@ function executionCounts(outcomes: RuleJobOutcome[]): RunResult['execution'] {
 function runUsage(outcomes: RuleJobOutcome[]): RunUsage {
   const live: InferenceUsageRecord[] = []
   const cached: InferenceUsageRecord[] = []
-  for (const outcome of outcomes)
-    (outcome.state === 'cached' ? cached : live).push(...outcome.usage)
-  return { ...usageTotals(live), ...(cached.length > 0 ? { cached: usageTotals(cached) } : {}) }
+  for (const outcome of outcomes) {
+    (outcome.state === 'cached'
+      ? cached
+      : live).push(...outcome.usage)
+  }
+  return {
+    ...usageTotals(live),
+    ...(cached.length > 0
+      ? {
+          cached: usageTotals(cached),
+        }
+      : {}),
+  }
 }
 
 function snapshotRunUsage(usage: RunUsage): RunUsage {
   return {
     ...usage,
-    ...(usage.cached ? { cached: { ...usage.cached, records: snapshotUsageRecords(usage.cached.records) } } : {}),
+    ...(usage.cached
+      ? {
+          cached: {
+            ...usage.cached,
+            records: snapshotUsageRecords(usage.cached.records),
+          },
+        }
+      : {}),
     records: snapshotUsageRecords(usage.records),
   }
 }
@@ -295,5 +345,10 @@ function usageTotals(records: InferenceUsageRecord[]): RunUsageTotals {
     if (record.totalTokens != null && Number.isFinite(record.totalTokens))
       totalTokens += record.totalTokens
   }
-  return { inputTokens, outputTokens, records: [...records], totalTokens }
+  return {
+    inputTokens,
+    outputTokens,
+    records: [...records],
+    totalTokens,
+  }
 }

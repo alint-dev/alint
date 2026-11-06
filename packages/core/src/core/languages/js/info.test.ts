@@ -71,7 +71,13 @@ describe('function info', () => {
     // `Error` is renameable-shaped and simply never renamed: it is not a name this function
     // declares, so it is not in `declaredNames` and survives the fingerprint verbatim.
     expect(renameableIn('function isNodeError(error: unknown): error is NodeJS.ErrnoException {\n  return error instanceof Error\n}', 'isNodeError'))
-      .toStrictEqual(['isNodeError', 'error', 'error', 'error', 'Error'])
+      .toStrictEqual([
+        'isNodeError',
+        'error',
+        'error',
+        'error',
+        'Error',
+      ])
   })
 
   // In `const { title } = doc` one token is both the property read and the local declared. Filing it

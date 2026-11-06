@@ -103,7 +103,15 @@ export function mergeSetupConfigs(...configs: SetupConfig[]): SetupConfig {
 
 function cloneModel(model: ModelConfig): ModelConfig {
   const clonedModel: ModelConfig = isAcpModel(model)
-    ? { ...model, args: model.args ? [...model.args] : undefined, env: model.env ? { ...model.env } : undefined }
+    ? {
+        ...model,
+        args: model.args
+          ? [...model.args]
+          : undefined,
+        env: model.env
+          ? { ...model.env }
+          : undefined,
+      }
     : { ...model }
 
   if (model.aliases !== undefined) {

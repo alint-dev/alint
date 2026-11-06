@@ -11,9 +11,13 @@ describe('cliIo', () => {
     const stream = new PassThrough()
     const io: CliIo = {
       cwd: '/tmp',
-      stderr: { write: () => true },
+      stderr: {
+        write: () => true,
+      },
       stdin: stream,
-      stdout: { write: () => true },
+      stdout: {
+        write: () => true,
+      },
     }
     io.stdin?.setEncoding('utf8')
 

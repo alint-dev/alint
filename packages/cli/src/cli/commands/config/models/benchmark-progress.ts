@@ -134,9 +134,15 @@ function patchSuffix(
   suffix: string,
 ): void {
   const rowsUp = rowCount - rowIndex - 1
-  const moveUp = rowsUp === 0 ? '' : `\x1B[${rowsUp}A`
-  const moveDown = rowsUp === 0 ? '' : `\x1B[${rowsUp}B`
-  const moveRight = column === 0 ? '' : `\x1B[${column}C`
+  const moveUp = rowsUp === 0
+    ? ''
+    : `\x1B[${rowsUp}A`
+  const moveDown = rowsUp === 0
+    ? ''
+    : `\x1B[${rowsUp}B`
+  const moveRight = column === 0
+    ? ''
+    : `\x1B[${column}C`
 
   // Every patch returns to column zero on the bottom row, making subsequent updates position-independent.
   output.write(`\r${moveUp}${moveRight}\x1B[K${suffix}\r${moveDown}`)

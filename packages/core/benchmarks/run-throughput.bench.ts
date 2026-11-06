@@ -14,15 +14,21 @@ const semanticFixtures = Array.from({ length: 120 }, (_, fileIndex) => ({
   text: Array.from({ length: 80 }, (_, targetIndex) => `/* TARGET ${targetIndex} */\nvalue-${fileIndex}-${targetIndex}\n`).join(''),
 }))
 const fileRule = defineRule({
-  create: () => ({ onTargetFile: () => {} }),
+  create: () => ({
+    onTargetFile: () => {},
+  }),
 })
 const functionRule = defineRule({
   cache: true,
-  create: () => ({ onTargetFunction: () => {} }),
+  create: () => ({
+    onTargetFunction: () => {},
+  }),
 })
 let projectCalls = 0
 const projectRule = defineRule({
-  create: () => ({ onTargetProject: () => { projectCalls += 1 } }),
+  create: () => ({
+    onTargetProject: () => { projectCalls += 1 },
+  }),
 })
 const plugin = definePlugin({
   languages: {
@@ -62,12 +68,24 @@ const baseConfig = {
   plugins: { benchmark: plugin },
 }
 const fileConfig = defineConfig([
-  { ...baseConfig, rules: { 'benchmark/file': 'warn' } },
-  { files: ['**/*.ts'], language: 'plaintext' },
+  {
+    ...baseConfig,
+    rules: { 'benchmark/file': 'warn' },
+  },
+  {
+    files: ['**/*.ts'],
+    language: 'plaintext',
+  },
 ])
 const oneFunctionConfig = defineConfig([
-  { ...baseConfig, rules: { 'benchmark/first': 'warn' } },
-  { files: ['**/*.mock'], language: 'benchmark/mock' },
+  {
+    ...baseConfig,
+    rules: { 'benchmark/first': 'warn' },
+  },
+  {
+    files: ['**/*.mock'],
+    language: 'benchmark/mock',
+  },
 ])
 const fourFunctionConfig = defineConfig([
   {
@@ -79,11 +97,20 @@ const fourFunctionConfig = defineConfig([
       'benchmark/third': 'warn',
     },
   },
-  { files: ['**/*.mock'], language: 'benchmark/mock' },
+  {
+    files: ['**/*.mock'],
+    language: 'benchmark/mock',
+  },
 ])
 const projectConfig = defineConfig([
-  { ...baseConfig, rules: { 'benchmark/project': 'warn' } },
-  { files: ['**/*.mock'], language: 'benchmark/mock' },
+  {
+    ...baseConfig,
+    rules: { 'benchmark/project': 'warn' },
+  },
+  {
+    files: ['**/*.mock'],
+    language: 'benchmark/mock',
+  },
 ])
 
 let root: string
@@ -94,7 +121,10 @@ beforeAll(async () => {
   root = await mkdtemp(join(tmpdir(), 'alint-run-throughput-'))
   await mkdir(join(root, 'src'))
   await mkdir(join(root, 'semantic'))
-  await Promise.all([...smallFixtures, ...semanticFixtures].map(fixture =>
+  await Promise.all([
+    ...smallFixtures,
+    ...semanticFixtures,
+  ].map(fixture =>
     writeFile(join(root, fixture.path), fixture.text),
   ))
   smallFiles = smallFixtures.map(fixture => join(root, fixture.path))

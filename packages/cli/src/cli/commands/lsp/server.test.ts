@@ -51,7 +51,11 @@ describe('startLspServer', () => {
     const client = createTestClient()
 
     void startLspServer(client.io)
-    client.send({ id: 1, method: 'initialize', params: initializeParams() })
+    client.send({
+      id: 1,
+      method: 'initialize',
+      params: initializeParams(),
+    })
 
     const response = await client.receive()
 
@@ -69,17 +73,27 @@ describe('startLspServer', () => {
   it('publishes cached diagnostics for every workspace folder file once initialized', async () => {
     const { configHome, cwd } = await writeWorkspaceFixture()
     const client = createTestClient({ ...process.env, XDG_CONFIG_HOME: configHome })
-    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([{
-      filePath: join(cwd, 'date.ts'),
-      loc: { start: { column: 2, line: 4 } },
-      message: 'helper is duplicated',
-      ruleId: 'js/no-duplicated-helper',
-      severity: 'warn',
-    }]))
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
+      {
+        filePath: join(cwd, 'date.ts'),
+        loc: {
+          start: { column: 2, line: 4 },
+        },
+        message: 'helper is duplicated',
+        ruleId: 'js/no-duplicated-helper',
+        severity: 'warn',
+      },
+    ]))
 
     try {
       void startLspServer(client.io)
-      client.send({ id: 1, method: 'initialize', params: initializeParams([pathToFileURL(cwd).toString()]) })
+      client.send({
+        id: 1,
+        method: 'initialize',
+        params: initializeParams([
+          pathToFileURL(cwd).toString(),
+        ]),
+      })
       await client.receive()
 
       // The server sends no notification before this.
@@ -104,17 +118,25 @@ describe('startLspServer', () => {
     const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
     const client = createTestClient({ ...process.env, XDG_CONFIG_HOME: configHome })
     const runAlint = vi.spyOn(alintCore, 'runAlint')
-      .mockResolvedValueOnce(runResultWith([{
-        filePath: join(cwd, 'date.ts'),
-        message: 'stale after the checkout',
-        ruleId: 'js/no-duplicated-helper',
-        severity: 'warn',
-      }]))
+      .mockResolvedValueOnce(runResultWith([
+        {
+          filePath: join(cwd, 'date.ts'),
+          message: 'stale after the checkout',
+          ruleId: 'js/no-duplicated-helper',
+          severity: 'warn',
+        },
+      ]))
       .mockResolvedValue(runResultWith([]))
 
     try {
       void startLspServer(client.io)
-      client.send({ id: 1, method: 'initialize', params: initializeParams([pathToFileURL(cwd).toString()]) })
+      client.send({
+        id: 1,
+        method: 'initialize',
+        params: initializeParams([
+          pathToFileURL(cwd).toString(),
+        ]),
+      })
       await client.receive()
       client.send({ method: 'initialized', params: {} })
       await client.receive()
@@ -122,7 +144,11 @@ describe('startLspServer', () => {
       // Type 2 is FileChangeType.Changed.
       client.send({
         method: 'workspace/didChangeWatchedFiles',
-        params: { changes: [{ type: 2, uri: dateUri }] },
+        params: {
+          changes: [
+            { type: 2, uri: dateUri },
+          ],
+        },
       })
 
       const published = await client.receive()
@@ -130,7 +156,9 @@ describe('startLspServer', () => {
       expect(published.method).toBe('textDocument/publishDiagnostics')
       expect(published.params?.uri).toBe(dateUri)
       expect(published.params?.diagnostics).toEqual([])
-      expect(runAlint.mock.calls[1]?.[0]?.files).toEqual([join(await realpath(cwd), 'date.ts')])
+      expect(runAlint.mock.calls[1]?.[0]?.files).toEqual([
+        join(await realpath(cwd), 'date.ts'),
+      ])
       expect(client.stdoutText()).not.toContain('Configuration changed')
     }
     finally {
@@ -143,19 +171,24 @@ describe('startLspServer', () => {
     const first = await writeWorkspaceFixture()
     const second = await writeWorkspaceFixture()
     const client = createTestClient({ ...process.env, XDG_CONFIG_HOME: first.configHome })
-    const runAlint = vi.spyOn(alintCore, 'runAlint').mockImplementation(async options => runResultWith([{
-      filePath: join(options?.cwd ?? '', 'date.ts'),
-      message: 'cached',
-      ruleId: 'js/no-duplicated-helper',
-      severity: 'warn',
-    }]))
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockImplementation(async options => runResultWith([
+      {
+        filePath: join(options?.cwd ?? '', 'date.ts'),
+        message: 'cached',
+        ruleId: 'js/no-duplicated-helper',
+        severity: 'warn',
+      },
+    ]))
 
     try {
       void startLspServer(client.io)
       client.send({
         id: 1,
         method: 'initialize',
-        params: initializeParams([pathToFileURL(first.cwd).toString(), pathToFileURL(second.cwd).toString()]),
+        params: initializeParams([
+          pathToFileURL(first.cwd).toString(),
+          pathToFileURL(second.cwd).toString(),
+        ]),
       })
       await client.receive()
       client.send({ method: 'initialized', params: {} })
@@ -168,7 +201,14 @@ describe('startLspServer', () => {
 
       client.send({
         method: 'workspace/didChangeWatchedFiles',
-        params: { changes: [{ type: 2, uri: pathToFileURL(join(first.cwd, 'alint.config.ts')).toString() }] },
+        params: {
+          changes: [
+            {
+              type: 2,
+              uri: pathToFileURL(join(first.cwd, 'alint.config.ts')).toString(),
+            },
+          ],
+        },
       })
 
       let message = await client.receive()
@@ -188,15 +228,20 @@ describe('startLspServer', () => {
 
   it('opens a folder the client adds and clears a folder it removes', async () => {
     const { configHome, cwd } = await writeWorkspaceFixture()
-    const folder = { name: 'fixture', uri: pathToFileURL(cwd).toString() }
+    const folder = {
+      name: 'fixture',
+      uri: pathToFileURL(cwd).toString(),
+    }
     const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
     const client = createTestClient({ ...process.env, XDG_CONFIG_HOME: configHome })
-    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([{
-      filePath: join(cwd, 'date.ts'),
-      message: 'helper is duplicated',
-      ruleId: 'js/no-duplicated-helper',
-      severity: 'warn',
-    }]))
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
+      {
+        filePath: join(cwd, 'date.ts'),
+        message: 'helper is duplicated',
+        ruleId: 'js/no-duplicated-helper',
+        severity: 'warn',
+      },
+    ]))
 
     try {
       void startLspServer(client.io)
@@ -204,14 +249,21 @@ describe('startLspServer', () => {
         id: 1,
         method: 'initialize',
         // The server receives folder changes only from a client that declares this capability.
-        params: initializeParams([], { workspace: { workspaceFolders: true } }),
+        params: initializeParams([], {
+          workspace: { workspaceFolders: true },
+        }),
       })
       await client.receive()
       client.send({ method: 'initialized', params: {} })
 
       client.send({
         method: 'workspace/didChangeWorkspaceFolders',
-        params: { event: { added: [folder], removed: [] } },
+        params: {
+          event: {
+            added: [folder],
+            removed: [],
+          },
+        },
       })
 
       const opened = await client.receive()
@@ -221,7 +273,12 @@ describe('startLspServer', () => {
 
       client.send({
         method: 'workspace/didChangeWorkspaceFolders',
-        params: { event: { added: [], removed: [folder] } },
+        params: {
+          event: {
+            added: [],
+            removed: [folder],
+          },
+        },
       })
 
       // The editor keeps a published list until the server replaces it.
@@ -254,7 +311,11 @@ describe('alint lsp', () => {
 
     try {
       void executeCli(['node', 'alint', 'lsp', '--stdio'], client.io)
-      client.send({ id: 1, method: 'initialize', params: initializeParams() })
+      client.send({
+        id: 1,
+        method: 'initialize',
+        params: initializeParams(),
+      })
       await client.receive()
 
       globalThis.console.log('rule noise')

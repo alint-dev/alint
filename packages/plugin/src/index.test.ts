@@ -12,9 +12,18 @@ describe('@alint-js/plugin helpers', () => {
   })
 
   it('returns plugin DSL objects unchanged', () => {
-    const rule = defineRule({ create: () => ({}) })
-    const plugin = definePlugin({ rules: { demo: rule } })
-    const input = [{ plugins: { demo: plugin }, rules: { 'demo/demo': 'warn' } }] as const
+    const rule = defineRule({
+      create: () => ({}),
+    })
+    const plugin = definePlugin({
+      rules: { demo: rule },
+    })
+    const input = [
+      {
+        plugins: { demo: plugin },
+        rules: { 'demo/demo': 'warn' },
+      },
+    ] as const
     const config = defineConfig(input)
 
     expect(plugin.rules?.demo).toBe(rule)
@@ -43,8 +52,20 @@ describe('@alint-js/plugin helpers', () => {
         }),
       ],
     })
-    const plugin = definePlugin({ rules: { review: rule } })
-    const input = [{ plugins: { demo: plugin }, rules: { 'demo/review': ['warn', { maxLines: 20 }] } }] as const
+    const plugin = definePlugin({
+      rules: { review: rule },
+    })
+    const input = [
+      {
+        plugins: { demo: plugin },
+        rules: {
+          'demo/review': [
+            'warn',
+            { maxLines: 20 },
+          ],
+        },
+      },
+    ] as const
     const config = defineConfig(input)
 
     defineConfig([
@@ -52,7 +73,10 @@ describe('@alint-js/plugin helpers', () => {
         plugins: { demo: plugin },
         rules: {
           // @ts-expect-error maxLines must be a number.
-          'demo/review': ['warn', { maxLines: 'twenty' }],
+          'demo/review': [
+            'warn',
+            { maxLines: 'twenty' },
+          ],
         },
       },
     ])

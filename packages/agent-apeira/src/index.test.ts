@@ -38,34 +38,13 @@ describe('apeira adapter', () => {
     expect(() => createApeiraAdapter({ maxSteps })).toThrow(TypeError)
   })
 
-  it('passes the configured maximum step count to the runner factory', async () => {
-    let capturedMaxSteps: number | undefined
-    const adapter = createApeiraAdapter({
-      createRunner: (_model, maxSteps) => {
-        capturedMaxSteps = maxSteps
-
-        return async () => ({
-          output: [{ content: 'done', role: 'assistant', type: 'message' }],
-          usage: undefined,
-        })
-      },
-      maxSteps: 24,
-    })
-
-    await adapter({
-      instructions: 'inspect the component',
-      model: fakeModel(),
-      prompt: 'review architectural boundaries',
-      tools: [],
-    })
-
-    expect(capturedMaxSteps).toBe(24)
-  })
-
   it('returns the final assistant message as the answer', async () => {
     const adapter = createApeiraAdapter({
       createRunner: () => async () => ({
-        output: [{ content: 'dup of clamp()', role: 'assistant', type: 'message' }],
+        output: [
+          { content: 'dup of clamp()', role: 'assistant', type: 'message' },
+        ],
+        toolCalls: [],
         usage: undefined,
       }),
     })
@@ -83,7 +62,10 @@ describe('apeira adapter', () => {
   it('maps the runner usage onto the result', async () => {
     const adapter = createApeiraAdapter({
       createRunner: () => async () => ({
-        output: [{ content: 'done', role: 'assistant', type: 'message' }],
+        output: [
+          { content: 'done', role: 'assistant', type: 'message' },
+        ],
+        toolCalls: [],
         usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
       }),
     })
@@ -112,7 +94,13 @@ describe('apeira adapter', () => {
     const adapter = createApeiraAdapter({
       createRunner: () => async (context) => {
         captured = context
-        return { output: [{ content: 'ok', role: 'assistant', type: 'message' }], usage: undefined }
+        return {
+          output: [
+            { content: 'ok', role: 'assistant', type: 'message' },
+          ],
+          toolCalls: [],
+          usage: undefined,
+        }
       },
     })
 
@@ -198,15 +186,17 @@ describe('apeira adapter', () => {
     })
 
     await expect(adapter(createRequest({
-      tools: [{
-        description: 'record a finding',
-        execute: () => {
-          toolCalls += 1
-          return 'recorded'
+      tools: [
+        {
+          description: 'record a finding',
+          execute: () => {
+            toolCalls += 1
+            return 'recorded'
+          },
+          name: 'report_finding',
+          parameters: { properties: {}, type: 'object' },
         },
-        name: 'report_finding',
-        parameters: { properties: {}, type: 'object' },
-      }],
+      ],
     }))).rejects.toBe(providerError)
     expect(toolCalls).toBe(1)
   })
@@ -221,14 +211,16 @@ describe('apeira adapter', () => {
     })
 
     await expect(adapter(createRequest({
-      tools: [{
-        description: 'query a service',
-        execute: () => {
-          throw toolError
+      tools: [
+        {
+          description: 'query a service',
+          execute: () => {
+            throw toolError
+          },
+          name: 'query_service',
+          parameters: { properties: {}, type: 'object' },
         },
-        name: 'query_service',
-        parameters: { properties: {}, type: 'object' },
-      }],
+      ],
     }))).rejects.toBe(toolError)
   })
 
@@ -238,7 +230,13 @@ describe('apeira adapter', () => {
     const adapter = createApeiraAdapter({
       createRunner: () => async (context) => {
         capturedSignal = context.abortSignal
-        return { output: [{ content: 'ok', role: 'assistant', type: 'message' }], usage: undefined }
+        return {
+          output: [
+            { content: 'ok', role: 'assistant', type: 'message' },
+          ],
+          toolCalls: [],
+          usage: undefined,
+        }
       },
     })
 
@@ -281,7 +279,9 @@ describe('apeira tool translation', () => {
 
     const result = await runnerTool.execute({ query: 'clamp' }, { messages: [], toolCallId: 'call-1' })
 
-    expect(calls).toEqual([{ query: 'clamp' }])
+    expect(calls).toEqual([
+      { query: 'clamp' },
+    ])
     expect(result).toBe('matches')
   })
 

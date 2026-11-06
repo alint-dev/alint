@@ -13,7 +13,9 @@ import { alphaFingerprint, exactFingerprint } from './fingerprint'
 async function fingerprintsOf(source: string, name?: string) {
   const targets = extractJsSourceTargets(createSourceFile('/fixture.ts', source))
     .filter(candidate => candidate.kind === 'function')
-  const target = name === undefined ? targets.at(0) : targets.find(candidate => candidate.name === name)
+  const target = name === undefined
+    ? targets.at(0)
+    : targets.find(candidate => candidate.name === name)
   if (target === undefined)
     throw new Error(`fixture has no function named ${name ?? '(first)'}`)
 

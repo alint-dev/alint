@@ -41,7 +41,12 @@ describe('createTools', () => {
   it('exposes the four filesystem tools', () => {
     const names = createTools('/repo').map(tool => tool.name)
 
-    expect(names).toEqual(['read_file', 'list_files', 'search_files', 'search_in_files'])
+    expect(names).toEqual([
+      'read_file',
+      'list_files',
+      'search_files',
+      'search_in_files',
+    ])
   })
 
   it('uses strict-provider-compatible parameter schemas', () => {
@@ -75,7 +80,9 @@ describe('createTools', () => {
   it('extends the builtins by spreading DEFAULT_IGNORE_PATTERNS', async () => {
     const { cwd } = await createProject()
 
-    const listed = String(await toolNamed(cwd, 'list_files', { ignore: [...DEFAULT_IGNORE_PATTERNS, '**/.venv/**'] }).execute({ patterns: '**/*.txt' }))
+    const listed = String(await toolNamed(cwd, 'list_files', {
+      ignore: [...DEFAULT_IGNORE_PATTERNS, '**/.venv/**'],
+    }).execute({ patterns: '**/*.txt' }))
 
     expect(listed).toContain('src/alpha/keep.txt')
     expect(listed).not.toContain('vendor/generated/ignored.txt') // still ignored via the spread base
@@ -85,7 +92,9 @@ describe('createTools', () => {
   it('replaces the builtins when ignore is passed without them', async () => {
     const { cwd } = await createProject()
 
-    const listed = String(await toolNamed(cwd, 'list_files', { ignore: ['**/.venv/**'] }).execute({ patterns: '**/*.txt' }))
+    const listed = String(await toolNamed(cwd, 'list_files', {
+      ignore: ['**/.venv/**'],
+    }).execute({ patterns: '**/*.txt' }))
 
     expect(listed).not.toContain('.venv/lib.txt') // the only pattern we passed
     // The base is fully replaced, so vendor is no longer ignored.

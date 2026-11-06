@@ -41,14 +41,17 @@ describe('plugin package resolution', () => {
   async function tarball(entries: Record<string, string>): Promise<Buffer> {
     const pack = tar.pack()
     const chunks: Buffer[] = []
-    pack.on('data', chunk => chunks.push(Buffer.from(chunk)))
+    // `streamx` types `data` as `unknown`; `tar-stream` packs emit Buffers.
+    pack.on('data', chunk => chunks.push(chunk as Buffer))
     for (const [name, content] of Object.entries(entries)) pack.entry({ name }, content)
     pack.finalize()
     await new Promise<void>((done, reject) => {
       pack.on('end', done)
       pack.on('error', reject)
     })
-    return new Promise((done, reject) => gzip(Buffer.concat(chunks), (error, value) => error ? reject(error) : done(value)))
+    return new Promise((done, reject) => gzip(Buffer.concat(chunks), (error, value) => error
+      ? reject(error)
+      : done(value)))
   }
 
   function integrity(value: Buffer, algorithm = 'sha512'): string {
@@ -61,7 +64,18 @@ describe('plugin package resolution', () => {
     app.get('/@alint-js%2fplugin-python', defineEventHandler((event) => {
       const host = event.req.headers.get('host')!
       setResponseHeader(event, 'content-type', 'application/json')
-      return { versions: { '0.3.1': { dist: { ...(digest === null ? {} : { integrity: digest }), tarball: `http://${host}/plugin.tgz` } } } }
+      return {
+        versions: {
+          '0.3.1': {
+            dist: {
+              ...(digest === null
+                ? {}
+                : { integrity: digest }),
+              tarball: `http://${host}/plugin.tgz`,
+            },
+          },
+        },
+      }
     }))
     app.get('/plugin.tgz', defineEventHandler((event) => {
       requests += 1
@@ -73,7 +87,11 @@ describe('plugin package resolution', () => {
       return 'not found'
     }))
     const server = await serve(app, { hostname: '127.0.0.1', port: 0, silent: true }).ready()
-    const result = { close: () => server.close(true), registry: server.url!, tarballRequests: () => requests }
+    const result = {
+      close: () => server.close(true),
+      registry: server.url!,
+      tarballRequests: () => requests,
+    }
     servers.push(result)
     return result
   }
@@ -81,7 +99,12 @@ describe('plugin package resolution', () => {
   async function pluginTarball(): Promise<Buffer> {
     return tarball({
       'package/dist/index.mjs': 'export default { rules: {} }\n',
-      'package/package.json': JSON.stringify({ exports: { '.': './dist/index.mjs' }, name: '@alint-js/plugin-python', type: 'module', version: '0.3.1' }),
+      'package/package.json': JSON.stringify({
+        exports: { '.': './dist/index.mjs' },
+        name: '@alint-js/plugin-python',
+        type: 'module',
+        version: '0.3.1',
+      }),
     })
   }
 
@@ -127,7 +150,11 @@ describe('plugin package resolution', () => {
   }
 
   async function installFrom(projectRoot: string, registry: string) {
-    return install({ cwd: projectRoot, npmRegistry: registry, specifier: registrySpecifier() })
+    return install({
+      cwd: projectRoot,
+      npmRegistry: registry,
+      specifier: registrySpecifier(),
+    })
   }
 
   it('downloads, extracts, and resolves the registry package root export', async () => {

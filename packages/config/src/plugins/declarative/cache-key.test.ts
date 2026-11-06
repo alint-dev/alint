@@ -77,23 +77,35 @@ describe('declarative rule cache key', () => {
       },
     ]
 
-    generateStructuredMock.mockResolvedValue({ findings: [{ line: 1, message: 'first instruction finding' }] })
+    generateStructuredMock.mockResolvedValue({
+      findings: [
+        { line: 1, message: 'first instruction finding' },
+      ],
+    })
 
     const first = await runAlint({
       config: createConfig('Report the first problem.'),
       cwd: root,
       files: [targetPath],
-      runner: { cache: { location: cacheLocation } },
+      runner: {
+        cache: { location: cacheLocation },
+      },
       setupConfig: createSetupConfig(),
     })
 
-    generateStructuredMock.mockResolvedValue({ findings: [{ line: 1, message: 'second instruction finding' }] })
+    generateStructuredMock.mockResolvedValue({
+      findings: [
+        { line: 1, message: 'second instruction finding' },
+      ],
+    })
 
     const second = await runAlint({
       config: createConfig('Report a completely different problem.'),
       cwd: root,
       files: [targetPath],
-      runner: { cache: { location: cacheLocation } },
+      runner: {
+        cache: { location: cacheLocation },
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -110,7 +122,11 @@ describe('declarative rule cache key', () => {
     const ruleFilePath = join(root, 'rules', 'rule.alint.toml')
 
     await writeFile(targetPath, 'hello\n')
-    generateStructuredMock.mockResolvedValue({ findings: [{ line: 1, message: 'stable finding' }] })
+    generateStructuredMock.mockResolvedValue({
+      findings: [
+        { line: 1, message: 'stable finding' },
+      ],
+    })
 
     const config: AlintConfig = [
       {
@@ -139,7 +155,9 @@ describe('declarative rule cache key', () => {
       config,
       cwd: root,
       files: [targetPath],
-      runner: { cache: { location: cacheLocation } },
+      runner: {
+        cache: { location: cacheLocation },
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -176,10 +194,14 @@ describe('createDeclarativeCacheKey', () => {
   it('changes when the reviewed file scope changes', () => {
     expect(createDeclarativeCacheKey(createRule()))
       .not
-      .toEqual(createDeclarativeCacheKey(createRule({ excludeFiles: ['**/*.test.ts'] })))
+      .toEqual(createDeclarativeCacheKey(createRule({
+        excludeFiles: ['**/*.test.ts'],
+      })))
     expect(createDeclarativeCacheKey(createRule()))
       .not
-      .toEqual(createDeclarativeCacheKey(createRule({ includeFiles: ['src/**/*.ts'] })))
+      .toEqual(createDeclarativeCacheKey(createRule({
+        includeFiles: ['src/**/*.ts'],
+      })))
   })
 
   it('ignores inputs that cannot change the findings', () => {

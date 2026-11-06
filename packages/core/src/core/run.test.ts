@@ -32,7 +32,9 @@ async function waitForCacheBody(
   return vi.waitUntil(async () => {
     try {
       const body = await readCacheBody(path)
-      return ready(body) ? body : false
+      return ready(body)
+        ? body
+        : false
     }
     catch (error) {
       if (error instanceof Error && 'code' in error && error.code === 'ENOENT')
@@ -73,12 +75,20 @@ describe('runAlint', () => {
   }
 
   it('validates rule timeout before planning an empty run', async () => {
-    await expect(runAlint({ runner: { timeoutMs: 0 } }))
+    await expect(runAlint({
+      runner: { timeoutMs: 0 },
+    }))
       .rejects
       .toThrow(new TypeError('Rule execution timeout must be a finite positive integer.'))
   })
 
-  it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+  it.each([
+    0,
+    -1,
+    1.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+  ])(
     'rejects invalid rule concurrency %s before planning a zero-job run',
     async (ruleConcurrency) => {
       const events: string[] = []
@@ -110,8 +120,13 @@ describe('runAlint', () => {
 
     await expect(runAlint({
       config: defineConfig([
-        { plugins: { company: plugin } },
-        { files: ['later.custom'], language: 'unknown' },
+        {
+          plugins: { company: plugin },
+        },
+        {
+          files: ['later.custom'],
+          language: 'unknown',
+        },
       ]),
       cwd: '/repo',
       files: ['missing.custom', 'later.custom'],
@@ -180,7 +195,15 @@ describe('runAlint', () => {
           extract: (file) => {
             if (file.text === 'bad')
               throw new Error('custom extraction failed')
-            return [{ file, identity: 'file', kind: 'file', language: 'custom', text: file.text }]
+            return [
+              {
+                file,
+                identity: 'file',
+                kind: 'file',
+                language: 'custom',
+                text: file.text,
+              },
+            ]
           },
           name: 'custom',
         },
@@ -192,8 +215,14 @@ describe('runAlint', () => {
     try {
       await runAlint({
         config: defineConfig([
-          { plugins: { company: plugin }, rules: { 'company/review': 'warn' } },
-          { files: ['**/*.custom'], language: 'custom' },
+          {
+            plugins: { company: plugin },
+            rules: { 'company/review': 'warn' },
+          },
+          {
+            files: ['**/*.custom'],
+            language: 'custom',
+          },
         ]),
         cwd: root,
         directories: [root],
@@ -208,8 +237,15 @@ describe('runAlint', () => {
 
     expect(runError).toBeInstanceOf(AlintRunError)
     expect((runError as AlintRunError).message).toBe('2 alint executions failed.')
-    expect((runError as AlintRunError).failures[0]).toMatchObject({ file: { index: 0, path: missingPath }, kind: 'read' })
-    expect((runError as AlintRunError).failures[1]).toEqual({ file: { index: 1, path: badPath }, kind: 'extract', message: 'custom extraction failed' })
+    expect((runError as AlintRunError).failures[0]).toMatchObject({
+      file: { index: 0, path: missingPath },
+      kind: 'read',
+    })
+    expect((runError as AlintRunError).failures[1]).toEqual({
+      file: { index: 1, path: badPath },
+      kind: 'extract',
+      message: 'custom extraction failed',
+    })
     expect(sourceCalls).toBe(1)
     expect(directoryCalls).toBe(1)
     expect(projectCalls).toBe(0)
@@ -266,7 +302,11 @@ describe('runAlint', () => {
         { review: rule },
         { 'company/review': 'warn' },
         {},
-        { agent: options.adapter, files: ['**/*.txt'], language: 'plaintext' },
+        {
+          agent: options.adapter,
+          files: ['**/*.txt'],
+          language: 'plaintext',
+        },
       ),
       cwd: root,
       files: [filePath],
@@ -361,8 +401,16 @@ describe('runAlint', () => {
     const events: string[] = []
     const denominators: number[] = []
     await writeFile(filePath, 'hello\n')
-    const first = defineRule({ create: () => ({ onTargetFile: () => {} }) })
-    const second = defineRule({ create: () => ({ onTargetFile: () => {} }) })
+    const first = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
+    const second = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
 
     await runAlint({
       config: createConfig(
@@ -433,7 +481,9 @@ describe('runAlint', () => {
     const fileReady: Array<{ inputPath: string, jobsAdded: number, jobsTotal: number, queuedForFile: number }> = []
     const queuedByPath = new Map<string, number>()
     const rule = defineRule({
-      create: () => ({ onTargetFunction: () => {} }),
+      create: () => ({
+        onTargetFunction: () => {},
+      }),
       languages: 'any',
     })
 
@@ -530,8 +580,14 @@ describe('runAlint', () => {
     try {
       await runAlint({
         config: defineConfig([
-          { plugins: { company: plugin }, rules: { 'company/review': 'warn' } },
-          { files: ['**/*.custom'], language: 'custom' },
+          {
+            plugins: { company: plugin },
+            rules: { 'company/review': 'warn' },
+          },
+          {
+            files: ['**/*.custom'],
+            language: 'custom',
+          },
         ]),
         cwd: root,
         files: [firstPath, secondPath, failingPath],
@@ -585,8 +641,16 @@ describe('runAlint', () => {
     let calls = 0
     let ended = false
     await writeFile(filePath, 'hello\n')
-    const first = defineRule({ create: () => ({ onTargetFile: () => {} }) })
-    const second = defineRule({ create: () => ({ onTargetFile: () => {} }) })
+    const first = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
+    const second = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
 
     await expect(runAlint({
       config: createConfig(
@@ -666,8 +730,16 @@ describe('runAlint', () => {
     const sentinel = new Error('start reporter failed')
     let finalProgress: Parameters<NonNullable<ProgressReporter['onRunEnd']>>[0]['progress'] | undefined
     await writeFile(filePath, 'hello\n')
-    const first = defineRule({ create: () => ({ onTargetFile: () => {} }) })
-    const second = defineRule({ create: () => ({ onTargetFile: () => {} }) })
+    const first = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
+    const second = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
 
     await expect(runAlint({
       config: createConfig(
@@ -685,8 +757,18 @@ describe('runAlint', () => {
       setupConfig: createSetupConfig(),
     })).rejects.toBe(sentinel)
 
-    expect(finalProgress).toMatchObject({ jobsCompleted: 2, jobsStarted: 2, jobsTotal: 2, planningComplete: true })
-    expect(finalProgress?.execution).toMatchObject({ cancelled: 2, planned: 2, queued: 0, running: 0 })
+    expect(finalProgress).toMatchObject({
+      jobsCompleted: 2,
+      jobsStarted: 2,
+      jobsTotal: 2,
+      planningComplete: true,
+    })
+    expect(finalProgress?.execution).toMatchObject({
+      cancelled: 2,
+      planned: 2,
+      queued: 0,
+      running: 0,
+    })
   })
 
   it('preserves completed outcomes when a later start reporter fails', async () => {
@@ -705,7 +787,11 @@ describe('runAlint', () => {
         },
       }),
     })
-    const second = defineRule({ create: () => ({ onTargetFile: () => {} }) })
+    const second = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
 
     await expect(runAlint({
       config: createConfig(
@@ -732,7 +818,13 @@ describe('runAlint', () => {
     })).rejects.toBe(sentinel)
 
     expect(diagnostics).toEqual(['first completed'])
-    expect(execution).toMatchObject({ cancelled: 1, completed: 1, planned: 2, queued: 0, running: 0 })
+    expect(execution).toMatchObject({
+      cancelled: 1,
+      completed: 1,
+      planned: 2,
+      queued: 0,
+      running: 0,
+    })
     expect(inputTokens).toBe(3)
   })
 
@@ -745,8 +837,16 @@ describe('runAlint', () => {
     await writeFile(firstPath, 'first\n')
     await writeFile(secondPath, 'second\n')
 
-    const one = defineRule({ create: () => ({ onTargetFile: () => {} }) })
-    const two = defineRule({ create: () => ({ onTargetFile: () => {} }) })
+    const one = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
+    const two = defineRule({
+      create: () => ({
+        onTargetFile: () => {},
+      }),
+    })
 
     await runAlint({
       config: createConfig(
@@ -784,7 +884,9 @@ describe('runAlint', () => {
       config: createConfig({ review: rule }, { 'company/review': 'warn' }, {}, { language: 'plaintext' }),
       cwd: root,
       files: [filePath, filePath],
-      progress: { onJobQueued: ({ job }) => jobs.push(job) },
+      progress: {
+        onJobQueued: ({ job }) => jobs.push(job),
+      },
       runner: { cache: false },
       setupConfig: createSetupConfig(),
     })
@@ -872,7 +974,9 @@ describe('runAlint', () => {
       files: ['source.txt'],
     })
 
-    expect(observedOptions).toEqual([{ maxLines: 10 }])
+    expect(observedOptions).toEqual([
+      { maxLines: 10 },
+    ])
   })
 
   it('runs explicit onTargetWith rules for .go through plaintext', async () => {
@@ -899,7 +1003,10 @@ describe('runAlint', () => {
         { review: rule },
         { 'company/review': 'warn' },
         {},
-        { files: ['**/*.go'], language: 'plaintext' },
+        {
+          files: ['**/*.go'],
+          language: 'plaintext',
+        },
       ),
       cwd: root,
       files: [filePath],
@@ -1083,7 +1190,9 @@ describe('runAlint', () => {
         { review: rule },
         { 'company/review': 'warn' },
         {},
-        { directories: ['crates/*'] },
+        {
+          directories: ['crates/*'],
+        },
       ),
       cwd: root,
       directories: [componentA, example, componentB],
@@ -1131,7 +1240,9 @@ describe('runAlint', () => {
       { review: rule },
       { 'company/review': 'warn' },
       {},
-      { directories: ['crates/*'] },
+      {
+        directories: ['crates/*'],
+      },
     )
 
     for (let run = 0; run < 2; run += 1) {
@@ -1180,7 +1291,9 @@ describe('runAlint', () => {
           { review: rule },
           { 'company/review': 'warn' },
           {},
-          { directories: ['crates/*'] },
+          {
+            directories: ['crates/*'],
+          },
         ),
         cwd: root,
         directories: [directoryPath],
@@ -1196,20 +1309,24 @@ describe('runAlint', () => {
 
     expect(runError).toBeInstanceOf(AlintRunError)
     expect(runError).toMatchObject({
-      failures: [{
-        job: {
-          inputPath: directoryPath,
-          ruleId: 'company/review',
-          target: { kind: 'directory' },
+      failures: [
+        {
+          job: {
+            inputPath: directoryPath,
+            ruleId: 'company/review',
+            target: { kind: 'directory' },
+          },
+          kind: 'handler',
+          message: 'directory exploded',
         },
-        kind: 'handler',
-        message: 'directory exploded',
-      }],
+      ],
       result: {
-        diagnostics: [{
-          filePath: directoryPath,
-          message: 'reported before directory failure',
-        }],
+        diagnostics: [
+          {
+            filePath: directoryPath,
+            message: 'reported before directory failure',
+          },
+        ],
       },
     })
     expect(runEndEvents).toEqual(['1:1/1'])
@@ -1253,12 +1370,18 @@ describe('runAlint', () => {
   it('clears stale project slots after a complete run removes every project handler', async () => {
     const root = await mkdtemp(join(tmpdir(), 'alint-project-cache-remove-handlers-'))
     const cachePath = join(root, '.alintcache')
-    const rule = defineRule({ create: () => ({ onTargetProject: () => {} }) })
+    const rule = defineRule({
+      create: () => ({
+        onTargetProject: () => {},
+      }),
+    })
 
     await runAlint({
       config: createConfig({ review: rule }, { 'company/review': 'warn' }),
       cwd: root,
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
     const warmed = await readCacheBody(cachePath)
@@ -1267,7 +1390,9 @@ describe('runAlint', () => {
     await runAlint({
       config: defineConfig([]),
       cwd: root,
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
     const cleared = await readCacheBody(cachePath)
@@ -1281,12 +1406,18 @@ describe('runAlint', () => {
     const root = await mkdtemp(join(tmpdir(), 'alint-project-cache-source-failure-'))
     const cachePath = join(root, '.alintcache')
     const missingPath = join(root, 'missing.txt')
-    const rule = defineRule({ create: () => ({ onTargetProject: () => {} }) })
+    const rule = defineRule({
+      create: () => ({
+        onTargetProject: () => {},
+      }),
+    })
 
     await runAlint({
       config: createConfig({ review: rule }, { 'company/review': 'warn' }),
       cwd: root,
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
     const warmed = await readCacheBody(cachePath)
@@ -1297,7 +1428,9 @@ describe('runAlint', () => {
       config: defineConfig([]),
       cwd: root,
       files: [missingPath],
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })).rejects.toBeInstanceOf(AlintRunError)
     const preserved = await readCacheBody(cachePath)
@@ -1315,7 +1448,9 @@ describe('runAlint', () => {
     await writeFile(filePath, text)
 
     const rule = defineRule({
-      create: () => ({ onTargetWith: () => {} }),
+      create: () => ({
+        onTargetWith: () => {},
+      }),
     })
 
     await runAlint({
@@ -1348,19 +1483,25 @@ describe('runAlint', () => {
 
     await writeFile(filePath, 'unchanged\n')
 
-    const rule = defineRule({ create: () => ({ onTargetProject: () => {} }) })
+    const rule = defineRule({
+      create: () => ({
+        onTargetProject: () => {},
+      }),
+    })
     const plugin = definePlugin({
       languages: {
         custom: {
           extensions: ['.custom'],
-          extract: file => [{
-            file,
-            identity: 'file',
-            kind: 'file',
-            language: 'custom/plain',
-            metadata: metadataWithUnsupportedValue('value', 1n),
-            text: file.text,
-          }],
+          extract: file => [
+            {
+              file,
+              identity: 'file',
+              kind: 'file',
+              language: 'custom/plain',
+              metadata: metadataWithUnsupportedValue('value', 1n),
+              text: file.text,
+            },
+          ],
           name: 'custom/plain',
         },
       },
@@ -1369,8 +1510,14 @@ describe('runAlint', () => {
 
     const result = await runAlint({
       config: defineConfig([
-        { plugins: { company: plugin }, rules: { 'company/review': 'warn' } },
-        { files: ['**/*.custom'], language: 'custom/plain' },
+        {
+          plugins: { company: plugin },
+          rules: { 'company/review': 'warn' },
+        },
+        {
+          files: ['**/*.custom'],
+          language: 'custom/plain',
+        },
       ]),
       cwd: root,
       files: [filePath],
@@ -1387,19 +1534,23 @@ describe('runAlint', () => {
 
     await writeFile(filePath, 'unchanged\n')
 
-    const rule = defineRule({ create: () => ({}) })
+    const rule = defineRule({
+      create: () => ({}),
+    })
     const plugin = definePlugin({
       languages: {
         custom: {
           extensions: ['.custom'],
-          extract: file => [{
-            file,
-            identity: 'file',
-            kind: 'file',
-            language: 'custom/plain',
-            metadata: metadataWithUnsupportedValue('value', 1n),
-            text: file.text,
-          }],
+          extract: file => [
+            {
+              file,
+              identity: 'file',
+              kind: 'file',
+              language: 'custom/plain',
+              metadata: metadataWithUnsupportedValue('value', 1n),
+              text: file.text,
+            },
+          ],
           name: 'custom/plain',
         },
       },
@@ -1408,8 +1559,14 @@ describe('runAlint', () => {
 
     const result = await runAlint({
       config: defineConfig([
-        { plugins: { company: plugin }, rules: { 'company/review': 'warn' } },
-        { files: ['**/*.custom'], language: 'custom/plain' },
+        {
+          plugins: { company: plugin },
+          rules: { 'company/review': 'warn' },
+        },
+        {
+          files: ['**/*.custom'],
+          language: 'custom/plain',
+        },
       ]),
       cwd: root,
       files: [filePath],
@@ -1428,21 +1585,27 @@ describe('runAlint', () => {
 
     await writeFile(filePath, 'unchanged\n')
 
-    const rule = defineRule({ create: () => ({ onTargetProject: () => {} }) })
+    const rule = defineRule({
+      create: () => ({
+        onTargetProject: () => {},
+      }),
+    })
     const plugin = definePlugin({
       languages: {
         custom: {
           extensions: ['.custom'],
           extract: (file) => {
             extractionCalls += 1
-            return [{
-              file,
-              identity: 'file',
-              kind: 'file',
-              language: 'custom/plain',
-              metadata: cyclicMetadata,
-              text: file.text,
-            }]
+            return [
+              {
+                file,
+                identity: 'file',
+                kind: 'file',
+                language: 'custom/plain',
+                metadata: cyclicMetadata,
+                text: file.text,
+              },
+            ]
           },
           name: 'custom/plain',
         },
@@ -1452,9 +1615,24 @@ describe('runAlint', () => {
 
     const result = await runAlint({
       config: defineConfig([
-        { basePath: tmpdir(), extends: [{ ignores: [basename(root)] }] },
-        { plugins: { company: plugin }, rules: { 'company/review': 'warn' } },
-        { files: ['**/*.custom'], language: 'custom/plain' },
+        {
+          basePath: tmpdir(),
+          extends: [
+            {
+              ignores: [
+                basename(root),
+              ],
+            },
+          ],
+        },
+        {
+          plugins: { company: plugin },
+          rules: { 'company/review': 'warn' },
+        },
+        {
+          files: ['**/*.custom'],
+          language: 'custom/plain',
+        },
       ]),
       cwd: root,
       files: [filePath],
@@ -1485,13 +1663,17 @@ describe('runAlint', () => {
     const first = await runAlint({
       config,
       cwd: firstRoot,
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
     const second = await runAlint({
       config,
       cwd: secondRoot,
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -1591,14 +1773,16 @@ describe('runAlint', () => {
             else
               firstMayFinish.resolve()
 
-            return [{
-              file,
-              identity: 'file',
-              kind: 'file',
-              language: 'custom/plain',
-              origin: { physicalPath: file.path },
-              text: file.text,
-            }]
+            return [
+              {
+                file,
+                identity: 'file',
+                kind: 'file',
+                language: 'custom/plain',
+                origin: { physicalPath: file.path },
+                text: file.text,
+              },
+            ]
           },
           name: 'custom/plain',
         },
@@ -1701,15 +1885,17 @@ describe('runAlint', () => {
             const version = options.languageOptions.version
             if (typeof version !== 'number')
               throw new TypeError('Expected numeric language version.')
-            return [{
-              file,
-              identity: 'file',
-              kind: 'file',
-              language: 'custom/plain',
-              metadata: { version },
-              origin: { physicalPath: file.path },
-              text: file.text,
-            }]
+            return [
+              {
+                file,
+                identity: 'file',
+                kind: 'file',
+                language: 'custom/plain',
+                metadata: { version },
+                origin: { physicalPath: file.path },
+                text: file.text,
+              },
+            ]
           },
           name: 'custom/plain',
         },
@@ -1732,7 +1918,9 @@ describe('runAlint', () => {
       config: createProjectConfig(1),
       cwd: root,
       files: [filePath],
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -1743,7 +1931,9 @@ describe('runAlint', () => {
       progress: {
         onJobEnd: payload => ruleEndEvents.push(`${payload.job.target.kind}:${payload.cache}`),
       },
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -1779,27 +1969,34 @@ describe('runAlint', () => {
         languages: {
           custom: {
             extensions: ['.custom'],
-            extract: file => [{
-              file,
-              identity: 'file',
-              kind: 'file',
-              language: 'custom/plain',
-              metadata: { version },
-              origin: { physicalPath: file.path },
-              text: `extracted-${version}`,
-            }],
+            extract: file => [
+              {
+                file,
+                identity: 'file',
+                kind: 'file',
+                language: 'custom/plain',
+                metadata: { version },
+                origin: { physicalPath: file.path },
+                text: `extracted-${version}`,
+              },
+            ],
             name: 'custom/plain',
           },
         },
       },
-      { language: 'custom/plain', languageOptions: { stable: true } },
+      {
+        language: 'custom/plain',
+        languageOptions: { stable: true },
+      },
     )
 
     await runAlint({
       config: createProjectConfig(1),
       cwd: root,
       files: [filePath],
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -1810,7 +2007,9 @@ describe('runAlint', () => {
       progress: {
         onJobEnd: payload => ruleEndEvents.push(`${payload.job.target.kind}:${payload.cache}`),
       },
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -1833,7 +2032,9 @@ describe('runAlint', () => {
 
     await runAlint({
       config: defineConfig([
-        { ignores: ['**'] },
+        {
+          ignores: ['**'],
+        },
         createConfig(
           { review: rule },
           { 'company/review': 'warn' },
@@ -1864,7 +2065,9 @@ describe('runAlint', () => {
       cwd: root,
       setupConfig: createSetupConfig(),
     })).rejects.toMatchObject({
-      failures: [{ message: 'Diagnostic for rule "company/review" is missing filePath.' }],
+      failures: [
+        { message: 'Diagnostic for rule "company/review" is missing filePath.' },
+      ],
       message: '1 rule execution failed.',
       name: 'AlintRunError',
     })
@@ -1897,10 +2100,12 @@ describe('runAlint', () => {
       setupConfig: createSetupConfig(),
     })
 
-    expect(result.diagnostics).toMatchObject([{
-      filePath,
-      message: 'project issue',
-    }])
+    expect(result.diagnostics).toMatchObject([
+      {
+        filePath,
+        message: 'project issue',
+      },
+    ])
   })
 
   it('retains partial results and project failure details when onTargetProject throws', async () => {
@@ -1944,20 +2149,24 @@ describe('runAlint', () => {
 
     expect(runError).toBeInstanceOf(AlintRunError)
     expect(runError).toMatchObject({
-      failures: [{
-        job: {
-          inputPath: root,
-          ruleId: 'company/review',
-          target: { kind: 'project' },
+      failures: [
+        {
+          job: {
+            inputPath: root,
+            ruleId: 'company/review',
+            target: { kind: 'project' },
+          },
+          kind: 'handler',
+          message: 'project exploded',
         },
-        kind: 'handler',
-        message: 'project exploded',
-      }],
+      ],
       result: {
-        diagnostics: [{
-          filePath,
-          message: 'reported before project failure',
-        }],
+        diagnostics: [
+          {
+            filePath,
+            message: 'reported before project failure',
+          },
+        ],
       },
     })
     expect(runEndEvents).toEqual(['1:1/1'])
@@ -1983,7 +2192,9 @@ describe('runAlint', () => {
         { review: rule },
         { 'company/review': 'warn' },
         {},
-        { files: ['**/*.ts'] },
+        {
+          files: ['**/*.ts'],
+        },
       ),
       cwd: root,
       files: [filePath],
@@ -2131,7 +2342,11 @@ describe('runAlint', () => {
         { boundary: rule },
         { 'company/boundary': 'warn' },
         {},
-        { agent: adapter, files: ['**/*.txt'], language: 'plaintext' },
+        {
+          agent: adapter,
+          files: ['**/*.txt'],
+          language: 'plaintext',
+        },
       ),
       cwd: root,
       files: [filePath],
@@ -2258,7 +2473,9 @@ describe('runAlint', () => {
           },
         ),
         files: [filePath],
-        progress: { onJobRetry: () => { throw sentinel } },
+        progress: {
+          onJobRetry: () => { throw sentinel },
+        },
         setupConfig: createSetupConfig(),
       })
     }
@@ -2357,7 +2574,11 @@ describe('runAlint', () => {
           { boundary: rule },
           { 'company/boundary': 'warn' },
           {},
-          { agent: adapter, files: ['**/*.txt'], language: 'plaintext' },
+          {
+            agent: adapter,
+            files: ['**/*.txt'],
+            language: 'plaintext',
+          },
         ),
         cwd: root,
         files: [filePath],
@@ -2403,13 +2624,20 @@ describe('runAlint', () => {
         { boundary: rule },
         { 'company/boundary': 'warn' },
         {},
-        { files: ['**/*.txt'], language: 'plaintext' },
+        {
+          files: ['**/*.txt'],
+          language: 'plaintext',
+        },
       ),
       cwd: root,
       files: [filePath],
       setupConfig: createSetupConfig(),
     })).rejects.toMatchObject({
-      failures: [{ message: expect.stringMatching(/requires an agent/i) }],
+      failures: [
+        {
+          message: expect.stringMatching(/requires an agent/i),
+        },
+      ],
     })
   })
 
@@ -2435,7 +2663,9 @@ describe('runAlint', () => {
         { visit: rule },
         { 'company/visit': 'warn' },
         {},
-        { ignores: ['ignored.ts'] },
+        {
+          ignores: ['ignored.ts'],
+        },
       ),
       cwd: root,
       files: [ignoredPath, checkedPath],
@@ -2460,7 +2690,9 @@ describe('runAlint', () => {
         onTargetFunction: async (target) => {
           const model = await ctx.model()
           const file = await ctx.src.readFile(target.file)
-          const source = target.range ? ctx.src.sliceRange(file, target.range).text : file.text
+          const source = target.range
+            ? ctx.src.sliceRange(file, target.range).text
+            : file.text
 
           ctx.report({
             evidence: {
@@ -2645,9 +2877,11 @@ describe('runAlint', () => {
       files: [filePath],
       setupConfig,
     })).rejects.toMatchObject({
-      failures: [{
-        message: 'Default model "default" is not configured. Configure a system default model or select a model for this project.',
-      }],
+      failures: [
+        {
+          message: 'Default model "default" is not configured. Configure a system default model or select a model for this project.',
+        },
+      ],
     })
   })
 
@@ -2783,7 +3017,9 @@ describe('runAlint', () => {
         defaultModel: 'default',
         files: [filePath],
         modelOverride: 'override',
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -2792,7 +3028,9 @@ describe('runAlint', () => {
         defaultModel: 'unused-default',
         files: [filePath],
         modelOverride: 'override',
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -2839,7 +3077,9 @@ describe('runAlint', () => {
           { language: 'plaintext' },
         ),
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -2854,7 +3094,9 @@ describe('runAlint', () => {
         progress: {
           onJobEnd: payload => ruleEndEvents.push(`${payload.job.ruleId}:${payload.cache}`),
         },
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -2890,7 +3132,9 @@ describe('runAlint', () => {
         },
       })
       const createVersionedConfig = (cacheKey: string) => createConfig(
-        { review: defineRule({ cacheKey, create }) },
+        {
+          review: defineRule({ cacheKey, create }),
+        },
         { 'company/review': 'warn' },
         {},
         { language: 'plaintext' },
@@ -2899,7 +3143,9 @@ describe('runAlint', () => {
       await runAlint({
         config: createVersionedConfig('prompt-v1'),
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
       await runAlint({
@@ -2908,7 +3154,9 @@ describe('runAlint', () => {
         progress: {
           onJobEnd: payload => ruleEndEvents.push(payload.cache),
         },
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
       const cacheBody = await readCacheBody(cachePath)
@@ -2989,10 +3237,12 @@ describe('runAlint', () => {
         cached: {
           inputTokens: 7,
           outputTokens: 3,
-          records: [expect.objectContaining({
-            ruleId: 'company/cached',
-            totalTokens: 10,
-          })],
+          records: [
+            expect.objectContaining({
+              ruleId: 'company/cached',
+              totalTokens: 10,
+            }),
+          ],
           totalTokens: 10,
         },
         inputTokens: 0,
@@ -3056,7 +3306,9 @@ describe('runAlint', () => {
       await runAlint({
         config,
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -3069,7 +3321,9 @@ describe('runAlint', () => {
             onJobEnd: payload => ruleEnds.push(`${payload.cache}:${payload.state}`),
             onJobStart: () => controller.abort(reason),
           },
-          runner: { cache: { location: cachePath } },
+          runner: {
+            cache: { location: cachePath },
+          },
           setupConfig: createSetupConfig(),
           signal: controller.signal,
         })
@@ -3109,7 +3363,9 @@ describe('runAlint', () => {
       const replayed = await runAlint({
         config,
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -3139,9 +3395,13 @@ describe('runAlint', () => {
             const name = target.name ?? 'anonymous'
             calls.set(name, (calls.get(name) ?? 0) + 1)
             const file = await ctx.src.readFile(target.file)
-            const source = target.range ? ctx.src.sliceRange(file, target.range).text : file.text
+            const source = target.range
+              ? ctx.src.sliceRange(file, target.range).text
+              : file.text
             ctx.report({
-              message: `${name}:${source.includes('return 3') ? 'changed' : 'original'}`,
+              message: `${name}:${source.includes('return 3')
+                ? 'changed'
+                : 'original'}`,
             })
           },
         }),
@@ -3388,14 +3648,16 @@ describe('runAlint', () => {
           languages: {
             custom: {
               extensions: ['.custom'],
-              extract: file => [{
-                file,
-                identity: 'file',
-                kind: 'file',
-                language: name,
-                origin: { physicalPath: file.path },
-                text: file.text,
-              }],
+              extract: file => [
+                {
+                  file,
+                  identity: 'file',
+                  kind: 'file',
+                  language: name,
+                  origin: { physicalPath: file.path },
+                  text: file.text,
+                },
+              ],
               name,
             },
           },
@@ -3456,15 +3718,17 @@ describe('runAlint', () => {
           languages: {
             custom: {
               extensions: ['.custom'],
-              extract: file => [{
-                file,
-                identity: 'file',
-                kind: 'file',
-                language: 'custom/plain',
-                metadata: { version },
-                origin: { physicalPath: file.path },
-                text: file.text,
-              }],
+              extract: file => [
+                {
+                  file,
+                  identity: 'file',
+                  kind: 'file',
+                  language: 'custom/plain',
+                  metadata: { version },
+                  origin: { physicalPath: file.path },
+                  text: file.text,
+                },
+              ],
               name: 'custom/plain',
             },
           },
@@ -3584,7 +3848,9 @@ describe('runAlint', () => {
         create: ctx => ({
           onTargetFunction: (target) => {
             handlerCalls += 1
-            ctx.report({ message: String(target.metadata?.label) })
+            ctx.report({
+              message: String(target.metadata?.label),
+            })
           },
         }),
         languages: 'any',
@@ -3616,18 +3882,26 @@ describe('runAlint', () => {
         config,
         cwd: root,
         files: [filePath],
-        progress: { onJobQueued: ({ job }) => coldIdentities.push(job.target.identity) },
+        progress: {
+          onJobQueued: ({ job }) => coldIdentities.push(job.target.identity),
+        },
         projectTargets: false,
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
       const warm = await runAlint({
         config,
         cwd: root,
         files: [filePath],
-        progress: { onJobQueued: ({ job }) => warmIdentities.push(job.target.identity) },
+        progress: {
+          onJobQueued: ({ job }) => warmIdentities.push(job.target.identity),
+        },
         projectTargets: false,
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
       const body = await readCacheBody(cachePath)
@@ -3747,16 +4021,32 @@ describe('runAlint', () => {
     }
     const rules = {
       class: defineRule({
-        create: () => ({ onTargetClass: () => hold('class') }),
+        create: () => ({
+          onTargetClass: () => hold('class'),
+        }),
         languages: 'any',
       }),
-      directory: defineRule({ create: () => ({ onTargetDirectory: () => hold('directory') }) }),
-      file: defineRule({ create: () => ({ onTargetFile: () => hold('file') }) }),
+      directory: defineRule({
+        create: () => ({
+          onTargetDirectory: () => hold('directory'),
+        }),
+      }),
+      file: defineRule({
+        create: () => ({
+          onTargetFile: () => hold('file'),
+        }),
+      }),
       function: defineRule({
-        create: () => ({ onTargetFunction: () => hold('function') }),
+        create: () => ({
+          onTargetFunction: () => hold('function'),
+        }),
         languages: 'any',
       }),
-      project: defineRule({ create: () => ({ onTargetProject: () => hold('project') }) }),
+      project: defineRule({
+        create: () => ({
+          onTargetProject: () => hold('project'),
+        }),
+      }),
     }
 
     await runAlint({
@@ -3774,7 +4064,13 @@ describe('runAlint', () => {
       setupConfig: createSetupConfig(),
     })
 
-    expect(new Set(started)).toEqual(new Set(['class', 'directory', 'file', 'function', 'project']))
+    expect(new Set(started)).toEqual(new Set([
+      'class',
+      'directory',
+      'file',
+      'function',
+      'project',
+    ]))
     expect(maximum).toBe(2)
   })
 
@@ -3839,24 +4135,27 @@ describe('runAlint', () => {
       })
       const names = ['first', 'second']
       const observationOrder: string[] = []
-      const rules = Object.fromEntries(names.map((name, index) => [name, defineRule({
-        create: ctx => ({
-          onTargetFile: async () => {
-            started += 1
-            if (started === names.length)
-              allStarted()
-            if (completionOrder)
-              await releases[index]!.promise
-            observationOrder.push(name)
-            ctx.report({ message: `${name}:diagnostic:1` })
-            ctx.report({ message: `${name}:diagnostic:2` })
-            ctx.metering.recordUsage({ inputTokens: index + 1, modelId: `${name}:model:1`, providerId: 'test' })
-            ctx.metering.recordUsage({ modelId: `${name}:model:2`, outputTokens: index + 1, providerId: 'test' })
-            if (name === 'second')
-              throw new Error('second:failure')
-          },
+      const rules = Object.fromEntries(names.map((name, index) => [
+        name,
+        defineRule({
+          create: ctx => ({
+            onTargetFile: async () => {
+              started += 1
+              if (started === names.length)
+                allStarted()
+              if (completionOrder)
+                await releases[index]!.promise
+              observationOrder.push(name)
+              ctx.report({ message: `${name}:diagnostic:1` })
+              ctx.report({ message: `${name}:diagnostic:2` })
+              ctx.metering.recordUsage({ inputTokens: index + 1, modelId: `${name}:model:1`, providerId: 'test' })
+              ctx.metering.recordUsage({ modelId: `${name}:model:2`, outputTokens: index + 1, providerId: 'test' })
+              if (name === 'second')
+                throw new Error('second:failure')
+            },
+          }),
         }),
-      })]))
+      ]))
       const run = runAlint({
         config: createConfig(rules, {
           'company/first': 'warn',
@@ -3897,7 +4196,9 @@ describe('runAlint', () => {
     expect(reverse.observationOrder).toEqual(['second', 'first'])
     expect(reverse.projected).toEqual(sequential.projected)
     expect(reverse.failures).toEqual(sequential.failures)
-    expect(sequential.failures).toMatchObject([{ kind: 'handler', message: 'second:failure' }])
+    expect(sequential.failures).toMatchObject([
+      { kind: 'handler', message: 'second:failure' },
+    ])
     expect(sequential.projected.diagnostics.map(diagnostic => diagnostic.message)).toEqual([
       'first:diagnostic:1',
       'first:diagnostic:2',
@@ -3919,18 +4220,21 @@ describe('runAlint', () => {
     const thrownFailures: Error[] = []
     await writeFile(filePath, 'hello\n')
     const names = Array.from({ length: 8 }, (_, index) => `job-${index}`)
-    const rules = Object.fromEntries(names.map((name, index) => [name, defineRule({
-      create: () => ({
-        onTargetFile: () => {
-          visited.push(name)
-          if (index === 1 || index === 4) {
-            const error = new Error(`${name}:failure`)
-            thrownFailures.push(error)
-            throw error
-          }
-        },
+    const rules = Object.fromEntries(names.map((name, index) => [
+      name,
+      defineRule({
+        create: () => ({
+          onTargetFile: () => {
+            visited.push(name)
+            if (index === 1 || index === 4) {
+              const error = new Error(`${name}:failure`)
+              thrownFailures.push(error)
+              throw error
+            }
+          },
+        }),
       }),
-    })]))
+    ]))
     const enabledRules = Object.fromEntries(names.map(name => [`company/${name}`, 'warn' as const]))
 
     let runError: unknown
@@ -3956,7 +4260,13 @@ describe('runAlint', () => {
       'job-1:failure',
       'job-4:failure',
     ])
-    expect((runError as AlintRunError).result.execution).toMatchObject({ completed: 6, failed: 2, planned: 8, queued: 0, running: 0 })
+    expect((runError as AlintRunError).result.execution).toMatchObject({
+      completed: 6,
+      failed: 2,
+      planned: 8,
+      queued: 0,
+      running: 0,
+    })
     expect((runError as AlintRunError).cause).toBeInstanceOf(AggregateError)
     expect(((runError as AlintRunError).cause as AggregateError).errors.map(error => error.message)).toEqual([
       'job-1:failure',
@@ -4041,7 +4351,9 @@ describe('runAlint', () => {
     const ends: number[] = []
     await writeFile(filePath, 'export class Demo {}\nexport function demo() {}\n')
     const rule = defineRule({
-      create: () => ({ onTargetWith: () => {} }),
+      create: () => ({
+        onTargetWith: () => {},
+      }),
       languages: 'any',
     })
 
@@ -4151,7 +4463,12 @@ describe('runAlint', () => {
 
     expect(runError).toBeInstanceOf(AlintRunCancelledError)
     expect((runError as AlintRunCancelledError).cause).toBe(reason)
-    expect((runError as AlintRunCancelledError).result.execution).toMatchObject({ cancelled: 0, planned: 0, queued: 0, running: 0 })
+    expect((runError as AlintRunCancelledError).result.execution).toMatchObject({
+      cancelled: 0,
+      planned: 0,
+      queued: 0,
+      running: 0,
+    })
     expect(events).toEqual([])
   })
 
@@ -4338,10 +4655,14 @@ describe('runAlint', () => {
         onJobEnd: payload => events.push(`${payload.state}:${payload.job.ruleId}`),
         onRunEnd: payload => events.push(`run:${payload.execution.completed}/${payload.execution.failed}/${payload.execution.planned}`),
       },
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })).rejects.toMatchObject({
-      failures: [{ message: 'rule exploded' }],
+      failures: [
+        { message: 'rule exploded' },
+      ],
       message: '1 rule execution failed.',
     })
 
@@ -4396,7 +4717,10 @@ describe('runAlint', () => {
       // The second file can enter the scheduler before the first file.
       // With one slot, the blocked second file prevents the first file from completing.
       // Two slots let this test observe a completed file without assuming admission order.
-      runner: { cache: { location: cachePath }, ruleConcurrency: 2 },
+      runner: {
+        cache: { location: cachePath },
+        ruleConcurrency: 2,
+      },
       setupConfig: createSetupConfig(),
     })
 
@@ -4439,11 +4763,15 @@ describe('runAlint', () => {
       ),
       cwd: root,
       files: [filePath],
-      runner: { cache: { location: cachePath } },
+      runner: {
+        cache: { location: cachePath },
+      },
       setupConfig: createSetupConfig(),
     })).rejects.toMatchObject({
       name: 'AlintCachePersistenceError',
-      result: { execution: { completed: 1 } },
+      result: {
+        execution: { completed: 1 },
+      },
     })
   })
 
@@ -4455,7 +4783,12 @@ describe('runAlint', () => {
       create: ctx => ({
         onTargetFile: () => {
           ctx.report({ message: 'original diagnostic' })
-          ctx.metering.recordUsage({ inputTokens: 3, modelId: 'model', providerId: 'provider', totalTokens: 3 })
+          ctx.metering.recordUsage({
+            inputTokens: 3,
+            modelId: 'model',
+            providerId: 'provider',
+            totalTokens: 3,
+          })
         },
       }),
     })
@@ -4472,7 +4805,12 @@ describe('runAlint', () => {
       progress: {
         onRunEnd: (payload) => {
           payload.diagnostics[0]!.message = 'mutated diagnostic'
-          payload.diagnostics.push({ filePath, message: 'added', ruleId: 'company/review', severity: 'warn' })
+          payload.diagnostics.push({
+            filePath,
+            message: 'added',
+            ruleId: 'company/review',
+            severity: 'warn',
+          })
           payload.execution.cached = 999
           payload.progress.execution.cached = 999
           payload.usage.totalTokens = 999
@@ -4552,8 +4890,12 @@ describe('runAlint', () => {
         config: createConfig({ live: rule }, { 'company/live': 'warn' }, {}, { language: 'plaintext' }),
         files: [filePath],
         progress: {
-          onDiagnostic: kind === 'diagnostic' ? () => { throw sentinel } : undefined,
-          onUsage: kind === 'usage' ? () => { throw sentinel } : undefined,
+          onDiagnostic: kind === 'diagnostic'
+            ? () => { throw sentinel }
+            : undefined,
+          onUsage: kind === 'usage'
+            ? () => { throw sentinel }
+            : undefined,
         },
         setupConfig: createSetupConfig(),
       })
@@ -4593,7 +4935,9 @@ describe('runAlint', () => {
       await runAlint({
         config: createConfig({ live: rule }, { 'company/live': 'warn' }, {}, { language: 'plaintext' }),
         files: [filePath],
-        progress: { onDiagnostic: () => { throw sentinels[callbackIndex++] } },
+        progress: {
+          onDiagnostic: () => { throw sentinels[callbackIndex++] },
+        },
         setupConfig: createSetupConfig(),
       })
     }
@@ -4631,7 +4975,9 @@ describe('runAlint', () => {
       await runAlint({
         cacheOnly: true,
         cwd: root,
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -4714,7 +5060,9 @@ describe('runAlint', () => {
         config,
         cwd: root,
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -4726,7 +5074,9 @@ describe('runAlint', () => {
         progress: {
           onJobEnd: payload => ruleEndEvents.push(`${payload.cache}:${payload.state}`),
         },
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -4787,7 +5137,9 @@ describe('runAlint', () => {
         config: createConfig(rules, { 'company/first': 'warn' }),
         cwd: root,
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -4799,7 +5151,9 @@ describe('runAlint', () => {
         progress: {
           onJobEnd: payload => ruleEndEvents.push(`${payload.job.ruleId}:${payload.cache}:${payload.state}`),
         },
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -4861,14 +5215,18 @@ describe('runAlint', () => {
       const root = await mkdtemp(join(tmpdir(), 'alint-cache-only-no-write-'))
       const filePath = join(root, 'demo.ts')
       const cachePath = join(root, '.alintcache')
-      const config = createConfig({ review: reportingRule() }, { 'company/review': 'warn' })
+      const config = createConfig({
+        review: reportingRule(),
+      }, { 'company/review': 'warn' })
 
       await writeFile(filePath, 'export function load() {}\n')
       await runAlint({
         config,
         cwd: root,
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -4883,7 +5241,9 @@ describe('runAlint', () => {
         config,
         cwd: root,
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -4899,7 +5259,9 @@ describe('runAlint', () => {
 
       await runAlint({
         cacheOnly: true,
-        config: createConfig({ review: reportingRule() }, { 'company/review': 'warn' }),
+        config: createConfig({
+          review: reportingRule(),
+        }, { 'company/review': 'warn' }),
         cwd: root,
         files: [filePath],
         setupConfig: createSetupConfig(),
@@ -4985,7 +5347,10 @@ describe('runAlint', () => {
               controller.abort()
           },
         },
-        runner: { cache: { location: cachePath }, ruleConcurrency: 1 },
+        runner: {
+          cache: { location: cachePath },
+          ruleConcurrency: 1,
+        },
         setupConfig: createSetupConfig(),
         signal: controller.signal,
       })).rejects.toBeInstanceOf(AlintAbortError)
@@ -5000,7 +5365,10 @@ describe('runAlint', () => {
         config,
         cwd: root,
         files: [filePath],
-        runner: { cache: { location: cachePath }, ruleConcurrency: 1 },
+        runner: {
+          cache: { location: cachePath },
+          ruleConcurrency: 1,
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -5042,7 +5410,10 @@ describe('runAlint', () => {
         config: createConfig({ review: rule }, { 'company/review': 'warn' }),
         cwd: root,
         files: [filePath],
-        runner: { cache: { location: cachePath }, ruleConcurrency: 1 },
+        runner: {
+          cache: { location: cachePath },
+          ruleConcurrency: 1,
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -5095,7 +5466,15 @@ describe('runAlint', () => {
               if (extractionCalls === 2)
                 releaseExtractions()
               await extractionsReady
-              return [{ file, identity: 'file', kind: 'file', language: 'custom', text: file.text }]
+              return [
+                {
+                  file,
+                  identity: 'file',
+                  kind: 'file',
+                  language: 'custom',
+                  text: file.text,
+                },
+              ]
             },
             name: 'custom',
           },
@@ -5103,8 +5482,14 @@ describe('runAlint', () => {
         rules: { repeated: rule },
       })
       const config = defineConfig([
-        { plugins: { company: plugin }, rules: { 'company/repeated': 'warn' } },
-        { files: ['**/*.custom'], language: 'custom' },
+        {
+          plugins: { company: plugin },
+          rules: { 'company/repeated': 'warn' },
+        },
+        {
+          files: ['**/*.custom'],
+          language: 'custom',
+        },
       ])
 
       await expect(runAlint({
@@ -5118,7 +5503,10 @@ describe('runAlint', () => {
           },
         },
         projectTargets: false,
-        runner: { cache: { location: cachePath }, ruleConcurrency: 2 },
+        runner: {
+          cache: { location: cachePath },
+          ruleConcurrency: 2,
+        },
         setupConfig: createSetupConfig(),
         signal: controller.signal,
       })).rejects.toBeInstanceOf(AlintAbortError)
@@ -5128,7 +5516,10 @@ describe('runAlint', () => {
         cwd: root,
         files: [filePath],
         projectTargets: false,
-        runner: { cache: { location: cachePath }, ruleConcurrency: 1 },
+        runner: {
+          cache: { location: cachePath },
+          ruleConcurrency: 1,
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -5214,7 +5605,9 @@ describe('runAlint', () => {
           config,
           cwd: root,
           files: [filePath],
-          runner: { cache: { location: cachePath } },
+          runner: {
+            cache: { location: cachePath },
+          },
           setupConfig: createSetupConfig(),
           signal: controller.signal,
         })
@@ -5232,7 +5625,9 @@ describe('runAlint', () => {
         config,
         cwd: root,
         files: [filePath],
-        runner: { cache: { location: cachePath } },
+        runner: {
+          cache: { location: cachePath },
+        },
         setupConfig: createSetupConfig(),
       })
 
@@ -5304,7 +5699,9 @@ describe('runAlint', () => {
 
   describe('projectTargets', () => {
     it('does not create project-only rule handlers when project targets are disabled', async () => {
-      const create = vi.fn(() => ({ onTargetProject: () => {} }))
+      const create = vi.fn(() => ({
+        onTargetProject: () => {},
+      }))
       const rule = defineRule({ create })
 
       await runAlint({

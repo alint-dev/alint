@@ -44,7 +44,9 @@ export function createPythonPlugin() {
 }
 
 export function createTools(cwd: string): AgentTool[] {
-  return createFsTools(cwd, { ignore: [...DEFAULT_IGNORE_PATTERNS, '**/.venv/**', '**/__pycache__/**'] })
+  return createFsTools(cwd, {
+    ignore: [...DEFAULT_IGNORE_PATTERNS, '**/.venv/**', '**/__pycache__/**'],
+  })
 }
 
 export const pythonPlugin = createPythonPlugin()

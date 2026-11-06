@@ -29,25 +29,53 @@ const JOB: ProgressJobRef = {
 
 function progressSnapshot(execution = counts(), final = false): ProgressSnapshot {
   const jobsCompleted = execution.cached + execution.cancelled + execution.completed + execution.failed + execution.skipped
-  return { execution, filesPlanned: final ? 1 : 0, filesTotal: 1, jobsCompleted, jobsStarted: jobsCompleted + execution.running, jobsTotal: execution.planned, planningComplete: final }
+  return {
+    execution,
+    filesPlanned: final ? 1 : 0,
+    filesTotal: 1,
+    jobsCompleted,
+    jobsStarted: jobsCompleted + execution.running,
+    jobsTotal: execution.planned,
+    planningComplete: final,
+  }
 }
 
 describe('createPlainProgressReporter', () => {
   it('writes flat job paths and final exclusive execution counts without ANSI escapes', () => {
     const chunks: string[] = []
-    const reporter = createPlainProgressReporter({ write: chunk => chunks.push(chunk) })
+    const reporter = createPlainProgressReporter({
+      write: chunk => chunks.push(chunk),
+    })
 
     reporter.onPrepareStart?.({})
     reporter.onPrepareEnd?.({ filesTotal: 1 })
-    reporter.onJobStart?.({ job: JOB, progress: progressSnapshot(counts({ planned: 2, queued: 1, running: 1 })) })
+    reporter.onJobStart?.({
+      job: JOB,
+      progress: progressSnapshot(counts({ planned: 2, queued: 1, running: 1 })),
+    })
     reporter.onRunEnd?.({
       diagnostics: [
-        { filePath: JOB.inputPath, message: 'warned', ruleId: JOB.ruleId, severity: 'warn' },
-        { filePath: JOB.inputPath, message: 'errored', ruleId: JOB.ruleId, severity: 'error' },
+        {
+          filePath: JOB.inputPath,
+          message: 'warned',
+          ruleId: JOB.ruleId,
+          severity: 'warn',
+        },
+        {
+          filePath: JOB.inputPath,
+          message: 'errored',
+          ruleId: JOB.ruleId,
+          severity: 'error',
+        },
       ],
       execution: counts({ cached: 1, completed: 1, planned: 2 }),
       progress: progressSnapshot(counts({ cached: 1, completed: 1, planned: 2 }), true),
-      usage: { inputTokens: 10, outputTokens: 14, records: [], totalTokens: 24 },
+      usage: {
+        inputTokens: 10,
+        outputTokens: 14,
+        records: [],
+        totalTokens: 24,
+      },
     })
 
     expect(chunks.join('')).toBe([
@@ -62,13 +90,20 @@ describe('createPlainProgressReporter', () => {
 
   it('marks the final line failed from the final failed count', () => {
     const chunks: string[] = []
-    const reporter = createPlainProgressReporter({ write: chunk => chunks.push(chunk) })
+    const reporter = createPlainProgressReporter({
+      write: chunk => chunks.push(chunk),
+    })
 
     reporter.onRunEnd?.({
       diagnostics: [],
       execution: counts({ cancelled: 1, failed: 1, planned: 2 }),
       progress: progressSnapshot(counts({ cancelled: 1, failed: 1, planned: 2 }), true),
-      usage: { inputTokens: 0, outputTokens: 0, records: [], totalTokens: 0 },
+      usage: {
+        inputTokens: 0,
+        outputTokens: 0,
+        records: [],
+        totalTokens: 0,
+      },
     })
 
     expect(chunks.join('')).toBe('alint failed: 0 warn, 0 error, 0 tokens, 0 completed, 0 cached, 1 failed, 1 cancelled, 0 skipped\n')
@@ -107,11 +142,24 @@ describe('createCliProgressReporter', () => {
     const current = { ...JOB, inputPath: '/repo/src/input.ts', ruleId: 'rule/current' }
 
     progress.reporter.onPrepareStart?.({})
-    progress.reporter.onExecuteStart?.({ progress: progressSnapshot(counts()) })
-    progress.reporter.onJobQueued?.({ job: current, progress: progressSnapshot(counts({ planned: 1, queued: 1 })) })
-    progress.reporter.onJobStart?.({ job: current, progress: progressSnapshot(counts({ planned: 1, running: 1 })) })
+    progress.reporter.onExecuteStart?.({
+      progress: progressSnapshot(counts()),
+    })
+    progress.reporter.onJobQueued?.({
+      job: current,
+      progress: progressSnapshot(counts({ planned: 1, queued: 1 })),
+    })
+    progress.reporter.onJobStart?.({
+      job: current,
+      progress: progressSnapshot(counts({ planned: 1, running: 1 })),
+    })
     expect(progress.reporter.onJobRetry).toBeTypeOf('function')
-    expect(() => progress.reporter.onJobRetry?.({ attempt: 1, job: current, maxAttempts: 3, progress: progressSnapshot(counts({ planned: 1, running: 1 })) })).not.toThrow()
+    expect(() => progress.reporter.onJobRetry?.({
+      attempt: 1,
+      job: current,
+      maxAttempts: 3,
+      progress: progressSnapshot(counts({ planned: 1, running: 1 })),
+    })).not.toThrow()
 
     vi.advanceTimersByTime(120)
 

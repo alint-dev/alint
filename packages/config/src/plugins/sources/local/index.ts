@@ -32,7 +32,9 @@ export async function createLockEntry(
   const relativePath = relative(await realpath(options.cwd), installed.path)
   const path = isAbsolute(relativePath) || win32.isAbsolute(relativePath)
     ? installed.path
-    : relativePath === '' ? '.' : relativePath
+    : relativePath === ''
+      ? '.'
+      : relativePath
 
   return {
     alias: options.alias,

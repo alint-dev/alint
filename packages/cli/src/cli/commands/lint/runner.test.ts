@@ -23,21 +23,27 @@ describe('resolveRunnerConfig', () => {
 
   it('treats --no-cache as a hard off-switch', () => {
     expect(resolveRunnerConfig(
-      { cache: { location: '.alintcache' } },
+      {
+        cache: { location: '.alintcache' },
+      },
       { cache: false, format: 'stylish' },
     )?.cache).toBe(false)
   })
 
   it('layers --cache-location onto the project cache config', () => {
     expect(resolveRunnerConfig(
-      { cache: { enabled: true, location: '.alintcache' } },
+      {
+        cache: { enabled: true, location: '.alintcache' },
+      },
       { cacheLocation: '/tmp/alint', format: 'stylish' },
     )?.cache).toEqual({ enabled: true, location: '/tmp/alint' })
   })
 
   it('treats --no-stats as a hard off-switch', () => {
     expect(resolveRunnerConfig(
-      { stats: { location: '/stats' } },
+      {
+        stats: { location: '/stats' },
+      },
       { format: 'stylish', stats: false },
     )?.stats).toBe(false)
   })

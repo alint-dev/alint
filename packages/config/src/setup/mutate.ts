@@ -24,7 +24,10 @@ export function addProviderModels(
 
     return {
       ...provider,
-      models: [...provider.models, ...addedModels],
+      models: [
+        ...provider.models,
+        ...addedModels,
+      ],
     }
   })
 }
@@ -98,7 +101,9 @@ export function unsetProviderHeader(
 
     return {
       ...provider,
-      headers: Object.keys(headers).length === 0 ? undefined : headers,
+      headers: Object.keys(headers).length === 0
+        ? undefined
+        : headers,
     }
   })
 }
@@ -106,16 +111,24 @@ export function unsetProviderHeader(
 function cloneModel(model: ModelConfig): ModelConfig {
   return {
     ...model,
-    aliases: model.aliases === undefined ? undefined : [...model.aliases],
-    capabilities: model.capabilities === undefined ? undefined : [...model.capabilities],
-    defaultParams: model.defaultParams === undefined ? undefined : { ...model.defaultParams },
+    aliases: model.aliases === undefined
+      ? undefined
+      : [...model.aliases],
+    capabilities: model.capabilities === undefined
+      ? undefined
+      : [...model.capabilities],
+    defaultParams: model.defaultParams === undefined
+      ? undefined
+      : { ...model.defaultParams },
   }
 }
 
 function cloneProvider(provider: ProviderConfig): ProviderConfig {
   return {
     ...provider,
-    headers: provider.headers === undefined ? undefined : { ...provider.headers },
+    headers: provider.headers === undefined
+      ? undefined
+      : { ...provider.headers },
     models: provider.models.map(cloneModel),
   }
 }
@@ -146,7 +159,9 @@ function updateProvider(
     ...config,
     providers: config.providers.map((provider, index) => {
       const clonedProvider = cloneProvider(provider)
-      return providerIndex === index ? update(clonedProvider) : clonedProvider
+      return providerIndex === index
+        ? update(clonedProvider)
+        : clonedProvider
     }),
   }
 }

@@ -83,7 +83,9 @@ describe('basic-structured declarative preset', () => {
     const reports: unknown[] = []
     const ctx = {
       cwd: '/repo',
-      logger: { debug: vi.fn() },
+      logger: {
+        debug: vi.fn(),
+      },
       report: (diagnostic: unknown) => reports.push(diagnostic),
     }
 
@@ -91,7 +93,13 @@ describe('basic-structured declarative preset', () => {
       ctx,
       excludeFiles: ['**/*_test.py'],
       findings: [
-        { confidence: 'high', filePath: '/repo/src/main.py', line: 2, message: 'move parser', suggestion: 'Create a parser object.' },
+        {
+          confidence: 'high',
+          filePath: '/repo/src/main.py',
+          line: 2,
+          message: 'move parser',
+          suggestion: 'Create a parser object.',
+        },
         { filePath: '/repo/src/main_test.py', line: 1, message: 'ignored test file' },
       ],
       includeFiles: ['src/**/*.py'],
@@ -105,7 +113,9 @@ describe('basic-structured declarative preset', () => {
           suggestion: 'Create a parser object.',
         },
         filePath: '/repo/src/main.py',
-        loc: { start: { column: 0, line: 2 } },
+        loc: {
+          start: { column: 0, line: 2 },
+        },
         message: 'move parser',
       },
     ])
@@ -168,7 +178,9 @@ describe('basic-structured declarative preset', () => {
     expect(ctx.report).toHaveBeenCalledWith({
       evidence: { suggestion: 'Create a parser object.' },
       filePath: '/repo/src/main.py',
-      loc: { start: { column: 0, line: 3 } },
+      loc: {
+        start: { column: 0, line: 3 },
+      },
       message: 'move parser',
     })
     expect(ctx.logger.debug).toHaveBeenCalledWith('Ignoring declarative finding that reports no issue', {
@@ -201,7 +213,9 @@ describe('basic-structured declarative preset', () => {
     expect(generateStructuredMock).toHaveBeenCalledOnce()
     expect(ctx.report).toHaveBeenCalledWith({
       filePath: '/repo/src/main.py',
-      loc: { start: { column: 0, line: 1 } },
+      loc: {
+        start: { column: 0, line: 1 },
+      },
       message: 'use a clearer boundary',
     })
   })
@@ -212,8 +226,12 @@ function createRuleContext(): RuleContext {
     cwd: '/repo',
     id: 'declarative/semantic-boundary',
     localId: 'semantic-boundary',
-    logger: { debug: vi.fn() },
-    metering: { recordUsage: vi.fn() },
+    logger: {
+      debug: vi.fn(),
+    },
+    metering: {
+      recordUsage: vi.fn(),
+    },
     model: vi.fn(async () => ({
       aliases: [],
       capabilities: ['structured-output'],
@@ -235,7 +253,9 @@ function createRuleContext(): RuleContext {
         contentHash: createHash('sha256').update(source).digest('hex'),
         language: 'python',
         lines: source.split('\n'),
-        path: typeof file === 'string' ? file : file.path,
+        path: typeof file === 'string'
+          ? file
+          : file.path,
         text: source,
       }),
     }),

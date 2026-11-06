@@ -48,7 +48,10 @@ beforeEach(async () => {
       payload += chunk.toString()
     })
     request.on('end', () => {
-      requests.push({ body: JSON.parse(payload) as Record<string, unknown>, url: request.url ?? '' })
+      requests.push({
+        body: JSON.parse(payload) as Record<string, unknown>,
+        url: request.url ?? '',
+      })
 
       const next = responses.shift() ?? { body: {}, status: 500 }
       const send = (): void => {
@@ -85,7 +88,9 @@ beforeEach(async () => {
 
     pendingTimers.clear()
 
-    return new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+    return new Promise((resolve, reject) => server.close(error => error
+      ? reject(error)
+      : resolve()))
   }
 })
 
@@ -97,7 +102,11 @@ function createOptions() {
   return {
     createMessages: (retryFeedback?: string) => [
       { content: 'You are a judge.', role: 'system' as const },
-      ...(retryFeedback ? [{ content: retryFeedback, role: 'user' as const }] : []),
+      ...(retryFeedback
+        ? [
+            { content: retryFeedback, role: 'user' as const },
+          ]
+        : []),
       { content: 'Review this file.', role: 'user' as const },
     ],
     model: createResolvedModel(),
@@ -149,7 +158,9 @@ function toolCallCompletion(args: unknown): unknown {
           tool_calls: [
             {
               function: {
-                arguments: typeof args === 'string' ? args : JSON.stringify(args),
+                arguments: typeof args === 'string'
+                  ? args
+                  : JSON.stringify(args),
                 name: 'reportFindings',
               },
               id: 'call_1',
@@ -171,7 +182,9 @@ const validPayload = {
 
 describe('generateStructured', () => {
   it('returns the parsed structured result from a forced tool call', async () => {
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     const result = await generateStructured(createOptions())
 
@@ -186,7 +199,9 @@ describe('generateStructured', () => {
     // call comes back as a pending `toolCalls` entry with empty `toolResults`. The
     // arguments still are the structured output and must be consumed without a follow-up
     // request.
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     const result = await generateStructured(createOptions())
 
@@ -196,12 +211,17 @@ describe('generateStructured', () => {
 
   describe('signal', () => {
     it('does not call the model when the signal is already aborted', async () => {
-      responses.push({ body: toolCallCompletion(validPayload) })
+      responses.push({
+        body: toolCallCompletion(validPayload),
+      })
 
       const controller = new AbortController()
       controller.abort()
 
-      await expect(generateStructured({ ...createOptions(), signal: controller.signal }))
+      await expect(generateStructured({
+        ...createOptions(),
+        signal: controller.signal,
+      }))
         .rejects
         .toMatchObject({ name: 'AbortError' })
       expect(requests).toHaveLength(0)
@@ -230,10 +250,16 @@ describe('generateStructured', () => {
     it('forwards the signal to the model call so an in-flight request is cancelled', async () => {
       // The server holds the reply open. Without `abortSignal` reaching the HTTP call, this
       // request would run to completion and return findings for a run the caller cancelled.
-      responses.push({ body: toolCallCompletion(validPayload), delayMs: 10_000 })
+      responses.push({
+        body: toolCallCompletion(validPayload),
+        delayMs: 10_000,
+      })
 
       const controller = new AbortController()
-      const pending = generateStructured({ ...createOptions(), signal: controller.signal })
+      const pending = generateStructured({
+        ...createOptions(),
+        signal: controller.signal,
+      })
 
       await vi.waitFor(() => expect(requests).toHaveLength(1))
       controller.abort()
@@ -243,7 +269,9 @@ describe('generateStructured', () => {
   })
 
   it('forces a single tool call with the normalized schema as parameters', async () => {
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     await generateStructured(createOptions())
 
@@ -251,7 +279,10 @@ describe('generateStructured', () => {
     expect(body.model).toBe('test-model')
     expect(body.temperature).toBe(0)
     expect(body.parallel_tool_calls).toBe(false)
-    expect(body.tool_choice).toEqual({ function: { name: 'reportFindings' }, type: 'function' })
+    expect(body.tool_choice).toEqual({
+      function: { name: 'reportFindings' },
+      type: 'function',
+    })
 
     const tools = body.tools as [{ function: { description: string, name: string, parameters: Record<string, unknown>, strict: boolean } }]
     expect(tools).toHaveLength(1)
@@ -263,12 +294,16 @@ describe('generateStructured', () => {
   })
 
   it('records usage for each attempt with the operation metadata', async () => {
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
     const records: unknown[] = []
 
     await generateStructured({
       ...createOptions(),
-      metering: { recordUsage: record => records.push(record) },
+      metering: {
+        recordUsage: record => records.push(record),
+      },
     })
 
     expect(records).toEqual([
@@ -284,8 +319,16 @@ describe('generateStructured', () => {
   })
 
   it('retries with validation feedback after an invalid tool payload', async () => {
-    responses.push({ body: toolCallCompletion({ findings: [{ line: 'three' }] }) })
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: toolCallCompletion({
+        findings: [
+          { line: 'three' },
+        ],
+      }),
+    })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     const result = await generateStructured(createOptions())
 
@@ -300,8 +343,12 @@ describe('generateStructured', () => {
   })
 
   it('retries when the tool call arguments are not valid JSON', async () => {
-    responses.push({ body: toolCallCompletion('{ not json') })
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: toolCallCompletion('{ not json'),
+    })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     const result = await generateStructured(createOptions())
 
@@ -313,8 +360,12 @@ describe('generateStructured', () => {
   })
 
   it('retries when the forced tool call is missing from the response', async () => {
-    responses.push({ body: textCompletion('stop') })
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: textCompletion('stop'),
+    })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     const result = await generateStructured(createOptions())
 
@@ -326,8 +377,12 @@ describe('generateStructured', () => {
   })
 
   it('retries when the model response is truncated by length', async () => {
-    responses.push({ body: textCompletion('length') })
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: textCompletion('length'),
+    })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     const result = await generateStructured(createOptions())
 
@@ -336,17 +391,30 @@ describe('generateStructured', () => {
   })
 
   it('throws InvalidStructuredOutputError once attempts are exhausted', async () => {
-    responses.push({ body: toolCallCompletion({ findings: [{}] }) })
-    responses.push({ body: toolCallCompletion({ findings: [{}] }) })
+    responses.push({
+      body: toolCallCompletion({
+        findings: [{}],
+      }),
+    })
+    responses.push({
+      body: toolCallCompletion({
+        findings: [{}],
+      }),
+    })
 
-    await expect(generateStructured({ ...createOptions(), maxAttempts: 2 }))
+    await expect(generateStructured({
+      ...createOptions(),
+      maxAttempts: 2,
+    }))
       .rejects
       .toThrow(InvalidStructuredOutputError)
     expect(requests).toHaveLength(2)
   })
 
   it('does not retry when the model finishes with content_filter', async () => {
-    responses.push({ body: textCompletion('content_filter') })
+    responses.push({
+      body: textCompletion('content_filter'),
+    })
 
     await expect(generateStructured(createOptions()))
       .rejects
@@ -355,8 +423,13 @@ describe('generateStructured', () => {
   })
 
   it.each([408, 429, 500, 599])('retries transient HTTP status %i', async (status) => {
-    responses.push({ body: { error: 'retry me' }, status })
-    responses.push({ body: toolCallCompletion(validPayload) })
+    responses.push({
+      body: { error: 'retry me' },
+      status,
+    })
+    responses.push({
+      body: toolCallCompletion(validPayload),
+    })
 
     const result = await generateStructured(createOptions())
 
@@ -366,7 +439,10 @@ describe('generateStructured', () => {
   })
 
   it('propagates other HTTP errors without retrying', async () => {
-    responses.push({ body: { error: 'forbidden' }, status: 403 })
+    responses.push({
+      body: { error: 'forbidden' },
+      status: 403,
+    })
 
     await expect(generateStructured(createOptions())).rejects.toThrow()
     expect(requests).toHaveLength(1)

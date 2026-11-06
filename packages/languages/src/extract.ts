@@ -53,7 +53,10 @@ export async function extractTargets(file: SourceFile): Promise<SourceTarget[]> 
         binders.push(node)
         break
       case 'call':
-        calls.push({ name: node.text, range: rangeOf(node) })
+        calls.push({
+          name: node.text,
+          range: rangeOf(node),
+        })
         break
       case 'comment':
         comments.push(rangeOf(node))
@@ -145,12 +148,16 @@ function functionTarget(
     bodyIsSingleExpression: statements.length === 1 && !holdsBlock(statements[0]),
     bodyStatements: statements.length,
     commentRanges: rangesInside(comments, range),
-    declaredNames: [...new Set([
-      ...binders
-        .filter(binder => binder.startIndex >= range.start && binder.endIndex <= range.end)
-        .map(binder => binder.text),
-      ...(name === undefined ? [] : [name]),
-    ])],
+    declaredNames: [
+      ...new Set([
+        ...binders
+          .filter(binder => binder.startIndex >= range.start && binder.endIndex <= range.end)
+          .map(binder => binder.text),
+        ...(name === undefined
+          ? []
+          : [name]),
+      ]),
+    ],
     exported,
     identifierRanges: withOwnName(rangesInside(identifiers, range), nameNode, range),
   }

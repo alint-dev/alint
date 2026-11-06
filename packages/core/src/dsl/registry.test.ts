@@ -6,7 +6,9 @@ import { buildRuleRegistry } from './registry'
 
 describe('rule registry', () => {
   it('registers plugin rules without implicitly enabling them', () => {
-    const rule = defineRule({ create: () => ({}) })
+    const rule = defineRule({
+      create: () => ({}),
+    })
     const registry = buildRuleRegistry({
       plugins: {
         company: definePlugin({
@@ -23,8 +25,12 @@ describe('rule registry', () => {
   })
 
   it('enables only configured rules by flat plugin alias', () => {
-    const reviewRule = defineRule({ create: () => ({}) })
-    const namingRule = defineRule({ create: () => ({}) })
+    const reviewRule = defineRule({
+      create: () => ({}),
+    })
+    const namingRule = defineRule({
+      create: () => ({}),
+    })
     const registry = buildRuleRegistry({
       plugins: {
         company: definePlugin({
@@ -55,7 +61,9 @@ describe('rule registry', () => {
       plugins: {
         company: definePlugin({
           rules: {
-            review: defineRule({ create: () => ({}) }),
+            review: defineRule({
+              create: () => ({}),
+            }),
           },
         }),
       },
@@ -66,7 +74,9 @@ describe('rule registry', () => {
   })
 
   it('does not enable rules configured with off severity', () => {
-    const rule = defineRule({ create: () => ({}) })
+    const rule = defineRule({
+      create: () => ({}),
+    })
     const registry = buildRuleRegistry({
       plugins: {
         company: definePlugin({
@@ -85,7 +95,9 @@ describe('rule registry', () => {
   })
 
   it('uses tuple severity entries when enabling configured rules', () => {
-    const rule = defineRule({ create: () => ({}) })
+    const rule = defineRule({
+      create: () => ({}),
+    })
     const registry = buildRuleRegistry({
       plugins: {
         company: definePlugin({
@@ -111,7 +123,9 @@ describe('rule registry', () => {
   })
 
   it('rejects duplicate rule ids across flat plugin aliases', () => {
-    const rule = defineRule({ create: () => ({}) })
+    const rule = defineRule({
+      create: () => ({}),
+    })
 
     expect(() => buildRuleRegistry({
       plugins: {
@@ -157,7 +171,9 @@ describe('rule registry', () => {
       {
         id: 'company/review',
         localId: 'review',
-        options: [{ maxLines: 10 }],
+        options: [
+          { maxLines: 10 },
+        ],
         rule,
         severity: 'warn',
       },
@@ -191,7 +207,9 @@ describe('rule registry', () => {
       {
         id: 'company/review',
         localId: 'review',
-        options: [{ maxLines: 10 }],
+        options: [
+          { maxLines: 10 },
+        ],
         rule,
         severity: 'warn',
       },
@@ -217,13 +235,18 @@ describe('rule registry', () => {
         }),
       },
       rules: {
-        'company/review': ['warn', { maxLines: 'ten' }],
+        'company/review': [
+          'warn',
+          { maxLines: 'ten' },
+        ],
       },
     })).toThrow('Invalid options for rule "company/review": "0.maxLines": Invalid type: Expected number but received "ten"')
   })
 
   it('rejects extra options for rules without an options schema', () => {
-    const rule = defineRule({ create: () => ({}) })
+    const rule = defineRule({
+      create: () => ({}),
+    })
 
     expect(() => buildRuleRegistry({
       plugins: {
@@ -234,7 +257,10 @@ describe('rule registry', () => {
         }),
       },
       rules: {
-        'company/review': ['warn', { maxLines: 10 }],
+        'company/review': [
+          'warn',
+          { maxLines: 10 },
+        ],
       },
     })).toThrow('Rule "company/review" does not accept options.')
   })
@@ -258,7 +284,11 @@ describe('rule registry', () => {
         }),
       },
       rules: {
-        'company/review': ['warn', {}, { extra: true }],
+        'company/review': [
+          'warn',
+          {},
+          { extra: true },
+        ],
       },
     })).toThrow('Invalid options for rule "company/review": Unexpected option at index 1.')
   })

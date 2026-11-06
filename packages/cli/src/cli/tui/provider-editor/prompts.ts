@@ -6,6 +6,10 @@ import { errorMessageFrom } from '@moeru/std/error'
 
 import { parseHeaderList, probeModels } from '../../provider-registry'
 
+// clack 1.8 resolves a cancelled prompt to its own `CANCEL_SYMBOL`, and `isCancel` narrows only that
+// symbol, so a wider `symbol` parameter would survive the guard.
+type Cancelled = typeof ClackPrompts.CANCEL_SYMBOL
+
 interface SelectOption<T extends string> {
   hint?: string
   label: string
@@ -71,7 +75,9 @@ export function createProviderEditorPrompts(prompts: typeof ClackPrompts): Provi
         initialValue,
         message: 'Provider endpoint (type .. to go back)',
         placeholder: initialValue ?? 'https://example.test/v1',
-        validate: value => isBackInput(value ?? '') || (value ?? '').trim().length > 0 ? undefined : 'Provider endpoint is required.',
+        validate: value => isBackInput(value ?? '') || (value ?? '').trim().length > 0
+          ? undefined
+          : 'Provider endpoint is required.',
       })
 
       return textResult(prompts, result)
@@ -101,7 +107,9 @@ export function createProviderEditorPrompts(prompts: typeof ClackPrompts): Provi
       const result = await prompts.text({
         message: 'Models',
         placeholder: 'qwen:8b, qwen:32b; type .. to go back',
-        validate: value => isBackInput(value ?? '') || splitInput(value ?? '').length > 0 ? undefined : 'At least one model is required.',
+        validate: value => isBackInput(value ?? '') || splitInput(value ?? '').length > 0
+          ? undefined
+          : 'At least one model is required.',
       })
 
       const value = textResult(prompts, result)
@@ -131,7 +139,9 @@ export function createProviderEditorPrompts(prompts: typeof ClackPrompts): Provi
 
       try {
         const models = await probeModels(endpoint, headers)
-        spinner.stop(models.length > 0 ? `Found ${models.length} models` : 'No models discovered')
+        spinner.stop(models.length > 0
+          ? `Found ${models.length} models`
+          : 'No models discovered')
         return models
       }
       catch (error) {
@@ -147,7 +157,9 @@ export function createProviderEditorPrompts(prompts: typeof ClackPrompts): Provi
       const result = await prompts.text({
         initialValue,
         message: 'Provider id (type .. to go back)',
-        validate: value => isBackInput(value ?? '') || (value ?? '').trim().length > 0 ? undefined : 'Provider id is required.',
+        validate: value => isBackInput(value ?? '') || (value ?? '').trim().length > 0
+          ? undefined
+          : 'Provider id is required.',
       })
 
       return textResult(prompts, result)
@@ -188,12 +200,15 @@ export function isBackInput(value: string): boolean {
 }
 
 export function withBackOption<T extends string>(options: SelectOption<T>[]): Array<SelectOption<T | typeof backValue>> {
-  return [...options, { label: 'Back', value: backValue }]
+  return [
+    ...options,
+    { label: 'Back', value: backValue },
+  ]
 }
 
 function selectionResult<T extends string>(
   prompts: typeof ClackPrompts,
-  result: symbol | T,
+  result: Cancelled | T,
 ): ProviderEditorPromptResult<Exclude<T, typeof backValue>> {
   if (prompts.isCancel(result)) {
     return { status: 'cancelled' }
@@ -214,11 +229,13 @@ function submitted<T>(value: T): ProviderEditorPromptResult<T> {
 
 function textResult(
   prompts: typeof ClackPrompts,
-  result: string | symbol,
+  result: Cancelled | string,
 ): ProviderEditorPromptResult<string> {
   if (prompts.isCancel(result)) {
     return { status: 'cancelled' }
   }
 
-  return isBackInput(result) ? { status: 'back' } : submitted(result)
+  return isBackInput(result)
+    ? { status: 'back' }
+    : submitted(result)
 }

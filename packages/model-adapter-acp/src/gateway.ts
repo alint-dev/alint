@@ -1,3 +1,7 @@
+// NOTICE: `@agentclientprotocol/sdk` 2.x moved `Usage` and `PromptResponse.usage` out of the stable
+// schema; they only exist on the `/unstable` entrypoint. The gateway reports ACP token usage back
+// as OpenAI usage, so it has to speak the unstable surface. Move back to the root import once
+// usage is part of the stable protocol.
 import type {
   AgentApp,
   ClientApp,
@@ -5,13 +9,13 @@ import type {
   StopReason,
   Stream,
   Usage,
-} from '@agentclientprotocol/sdk'
+} from '@agentclientprotocol/sdk/unstable'
 
 import type { OpenAIFunctionTool, PendingToolCall } from './tool-bridge'
 
 import process from 'node:process'
 
-import { client, methods, PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
+import { client, methods, PROTOCOL_VERSION } from '@agentclientprotocol/sdk/unstable'
 import { defineEventHandler, getRouterParam, H3 } from 'h3'
 import { serve } from 'h3/node'
 import { array, boolean, literal, looseObject, number, object, optional, record, safeParse, string, union, unknown } from 'valibot'
@@ -107,7 +111,9 @@ const chatCompletionRequestSchema = looseObject({
     literal('none'),
     literal('required'),
     object({
-      function: object({ name: string() }),
+      function: object({
+        name: string(),
+      }),
       type: literal('function'),
     }),
   ])),
@@ -314,7 +320,9 @@ class CompletionTurn {
     }
 
     this.#finished = true
-    this.#options.onFinished(this, [...this.#pendingCalls.keys()])
+    this.#options.onFinished(this, [
+      ...this.#pendingCalls.keys(),
+    ])
   }
 
   #flushDeferredText(): void {
@@ -384,7 +392,11 @@ class CompletionTurn {
         await context.buildSession({
           ...sessionExtensions(request.extensions),
           cwd,
-          mcpServers: this.#bridge ? [this.#bridge.config(origin)] : [],
+          mcpServers: this.#bridge
+            ? [
+                this.#bridge.config(origin),
+              ]
+            : [],
         }).withSession(async (session) => {
           this.#cancelSession = () => context.notify(methods.agent.session.cancel, {
             sessionId: session.sessionId,
@@ -392,7 +404,9 @@ class CompletionTurn {
           this.#assertActive()
           for (let attempt = 0; attempt < 2; attempt += 1) {
             const callCountBeforePrompt = this.#toolCallCount
-            this.#deferredText = requiresTool(request.toolChoice) ? [] : undefined
+            this.#deferredText = requiresTool(request.toolChoice)
+              ? []
+              : undefined
             const prompt = session.prompt(attempt === 0
               ? renderMessages(request)
               : [
@@ -459,7 +473,9 @@ export function createGateway(options: GatewayOptions): GatewayApp {
   const activeTurns = new Set<CompletionTurn>()
   const bridges = new Map<string, ToolBridge>()
   const pendingTurns = new Map<string, CompletionTurn>()
-  const configuredMcpOrigin = options.mcpBaseUrl ? new URL(options.mcpBaseUrl).origin : undefined
+  const configuredMcpOrigin = options.mcpBaseUrl
+    ? new URL(options.mcpBaseUrl).origin
+    : undefined
   const app = new H3()
 
   app.get('/v1/models', defineEventHandler(() => ({
@@ -575,11 +591,13 @@ export function createGateway(options: GatewayOptions): GatewayApp {
         message: {
           content: output.text || null,
           role: 'assistant',
-          tool_calls: [{
-            function: { arguments: output.call.arguments, name: output.call.name },
-            id: output.call.id,
-            type: 'function',
-          }],
+          tool_calls: [
+            {
+              function: { arguments: output.call.arguments, name: output.call.name },
+              id: output.call.id,
+              type: 'function',
+            },
+          ],
         },
       }, zeroUsage)
     }
@@ -686,7 +704,9 @@ function authorizeRequestTools(client: ClientApp): ClientApp {
       }
     }
 
-    return { outcome: { outcome: 'cancelled' } }
+    return {
+      outcome: { outcome: 'cancelled' },
+    }
   })
 }
 
@@ -714,11 +734,13 @@ function chatCompletion(
   usage?: null | Usage,
 ) {
   return {
-    choices: [{
-      finish_reason: choice.finishReason,
-      index: 0,
-      message: choice.message,
-    }],
+    choices: [
+      {
+        finish_reason: choice.finishReason,
+        index: 0,
+        message: choice.message,
+      },
+    ],
     created: Math.floor(Date.now() / 1_000),
     id: `chatcmpl-${crypto.randomUUID()}`,
     model,
@@ -760,7 +782,15 @@ function chatCompletionRequest(value: unknown): ChatCompletionRequest | undefine
     ...extensions
   } = result.output
 
-  return { extensions, messages, model, stream, temperature, toolChoice, tools }
+  return {
+    extensions,
+    messages,
+    model,
+    stream,
+    temperature,
+    toolChoice,
+    tools,
+  }
 }
 
 function connectWith<T>(
@@ -819,7 +849,9 @@ function lastToolResult(messages: unknown[]): ToolResultMessage | undefined {
   }
 
   return {
-    content: typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
+    content: typeof message.content === 'string'
+      ? message.content
+      : JSON.stringify(message.content),
     toolCallId: message.tool_call_id,
   }
 }
@@ -832,11 +864,15 @@ function mcpOrigin(requestUrl: string, configuredOrigin: string | undefined): st
   const url = new URL(requestUrl)
 
   // A remote Host header must not decide where the ACP agent sends an authenticated MCP request.
-  return ['127.0.0.1', '[::1]', 'localhost'].includes(url.hostname) ? url.origin : undefined
+  return ['127.0.0.1', '[::1]', 'localhost'].includes(url.hostname)
+    ? url.origin
+    : undefined
 }
 
 function openAIError(message: string, type: string) {
-  return { error: { message, type } }
+  return {
+    error: { message, type },
+  }
 }
 
 function renderMessages(request: ChatCompletionRequest): string {
@@ -874,7 +910,9 @@ function sessionExtensions(extensions: Record<string, unknown>): Record<string, 
     ...fields,
     _meta: {
       ...fields,
-      ...(isRecord(explicitMeta) ? explicitMeta : {}),
+      ...(isRecord(explicitMeta)
+        ? explicitMeta
+        : {}),
     },
   }
 }
@@ -892,11 +930,13 @@ function streamCompletion(
     reason: 'tool_calls' | ReturnType<typeof finishReason>,
     usage?: null | Usage,
   ) => {
-    enqueueSse(controller, encoder, chatCompletionChunk(id, created, model, [{
-      delta: {},
-      finish_reason: reason,
-      index: 0,
-    }]))
+    enqueueSse(controller, encoder, chatCompletionChunk(id, created, model, [
+      {
+        delta: {},
+        finish_reason: reason,
+        index: 0,
+      },
+    ]))
 
     if (usage) {
       enqueueSse(controller, encoder, {
@@ -919,28 +959,34 @@ function streamCompletion(
           const output = await turn.nextOutput()
 
           if (output.type === 'text-delta') {
-            enqueueSse(controller, encoder, chatCompletionChunk(id, created, model, [{
-              delta: { content: output.text, role: 'assistant' },
-              index: 0,
-            }]))
+            enqueueSse(controller, encoder, chatCompletionChunk(id, created, model, [
+              {
+                delta: { content: output.text, role: 'assistant' },
+                index: 0,
+              },
+            ]))
             continue
           }
 
           if (output.type === 'tool-call') {
             // The ACP call stays blocked until the next OpenAI request returns its tool result.
             deferToolCall(turn, output.call, onCompatibilityDiagnostic)
-            enqueueSse(controller, encoder, chatCompletionChunk(id, created, model, [{
-              delta: {
-                role: 'assistant',
-                tool_calls: [{
-                  function: { arguments: output.call.arguments, name: output.call.name },
-                  id: output.call.id,
-                  index: 0,
-                  type: 'function',
-                }],
+            enqueueSse(controller, encoder, chatCompletionChunk(id, created, model, [
+              {
+                delta: {
+                  role: 'assistant',
+                  tool_calls: [
+                    {
+                      function: { arguments: output.call.arguments, name: output.call.name },
+                      id: output.call.id,
+                      index: 0,
+                      type: 'function',
+                    },
+                  ],
+                },
+                index: 0,
               },
-              index: 0,
-            }]))
+            ]))
             finishStream(controller, 'tool_calls', zeroUsage)
             return
           }

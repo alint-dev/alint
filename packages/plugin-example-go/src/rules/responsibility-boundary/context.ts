@@ -38,7 +38,9 @@ export async function collectResponsibilityBoundaryContext(
     return [
       'Agent-selected project context:',
       agentContext,
-      deterministicContext ? `Deterministic fallback context:\n\n${deterministicContext}` : undefined,
+      deterministicContext
+        ? `Deterministic fallback context:\n\n${deterministicContext}`
+        : undefined,
     ].filter(Boolean).join('\n\n')
   }
   catch (error) {
@@ -97,7 +99,9 @@ async function collectDeterministicContext(ctx: RuleContext, filePath: string, s
     ].join('\n'))
   }
 
-  return sections.length > 0 ? sections.join('\n\n') : undefined
+  return sections.length > 0
+    ? sections.join('\n\n')
+    : undefined
 }
 
 function extractGoDeclarationSymbols(source: string): Array<{ line: number, name: string }> {

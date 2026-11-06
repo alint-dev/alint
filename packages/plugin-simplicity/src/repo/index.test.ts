@@ -37,7 +37,12 @@ describe('repoIndexFor', () => {
 
   it('is built once per run, however many files ask for it', async () => {
     const ctx = createFixtureContext()
-    const options = { cwd: FIXTURES, ignores: [], maxLines: 10, minTokens: 5 }
+    const options = {
+      cwd: FIXTURES,
+      ignores: [],
+      maxLines: 10,
+      minTokens: 5,
+    }
 
     const [first, second] = await Promise.all([
       repoIndexFor(ctx, options),
@@ -69,10 +74,38 @@ describe('twinsOf, across every language', () => {
   // two accessors that share a shape. The accessors are load-bearing: blinding every identifier
   // would collapse them.
   const LANGUAGES = [
-    { accessors: ['readName', 'readSize'], copy: 'isNodeError', directory: 'ts/', name: 'typescript', original: 'isNodeError', renamed: 'hasErrorCode' },
-    { accessors: ['read_name', 'read_size'], copy: 'is_missing', directory: 'rust/', name: 'rust', original: 'is_missing', renamed: 'is_absent' },
-    { accessors: ['ReadName', 'ReadSize'], copy: 'isMissing', directory: 'go/', name: 'go', original: 'isMissing', renamed: 'isAbsent' },
-    { accessors: ['read_name', 'read_size'], copy: 'is_missing', directory: 'python/', name: 'python', original: 'is_missing', renamed: 'is_absent' },
+    {
+      accessors: ['readName', 'readSize'],
+      copy: 'isNodeError',
+      directory: 'ts/',
+      name: 'typescript',
+      original: 'isNodeError',
+      renamed: 'hasErrorCode',
+    },
+    {
+      accessors: ['read_name', 'read_size'],
+      copy: 'is_missing',
+      directory: 'rust/',
+      name: 'rust',
+      original: 'is_missing',
+      renamed: 'is_absent',
+    },
+    {
+      accessors: ['ReadName', 'ReadSize'],
+      copy: 'isMissing',
+      directory: 'go/',
+      name: 'go',
+      original: 'isMissing',
+      renamed: 'isAbsent',
+    },
+    {
+      accessors: ['read_name', 'read_size'],
+      copy: 'is_missing',
+      directory: 'python/',
+      name: 'python',
+      original: 'is_missing',
+      renamed: 'is_absent',
+    },
   ] as const
 
   for (const language of LANGUAGES) {

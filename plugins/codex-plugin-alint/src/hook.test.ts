@@ -41,7 +41,9 @@ describe('bundled Stop hook', () => {
       readFile(bundledHook, 'utf8'),
       readFile(bundledLauncher, 'utf8'),
     ])
-    const imports = sources.flatMap(source => [...source.matchAll(/^import .*? from ["'](.+?)["'];?$/gmu)])
+    const imports = sources.flatMap(source => [
+      ...source.matchAll(/^import .*? from ["'](.+?)["'];?$/gmu),
+    ])
       .map(match => match[1])
       .filter(specifier => !specifier?.startsWith('node:'))
 
@@ -188,7 +190,9 @@ describe('bundled Stop hook', () => {
     const cwd = await createRepository('enabled')
     const pluginData = await mkdtemp(join(tmpdir(), 'alint-hook-data-'))
     const binDirectory = await mkdtemp(join(tmpdir(), 'alint-hook-bin-'))
-    const executable = join(binDirectory, process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm')
+    const executable = join(binDirectory, process.platform === 'win32'
+      ? 'pnpm.cmd'
+      : 'pnpm')
     await rm(join(cwd, 'node_modules'), { recursive: true })
     await writeFile(join(cwd, 'pnpm-lock.yaml'), 'lockfileVersion: 9\n', { encoding: 'utf8', mode: 0o644 })
     await writeFile(executable, fakePackageManager(), 'utf8')
@@ -321,7 +325,11 @@ async function createRepository(
   activation: RepositoryActivation,
 ): Promise<string> {
   const cwd = await mkdtemp(join(tmpdir(), 'alint-hook-repo-'))
-  await x('git', ['init'], { nodeOptions: { cwd }, nodePath: false, throwOnError: true })
+  await x('git', ['init'], {
+    nodeOptions: { cwd },
+    nodePath: false,
+    throwOnError: true,
+  })
 
   if (activation === 'none') {
     return cwd
@@ -329,7 +337,9 @@ async function createRepository(
 
   await writeFile(join(cwd, 'alint.config.toml'), '[[config.group]]\nname = "rules"\n', 'utf8')
   const binDirectory = join(cwd, 'node_modules', '.bin')
-  const executable = join(binDirectory, process.platform === 'win32' ? 'alint.cmd' : 'alint')
+  const executable = join(binDirectory, process.platform === 'win32'
+    ? 'alint.cmd'
+    : 'alint')
   await mkdir(binDirectory, { recursive: true })
   await writeFile(executable, fakeAlint(activation), 'utf8')
   await chmod(executable, 0o755)
@@ -337,11 +347,31 @@ async function createRepository(
 }
 
 async function detachHead(cwd: string): Promise<void> {
-  await x('git', ['config', 'user.email', 'test@example.com'], { nodeOptions: { cwd }, nodePath: false, throwOnError: true })
-  await x('git', ['config', 'user.name', 'Test'], { nodeOptions: { cwd }, nodePath: false, throwOnError: true })
-  await x('git', ['add', '.'], { nodeOptions: { cwd }, nodePath: false, throwOnError: true })
-  await x('git', ['commit', '-m', 'initial'], { nodeOptions: { cwd }, nodePath: false, throwOnError: true })
-  await x('git', ['checkout', '--detach'], { nodeOptions: { cwd }, nodePath: false, throwOnError: true })
+  await x('git', ['config', 'user.email', 'test@example.com'], {
+    nodeOptions: { cwd },
+    nodePath: false,
+    throwOnError: true,
+  })
+  await x('git', ['config', 'user.name', 'Test'], {
+    nodeOptions: { cwd },
+    nodePath: false,
+    throwOnError: true,
+  })
+  await x('git', ['add', '.'], {
+    nodeOptions: { cwd },
+    nodePath: false,
+    throwOnError: true,
+  })
+  await x('git', ['commit', '-m', 'initial'], {
+    nodeOptions: { cwd },
+    nodePath: false,
+    throwOnError: true,
+  })
+  await x('git', ['checkout', '--detach'], {
+    nodeOptions: { cwd },
+    nodePath: false,
+    throwOnError: true,
+  })
 }
 
 function fakeAlint(activation: Exclude<RepositoryActivation, 'none'>): string {
@@ -352,7 +382,9 @@ function fakeAlint(activation: Exclude<RepositoryActivation, 'none'>): string {
   const abnormalExit = activation === 'enabled-errors-exit-one'
   const stderrExit = activation === 'enabled-stderr-exit-one'
   const silentExit = activation === 'enabled-silent-exit-one'
-  const target = activation === 'enabled-all' ? 'all' : 'dirty-files'
+  const target = activation === 'enabled-all'
+    ? 'all'
+    : 'dirty-files'
 
   return `#!/usr/bin/env node
 const { writeSync } = require('node:fs')
@@ -430,7 +462,11 @@ async function runHook(
   return x(process.execPath, [bundledLauncher], {
     nodeOptions: {
       // NOTICE: Codex defines CLAUDE_PLUGIN_DATA as an official compatibility alias for its PLUGIN_DATA variable.
-      env: { ...process.env, ...env, CLAUDE_PLUGIN_DATA: pluginData },
+      env: {
+        ...process.env,
+        ...env,
+        CLAUDE_PLUGIN_DATA: pluginData,
+      },
     },
     nodePath: false,
     stdin: JSON.stringify({

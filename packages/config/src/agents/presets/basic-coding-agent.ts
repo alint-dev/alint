@@ -4,9 +4,10 @@ import type { Runner, Tool } from 'apeira'
 
 import type { DeclarativeFindingResponse, DeclarativeRuleDefinition } from '../../plugins/declarative/types'
 
+import { runSteps } from '@alint-js/agent-apeira'
 import { formatOutputLanguageInstruction, formatSourceWithLineNumbers, toolParametersFromSchema } from '@alint-js/core/structured-output'
 import { createTools } from '@alint-js/tools-fs'
-import { chat, hasToolCall, or, rawTool, stepCountAtLeast, user } from 'apeira'
+import { chat, rawTool, user } from 'apeira'
 import { parse } from 'valibot'
 
 import { declarativeFindingResponseSchema } from '../../plugins/declarative/types'
@@ -90,7 +91,6 @@ export function createCodingAgent(
     headers: model.provider.headers,
     model: model.id,
     parallelToolCalls: false,
-    stopWhen: or(hasToolCall(reportFindingsToolName), stepCountAtLeast(maxAgentSteps)),
     toolChoice: 'required',
   }),
 ) {
@@ -121,17 +121,19 @@ export function createCodingAgent(
         strict: true,
       }))
 
-      const result = await runner({
+      const result = await runSteps(runner, {
         channel: {
           emit: () => {},
           subscribe: () => () => {},
         },
-        input: [user([
-          formatOutputLanguageInstruction(options.outputLanguage),
-          `Project root: ${options.cwd}`,
-          `Reviewed target file path: ${options.targetFilePath}`,
-          `Reviewed target source with line numbers:\n\n${formatSourceWithLineNumbers(options.sourceText)}`,
-        ].filter(Boolean).join('\n\n'))],
+        input: [
+          user([
+            formatOutputLanguageInstruction(options.outputLanguage),
+            `Project root: ${options.cwd}`,
+            `Reviewed target file path: ${options.targetFilePath}`,
+            `Reviewed target source with line numbers:\n\n${formatSourceWithLineNumbers(options.sourceText)}`,
+          ].filter(Boolean).join('\n\n')),
+        ],
         instructions: [
           options.instruction,
           'Use the filesystem tools to inspect the project as needed before reaching a conclusion.',
@@ -139,6 +141,9 @@ export function createCodingAgent(
         ].join('\n\n'),
         tools,
         turnId: 'alint',
+      }, {
+        maxSteps: maxAgentSteps,
+        until: () => report !== undefined,
       })
 
       if (!report) {

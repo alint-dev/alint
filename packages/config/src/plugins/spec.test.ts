@@ -57,7 +57,14 @@ describe('plugin specifiers', () => {
     expect(() => parsePluginSpecifier(value)).toThrow('Static plugin file URLs are not supported.')
   })
 
-  it.each(['.', '..', './plugin', '../plugin', '.\\plugin', '..\\plugin']) (
+  it.each([
+    '.',
+    '..',
+    './plugin',
+    '../plugin',
+    '.\\plugin',
+    '..\\plugin',
+  ]) (
     'rejects relative directory %s without config provenance',
     (value) => {
       expect(() => parsePluginSpecifier(value)).toThrow('requires a config file')

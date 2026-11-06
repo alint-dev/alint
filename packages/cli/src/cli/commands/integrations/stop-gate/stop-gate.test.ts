@@ -19,8 +19,12 @@ describe('integrations stop-gate', () => {
       'stop-gate',
     ], {
       cwd: process.cwd(),
-      stderr: { write: chunk => stderr += chunk },
-      stdout: { write: chunk => stdout += chunk },
+      stderr: {
+        write: chunk => stderr += chunk,
+      },
+      stdout: {
+        write: chunk => stdout += chunk,
+      },
     })
 
     expect(exitCode).toBe(2)
@@ -99,10 +103,12 @@ describe('integrations stop-gate', () => {
     expect(report.failure.message).toBe('2 rule executions failed.')
     expect(report.failure.details).toHaveLength(2)
     expect(report.failure.details[0]?.job.ruleId).toBe('test/first')
-    expect(report.failure.details[0]?.causes).toEqual([{
-      code: 'MODEL_OFFLINE',
-      message: 'model provider unavailable',
-    }])
+    expect(report.failure.details[0]?.causes).toEqual([
+      {
+        code: 'MODEL_OFFLINE',
+        message: 'model provider unavailable',
+      },
+    ])
     expect(report.failure.details[1]?.job.ruleId).toBe('test/second')
     expect(report.execution.failed).toBe(2)
 
@@ -207,7 +213,9 @@ async function createRepository(config: string, dirty = true): Promise<string> {
   await git(cwd, ['init'])
   await git(cwd, ['config', 'user.email', 'test@example.com'])
   await git(cwd, ['config', 'user.name', 'Test'])
-  const configFile = config.startsWith('export default') ? 'alint.config.ts' : 'alint.config.toml'
+  const configFile = config.startsWith('export default')
+    ? 'alint.config.ts'
+    : 'alint.config.toml'
   await writeFile(join(cwd, configFile), config, 'utf8')
   await writeFile(join(cwd, 'input.ts'), 'original\n', 'utf8')
   await git(cwd, ['add', '.'])
@@ -340,8 +348,12 @@ async function run(
   ], {
     cwd,
     env,
-    stderr: { write: chunk => stderr += chunk },
-    stdout: { write: chunk => stdout += chunk },
+    stderr: {
+      write: chunk => stderr += chunk,
+    },
+    stdout: {
+      write: chunk => stdout += chunk,
+    },
   })
 
   return {

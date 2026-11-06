@@ -58,9 +58,15 @@ interface StaticConfigWrapper {
   }
 }
 
-const filePatternSchema = union([string(), array(string())])
+const filePatternSchema = union([
+  string(),
+  array(string()),
+])
 const ruleSeveritySchema = picklist(['error', 'off', 'warn'])
-const ruleConfigEntrySchema = union([ruleSeveritySchema, tupleWithRest([ruleSeveritySchema], unknown())])
+const ruleConfigEntrySchema = union([
+  ruleSeveritySchema,
+  tupleWithRest([ruleSeveritySchema], unknown()),
+])
 const staticConfigItemSchema = looseObject({
   agent: optional(unknown()),
   basePath: optional(string()),
@@ -163,7 +169,11 @@ function parseStaticConfigInputArray(
   }
 
   return value.flatMap(item =>
-    Array.isArray(item) ? parseStaticConfigInputArray(item, [...arrayStack, value]) : [parseStaticConfigItem(item)],
+    Array.isArray(item)
+      ? parseStaticConfigInputArray(item, [...arrayStack, value])
+      : [
+          parseStaticConfigItem(item),
+        ],
   )
 }
 

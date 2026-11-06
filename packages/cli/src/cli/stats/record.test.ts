@@ -35,7 +35,13 @@ describe('createRunStat', () => {
     const stat = createRunStat({
       cwd: '/p',
       durationMs: 42,
-      ruleCounts: { cached: 0, cancelled: 0, completed: 1, failed: 0, planned: 1 },
+      ruleCounts: {
+        cached: 0,
+        cancelled: 0,
+        completed: 1,
+        failed: 0,
+        planned: 1,
+      },
       usage,
     })
 
@@ -55,13 +61,21 @@ describe('createRunStat', () => {
     const usage: RunUsage = {
       inputTokens: 0,
       outputTokens: 0,
-      records: [{ modelId: 'm', providerId: 'p', ruleId: 'r' }],
+      records: [
+        { modelId: 'm', providerId: 'p', ruleId: 'r' },
+      ],
       totalTokens: 0,
     }
 
     const stat = createRunStat({
       cwd: '/p',
-      ruleCounts: { cached: 0, cancelled: 0, completed: 0, failed: 0, planned: 0 },
+      ruleCounts: {
+        cached: 0,
+        cancelled: 0,
+        completed: 0,
+        failed: 0,
+        planned: 0,
+      },
       usage,
     })
 

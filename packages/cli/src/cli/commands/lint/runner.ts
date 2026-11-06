@@ -20,7 +20,9 @@ export function resolveRunnerConfig(
     ruleConcurrency: ruleConcurrency ?? baseRunner?.ruleConcurrency,
     // --no-stats is a hard off-switch for this run. The CI gate lives in the writer
     // (resolveStatsWrite), not here.
-    stats: options.stats === false ? false : baseRunner?.stats,
+    stats: options.stats === false
+      ? false
+      : baseRunner?.stats,
     timeoutMs: timeoutMs ?? baseRunner?.timeoutMs,
   }
 

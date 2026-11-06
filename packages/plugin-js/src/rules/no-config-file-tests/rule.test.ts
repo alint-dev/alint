@@ -27,8 +27,12 @@ function createContext() {
     cwd: '/repo',
     id: 'js/no-config-file-tests',
     localId: 'no-config-file-tests',
-    logger: { debug: () => {} },
-    metering: { recordUsage: () => {} },
+    logger: {
+      debug: () => {},
+    },
+    metering: {
+      recordUsage: () => {},
+    },
     model: async () => ({
       aliases: [],
       capabilities: ['tool-call'],
@@ -50,7 +54,9 @@ function createContext() {
         contentHash: createHash('sha256').update(source).digest('hex'),
         language: 'typescript',
         lines: source.split('\n'),
-        path: typeof file === 'string' ? file : file.path,
+        path: typeof file === 'string'
+          ? file
+          : file.path,
         text: source,
       }),
     }),
@@ -111,7 +117,9 @@ describe('configFileTestsRule', () => {
           suggestion: 'Delete the test; the configuration already states this rule.',
         },
         filePath: '/repo/eslint.config.test.ts',
-        loc: { start: { column: 0, line: 4 } },
+        loc: {
+          start: { column: 0, line: 4 },
+        },
         message: 'The assertion repeats the severity the eslint config already declares.',
       },
     ])

@@ -23,8 +23,12 @@ async function createTestIo(): Promise<CliIo> {
   return {
     cwd,
     env: { ...process.env, XDG_CONFIG_HOME: configHome },
-    stderr: { write: () => true },
-    stdout: { write: () => true },
+    stderr: {
+      write: () => true,
+    },
+    stdout: {
+      write: () => true,
+    },
   }
 }
 
@@ -113,12 +117,16 @@ describe('createRunSession', () => {
     const io = await createTestIo()
     await writeFixture(io.cwd)
     await writeSetupConfig(getGlobalSetupConfigPath(io.env ?? process.env), {
-      providers: [{
-        endpoint: 'https://models.example/v1',
-        id: 'remote',
-        models: [{ id: 'small' }],
-        type: 'openai-compatible',
-      }],
+      providers: [
+        {
+          endpoint: 'https://models.example/v1',
+          id: 'remote',
+          models: [
+            { id: 'small' },
+          ],
+          type: 'openai-compatible',
+        },
+      ],
       version: 1,
     })
 
@@ -187,7 +195,10 @@ describe('createRunSession', () => {
   it('uses a preloaded config and resolved targets without reading project inputs again', async () => {
     const io = await createTestIo()
     const config: AlintConfig = []
-    const targets = { directories: ['virtual-directory'], files: ['missing.ts'] }
+    const targets = {
+      directories: ['virtual-directory'],
+      files: ['missing.ts'],
+    }
     const startModelAdapters = vi.fn().mockResolvedValue({
       setupConfig: { providers: [], version: 1 },
       shutdown: () => Promise.resolve(),
@@ -218,7 +229,9 @@ describe('createRunSession', () => {
     const session = await createRunSession(io)
 
     try {
-      await expect(session.run({ inputs: ['missing/**/*.ts'] })).rejects.toThrow('No files matching')
+      await expect(session.run({
+        inputs: ['missing/**/*.ts'],
+      })).rejects.toThrow('No files matching')
     }
     finally {
       await session.shutdown()

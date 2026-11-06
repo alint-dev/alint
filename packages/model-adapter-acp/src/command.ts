@@ -56,7 +56,10 @@ async function disposeCommandConnection(
 
   const closed = waitForClose(child)
   terminate()
-  if (await Promise.race([closed.then(() => true), delay(1_000, false)])) {
+  if (await Promise.race([
+    closed.then(() => true),
+    delay(1_000, false),
+  ])) {
     return
   }
 

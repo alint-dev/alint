@@ -157,7 +157,10 @@ describe('plugin lock parsing', () => {
       },
       version: 2,
     }, { cwd: '/repo' })
-    const reference = { alias: 'example', specifier: parsePluginSpecifier('/repo/plugins/example') }
+    const reference = {
+      alias: 'example',
+      specifier: parsePluginSpecifier('/repo/plugins/example'),
+    }
 
     expect(lock.find(reference)).toBeUndefined()
     expect(() => lock.get(reference)).toThrow('Plugin "example" is locked to @alint-js/plugin-example@1.0.0, but config requires /repo/plugins/example.')
@@ -175,7 +178,10 @@ describe('plugin lock parsing', () => {
       },
       version: 2,
     }, { cwd: '/repo' })
-    const reference = { alias: 'example', specifier: parsePluginSpecifier('@alint-js/plugin-example@1.0.0') }
+    const reference = {
+      alias: 'example',
+      specifier: parsePluginSpecifier('@alint-js/plugin-example@1.0.0'),
+    }
 
     expect(lock.find(reference)).toBeUndefined()
     expect(() => lock.get(reference)).toThrow('Plugin "example" is locked to /repo/plugins/example, but config requires @alint-js/plugin-example@1.0.0.')
@@ -331,8 +337,12 @@ describe('plugin lock static config state', () => {
 
   it('returns static plugin references absent from the lock file', () => {
     const config = parseStaticConfig([
-      { plugins: { python: '@alint-js/plugin-python@0.3.1' } },
-      { plugins: { js: '@alint-js/plugin-js@1.2.3' } },
+      {
+        plugins: { python: '@alint-js/plugin-python@0.3.1' },
+      },
+      {
+        plugins: { js: '@alint-js/plugin-js@1.2.3' },
+      },
     ])
     const lock = parsePluginLockFile({
       plugins: {
@@ -355,7 +365,9 @@ describe('plugin lock static config state', () => {
 
   it('returns mismatched-version static plugin references as missing', () => {
     const config = parseStaticConfig([
-      { plugins: { python: '@alint-js/plugin-python@0.3.1' } },
+      {
+        plugins: { python: '@alint-js/plugin-python@0.3.1' },
+      },
     ])
     const lock = parsePluginLockFile({
       plugins: {
@@ -380,8 +392,12 @@ describe('plugin lock static config state', () => {
     const projectRoot = await createTempProject()
     await mkdir(join(projectRoot, '.alint', 'plugins', 'store'), { recursive: true })
     const config = parseStaticConfig([
-      { plugins: { python: '@alint-js/plugin-python@0.3.1' } },
-      { plugins: { python: '@alint-js/plugin-python@0.3.1' } },
+      {
+        plugins: { python: '@alint-js/plugin-python@0.3.1' },
+      },
+      {
+        plugins: { python: '@alint-js/plugin-python@0.3.1' },
+      },
     ])
     const lock = parsePluginLockFile({
       plugins: {
@@ -406,7 +422,9 @@ describe('plugin lock static config state', () => {
 
   it('ignores static plugin references missing from the lock file when listing unresolved entries', async () => {
     const config = parseStaticConfig([
-      { plugins: { python: '@alint-js/plugin-python@0.3.1' } },
+      {
+        plugins: { python: '@alint-js/plugin-python@0.3.1' },
+      },
     ])
     const lock = parsePluginLockFile({ plugins: {}, version: 2 }, { cwd: await createTempProject() })
 
@@ -417,7 +435,9 @@ describe('plugin lock static config state', () => {
     const projectRoot = await createTempProject()
     const packageDir = await writeInstalledPackage(projectRoot)
     const config = parseStaticConfig([
-      { plugins: { python: '@alint-js/plugin-python@0.3.1' } },
+      {
+        plugins: { python: '@alint-js/plugin-python@0.3.1' },
+      },
     ])
     const lock = parsePluginLockFile({
       plugins: {

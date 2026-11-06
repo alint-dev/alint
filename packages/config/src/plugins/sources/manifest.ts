@@ -7,9 +7,13 @@ export function resolveRelativeRootEntry(packageJson: PackageJson): string {
   const [entry] = resolvePackageExports(packageJson, '.', { browser: false, require: false }) ?? []
 
   if (entry === undefined) {
-    const name = typeof packageJson.name === 'string' ? packageJson.name : '<unknown>'
+    const name = typeof packageJson.name === 'string'
+      ? packageJson.name
+      : '<unknown>'
     throw new Error(`Package "${name}" does not define a resolvable "." export.`)
   }
 
-  return entry.startsWith('./') ? entry.slice(2) : entry
+  return entry.startsWith('./')
+    ? entry.slice(2)
+    : entry
 }

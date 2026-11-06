@@ -23,7 +23,9 @@ export interface AstNode {
 }
 
 export function asAstNode(value: unknown): AstNode | undefined {
-  return isAstNode(value) ? value : undefined
+  return isAstNode(value)
+    ? value
+    : undefined
 }
 
 export function childNodes(node: AstNode): AstNode[] {

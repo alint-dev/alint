@@ -13,7 +13,12 @@ function fakeModel(headers: Record<string, string>): ResolvedModel {
     id: 'gpt-4o-mini',
     name: 'gpt-4o-mini',
     params: {},
-    provider: { endpoint: 'https://api.openai.com/v1', headers, id: 'openai', type: 'openai-compatible' },
+    provider: {
+      endpoint: 'https://api.openai.com/v1',
+      headers,
+      id: 'openai',
+      type: 'openai-compatible',
+    },
   }
 }
 
@@ -32,7 +37,12 @@ describe('pi adapter', () => {
     const adapter = createPiAdapter({
       run: async () => [
         { content: 'first', role: 'assistant' },
-        { content: [{ text: 'final', type: 'text' }], role: 'assistant' },
+        {
+          content: [
+            { text: 'final', type: 'text' },
+          ],
+          role: 'assistant',
+        },
       ],
     })
 
@@ -41,7 +51,9 @@ describe('pi adapter', () => {
 
   it('marks an assistant error before tools as safe to retry', async () => {
     const adapter = createPiAdapter({
-      run: async () => [{ errorMessage: 'provider failed', role: 'assistant', stopReason: 'error' }],
+      run: async () => [
+        { errorMessage: 'provider failed', role: 'assistant', stopReason: 'error' },
+      ],
     })
 
     const error = await adapter(fakeRequest()).catch(error => error)
@@ -54,7 +66,9 @@ describe('pi adapter', () => {
   it('marks an aborted assistant result before tools as safe to retry', async () => {
     const controller = new AbortController()
     const adapter = createPiAdapter({
-      run: async () => [{ errorMessage: 'request aborted', role: 'assistant', stopReason: 'aborted' }],
+      run: async () => [
+        { errorMessage: 'request aborted', role: 'assistant', stopReason: 'aborted' },
+      ],
     })
 
     const error = await adapter(fakeRequest({ signal: controller.signal })).catch(error => error)
@@ -69,20 +83,24 @@ describe('pi adapter', () => {
     const adapter = createPiAdapter({
       run: async (request) => {
         await request.tools[0].execute({ query: 'retry' })
-        return [{ errorMessage: 'provider failed', role: 'assistant', stopReason: 'error' }]
+        return [
+          { errorMessage: 'provider failed', role: 'assistant', stopReason: 'error' },
+        ]
       },
     })
 
     const error = await adapter(fakeRequest({
-      tools: [{
-        description: 'Search the repository.',
-        execute: () => {
-          toolCalls += 1
-          return 'matches'
+      tools: [
+        {
+          description: 'Search the repository.',
+          execute: () => {
+            toolCalls += 1
+            return 'matches'
+          },
+          name: 'search',
+          parameters: { type: 'object' },
         },
-        name: 'search',
-        parameters: { type: 'object' },
-      }],
+      ],
     })).catch(error => error)
 
     expect(error).toBeInstanceOf(Error)
@@ -152,8 +170,12 @@ describe('pi adapter helpers', () => {
 
     const result = await piTool.execute('call-1', { query: 'clamp' })
 
-    expect(calls).toEqual([{ query: 'clamp' }])
-    expect(result.content).toEqual([{ text: 'matches', type: 'text' }])
+    expect(calls).toEqual([
+      { query: 'clamp' },
+    ])
+    expect(result.content).toEqual([
+      { text: 'matches', type: 'text' },
+    ])
   })
 })
 

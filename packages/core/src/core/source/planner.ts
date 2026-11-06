@@ -79,7 +79,9 @@ function createExecutionTargets(
   cacheOwner: ReturnType<CacheStore['beginOwner']>,
 ): SourceExecutionTarget[] {
   const resolveIdentity = createTargetIdentityResolver(targets.map(target => ({
-    filePath: target.kind === 'file' ? normalizeCachePath(cwd, input.path) : undefined,
+    filePath: target.kind === 'file'
+      ? normalizeCachePath(cwd, input.path)
+      : undefined,
     identity: target.identity,
     kind: target.kind,
     name: target.name,
@@ -93,7 +95,9 @@ function createExecutionTargets(
     if (executions.length === 0)
       return []
     const identity = resolveIdentity({
-      filePath: target.kind === 'file' ? normalizeCachePath(cwd, input.path) : undefined,
+      filePath: target.kind === 'file'
+        ? normalizeCachePath(cwd, input.path)
+        : undefined,
       identity: target.identity,
       kind: target.kind,
       name: target.name,
@@ -104,7 +108,10 @@ function createExecutionTargets(
       identity: target.identity,
       kind: target.kind,
       language: target.language,
-      loc: target.loc && { end: { ...target.loc.end }, start: { ...target.loc.start } },
+      loc: target.loc && {
+        end: { ...target.loc.end },
+        start: { ...target.loc.start },
+      },
       metadata: snapshotMetadata(target.metadata),
       name: target.name,
       origin: target.origin && { ...target.origin, range: target.origin.range && { ...target.origin.range } },
@@ -170,15 +177,26 @@ function createProjectSnapshot(
 ): ProjectFileSnapshot {
   return {
     configHash: input.configHash,
-    file: { contentHash, language, path, targetCount: targets.length },
+    file: {
+      contentHash,
+      language,
+      path,
+      targetCount: targets.length,
+    },
     fileIndex: input.fileIndex,
     targets: targets.map(target => ({
       descriptor: {
         filePath: target.file.path,
         identity: target.identity,
         kind: target.kind,
-        ...(target.name === undefined ? {} : { name: target.name }),
-        ...(target.range === undefined ? {} : { range: { ...target.range } }),
+        ...(target.name === undefined
+          ? {}
+          : { name: target.name }),
+        ...(target.range === undefined
+          ? {}
+          : {
+              range: { ...target.range },
+            }),
       },
       semanticHash: targetSemanticHash(target),
     })),
@@ -191,13 +209,24 @@ function createSourceJobs(input: PreparedInput, targets: SourceExecutionTarget[]
     return {
       execution,
       jobRef: {
-        id: stableHash({ fileIndex: input.fileIndex, input: input.path, ruleId, targetIdentity: target.identity, targetIndex }),
+        id: stableHash({
+          fileIndex: input.fileIndex,
+          input: input.path,
+          ruleId,
+          targetIdentity: target.identity,
+          targetIndex,
+        }),
         index: 0,
         inputPath: input.path,
         ruleId,
         target: { identity: target.identity, kind: target.kind, name: target.name },
       },
-      orderKey: { inputIndex: input.fileIndex, ruleIndex: execution.runtime.ruleIndex, scope: 'source' as const, targetIndex },
+      orderKey: {
+        inputIndex: input.fileIndex,
+        ruleIndex: execution.runtime.ruleIndex,
+        scope: 'source' as const,
+        targetIndex,
+      },
       target,
     }
   }))
@@ -213,7 +242,11 @@ function failureMessage(error: unknown, fallback: string): string {
 }
 
 function fileFailure(input: PreparedInput, kind: AlintFileFailure['kind'], message: string): AlintFileFailure {
-  return { file: { index: input.fileIndex, path: input.path }, kind, message }
+  return {
+    file: { index: input.fileIndex, path: input.path },
+    kind,
+    message,
+  }
 }
 
 async function planSourceWithAdmission(
@@ -221,8 +254,11 @@ async function planSourceWithAdmission(
   options: PlanSourceOptions,
   waitForPlanning?: () => Promise<void>,
 ): Promise<SourcePlanResult> {
-  if (options.signal?.aborted)
-    return { outcomes: Promise.resolve([]) }
+  if (options.signal?.aborted) {
+    return {
+      outcomes: Promise.resolve([]),
+    }
+  }
 
   let file
   try {
@@ -230,16 +266,25 @@ async function planSourceWithAdmission(
   }
   catch (error) {
     reportFilePlanningComplete(input, 0, options)
-    return { failure: fileFailure(input, 'read', failureMessage(error, 'Failed to read source file.')), outcomes: Promise.resolve([]) }
+    return {
+      failure: fileFailure(input, 'read', failureMessage(error, 'Failed to read source file.')),
+      outcomes: Promise.resolve([]),
+    }
   }
 
-  if (options.signal?.aborted)
-    return { outcomes: Promise.resolve([]) }
+  if (options.signal?.aborted) {
+    return {
+      outcomes: Promise.resolve([]),
+    }
+  }
 
   await waitForPlanning?.()
 
-  if (options.signal?.aborted)
-    return { outcomes: Promise.resolve([]) }
+  if (options.signal?.aborted) {
+    return {
+      outcomes: Promise.resolve([]),
+    }
+  }
 
   let targets: SourceTarget[]
   try {
@@ -251,7 +296,10 @@ async function planSourceWithAdmission(
   }
   catch (error) {
     reportFilePlanningComplete(input, 0, options)
-    return { failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to extract source targets.')), outcomes: Promise.resolve([]) }
+    return {
+      failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to extract source targets.')),
+      outcomes: Promise.resolve([]),
+    }
   }
 
   const { contentHash } = file
@@ -272,18 +320,26 @@ async function planSourceWithAdmission(
   }
   catch (error) {
     reportFilePlanningComplete(input, 0, options)
-    return { failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to plan source targets.')), outcomes: Promise.resolve([]) }
+    return {
+      failure: fileFailure(input, 'extract', failureMessage(error, 'Failed to plan source targets.')),
+      outcomes: Promise.resolve([]),
+    }
   }
 
   if (options.signal?.aborted) {
     cacheOwner.commit({ mode: 'merge' })
-    return { outcomes: Promise.resolve([]), project }
+    return {
+      outcomes: Promise.resolve([]),
+      project,
+    }
   }
 
   const batch = options.scheduler.schedule(jobs)
   reportFilePlanningComplete(input, batch.jobsAdded, options)
   const outcomes = batch.outcomes.then(async (settled) => {
-    cacheOwner.commit(options.signal?.aborted ? { mode: 'merge' } : undefined)
+    cacheOwner.commit(options.signal?.aborted
+      ? { mode: 'merge' }
+      : undefined)
     await options.cacheStore.flush()
     return settled
   })
@@ -310,7 +366,10 @@ function reportFilePlanningComplete(input: PreparedInput, jobsAdded: number, opt
 function snapshotMetadata(metadata: SourceTargetMetadata | undefined): SourceTargetMetadata | undefined {
   if (metadata === undefined)
     return undefined
-  return Object.fromEntries(Object.entries(metadata).map(([key, value]) => [key, snapshotMetadataValue(value, new WeakSet())]))
+  return Object.fromEntries(Object.entries(metadata).map(([key, value]) => [
+    key,
+    snapshotMetadataValue(value, new WeakSet()),
+  ]))
 }
 
 function snapshotMetadataValue(value: SourceMetadataValue, ancestors: WeakSet<object>): SourceMetadataValue {
@@ -329,7 +388,10 @@ function snapshotMetadataValue(value: SourceMetadataValue, ancestors: WeakSet<ob
     const prototype = Object.getPrototypeOf(value)
     if (prototype !== Object.prototype && prototype !== null)
       throw new TypeError('Source target metadata must contain only plain objects and arrays.')
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, snapshotMetadataValue(item, ancestors)]))
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+      key,
+      snapshotMetadataValue(item, ancestors),
+    ]))
   }
   finally {
     ancestors.delete(value)

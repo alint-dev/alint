@@ -125,7 +125,13 @@ function writeResolvedConfig(
   write: (chunk: string) => unknown,
   config: typeof defaultStopGateConfig,
 ): void {
-  write(`enabled: ${config.enabled}${config.enabled === defaultStopGateConfig.enabled ? ' (default)' : ''}\n`)
-  write(`target: ${config.target}${config.target === defaultStopGateConfig.target ? ' (default)' : ''}\n`)
-  write(`timeoutMs: ${config.timeoutMs}${config.timeoutMs === defaultStopGateConfig.timeoutMs ? ' (default)' : ''}\n`)
+  write(`enabled: ${config.enabled}${config.enabled === defaultStopGateConfig.enabled
+    ? ' (default)'
+    : ''}\n`)
+  write(`target: ${config.target}${config.target === defaultStopGateConfig.target
+    ? ' (default)'
+    : ''}\n`)
+  write(`timeoutMs: ${config.timeoutMs}${config.timeoutMs === defaultStopGateConfig.timeoutMs
+    ? ' (default)'
+    : ''}\n`)
 }

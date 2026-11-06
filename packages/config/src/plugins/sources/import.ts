@@ -32,5 +32,7 @@ function getDefaultExport<T = unknown>(value: unknown): T {
   }
 
   const objectValue = value as object
-  return Object.hasOwn(objectValue, 'default') ? Reflect.get(objectValue, 'default') as T : value as T
+  return Object.hasOwn(objectValue, 'default')
+    ? Reflect.get(objectValue, 'default') as T
+    : value as T
 }

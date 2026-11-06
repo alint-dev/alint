@@ -84,7 +84,10 @@ export async function repoIndexFor(ctx: RuleContext, options: RepoIndexOptions):
 export function similarTo(index: RepoIndex, helper: IndexedHelper, limit: number): IndexedHelper[] {
   return index.helpers
     .filter(other => other.id !== helper.id && other.language === helper.language)
-    .map(other => ({ other, score: tokenOverlap(helper.tokens, other.tokens) }))
+    .map(other => ({
+      other,
+      score: tokenOverlap(helper.tokens, other.tokens),
+    }))
     .filter(entry => entry.score > 0)
     .sort((left, right) => right.score - left.score)
     .slice(0, limit)
@@ -97,8 +100,12 @@ export function twinsOf(
   helper: IndexedHelper,
   kind: 'alpha' | 'exact',
 ): IndexedHelper[] {
-  const bucket = kind === 'exact' ? index.byExact : index.byAlpha
-  const fingerprint = kind === 'exact' ? helper.exactFingerprint : helper.alphaFingerprint
+  const bucket = kind === 'exact'
+    ? index.byExact
+    : index.byAlpha
+  const fingerprint = kind === 'exact'
+    ? helper.exactFingerprint
+    : helper.alphaFingerprint
 
   return (bucket.get(fingerprint) ?? []).filter(other => other.id !== helper.id)
 }
@@ -113,7 +120,10 @@ async function buildRepoIndex(ctx: RuleContext, options: RepoIndexOptions): Prom
   }
 
   const paths = await listFiles(options.cwd, {
-    ignore: [...DEFAULT_IGNORE_PATTERNS, ...options.ignores],
+    ignore: [
+      ...DEFAULT_IGNORE_PATTERNS,
+      ...options.ignores,
+    ],
     patterns: ['**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,rs,go,py}'],
   })
 
@@ -253,5 +263,8 @@ function isIgnored(cwd: string, filePath: string, ignores: readonly string[]): b
 }
 
 function push(bucket: Map<string, IndexedHelper[]>, key: string, helper: IndexedHelper): void {
-  bucket.set(key, [...bucket.get(key) ?? [], helper])
+  bucket.set(key, [
+    ...bucket.get(key) ?? [],
+    helper,
+  ])
 }

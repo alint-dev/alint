@@ -1,4 +1,5 @@
 import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -17,7 +18,9 @@ const acpCases: Array<{
   { rule: 'structured', runtime: 'fake', scope: 'project' },
   { rule: 'coding-agent', runtime: 'fake', scope: 'global' },
   ...(process.env.ALINT_ACP_E2E_COMMAND
-    ? [{ rule: 'structured' as const, runtime: 'real' as const, scope: 'project' as const }]
+    ? [
+        { rule: 'structured' as const, runtime: 'real' as const, scope: 'project' as const },
+      ]
     : []),
 ]
 
@@ -31,10 +34,9 @@ describe('cli ACP adapter end to end', () => {
     const stdout: string[] = []
     const gatewayRoot = resolve(import.meta.dirname, '../../../model-adapter-acp')
     const coreRoot = resolve(import.meta.dirname, '../../../core')
-    const acpUrl = pathToFileURL(join(
-      await realpath(join(gatewayRoot, 'node_modules/@agentclientprotocol/sdk')),
-      'dist/acp.js',
-    )).href
+    // Resolved through the package's `exports` from the gateway, which owns the dependency, so the
+    // fake agent follows the SDK's internal layout instead of hardcoding a `dist/` path.
+    const acpUrl = pathToFileURL(createRequire(join(gatewayRoot, 'package.json')).resolve('@agentclientprotocol/sdk')).href
     const mcpClientUrl = pathToFileURL(join(
       await realpath(join(gatewayRoot, 'node_modules/@modelcontextprotocol/sdk')),
       'dist/esm/client/index.js',
@@ -109,18 +111,26 @@ export default [{
 `, 'utf8')
     }
     if (runtime === 'fake') {
-      const reportToolName = rule === 'coding-agent' ? 'report_findings' : 'reportFindings'
+      const reportToolName = rule === 'coding-agent'
+        ? 'report_findings'
+        : 'reportFindings'
       const reportArguments = rule === 'coding-agent'
         ? {
-            findings: [{
-              confidence: 'high',
-              filePath: 'demo.ts',
-              line: 1,
-              message: 'Use a named constant.',
-              suggestion: 'Extract the value into a named constant.',
-            }],
+            findings: [
+              {
+                confidence: 'high',
+                filePath: 'demo.ts',
+                line: 1,
+                message: 'Use a named constant.',
+                suggestion: 'Extract the value into a named constant.',
+              },
+            ],
           }
-        : { findings: [{ message: 'Use a named constant.' }] }
+        : {
+            findings: [
+              { message: 'Use a named constant.' },
+            ],
+          }
       await writeFile(agentPath, `
 import { writeFileSync } from 'node:fs'
 import { Readable, Writable } from 'node:stream'
@@ -170,16 +180,24 @@ acp.agent({ name: 'alint-e2e-agent' })
       : getProjectSetupConfigPath(cwd)
 
     await writeSetupConfig(setupPath, {
-      providers: [{
-        id: 'acp',
-        models: [{
-          aliases: ['default'],
-          args: runtime === 'fake' ? [agentPath] : parseIntegrationArgs(process.env.ALINT_ACP_E2E_ARGS_JSON),
-          command: runtime === 'fake' ? process.execPath : process.env.ALINT_ACP_E2E_COMMAND!,
-          driver: 'acp',
-          id: 'reviewer',
-        }],
-      }],
+      providers: [
+        {
+          id: 'acp',
+          models: [
+            {
+              aliases: ['default'],
+              args: runtime === 'fake'
+                ? [agentPath]
+                : parseIntegrationArgs(process.env.ALINT_ACP_E2E_ARGS_JSON),
+              command: runtime === 'fake'
+                ? process.execPath
+                : process.env.ALINT_ACP_E2E_COMMAND!,
+              driver: 'acp',
+              id: 'reviewer',
+            },
+          ],
+        },
+      ],
       version: 1,
     })
 
@@ -196,16 +214,24 @@ acp.agent({ name: 'alint-e2e-agent' })
     ], {
       cwd,
       env: { ...process.env, XDG_CONFIG_HOME: configHome },
-      stderr: { write: chunk => stderr.push(chunk) },
-      stdout: { write: chunk => stdout.push(chunk) },
+      stderr: {
+        write: chunk => stderr.push(chunk),
+      },
+      stdout: {
+        write: chunk => stdout.push(chunk),
+      },
     })
 
     expect(exitCode, stderr.join('')).toBe(0)
-    expect(JSON.parse(stdout.join('')).diagnostics).toMatchObject([{
-      message: 'Use a named constant.',
-      model: { providerId: 'acp', resolvedId: 'reviewer' },
-      ruleId: rule === 'coding-agent' ? 'review/code-review' : 'e2e/review',
-    }])
+    expect(JSON.parse(stdout.join('')).diagnostics).toMatchObject([
+      {
+        message: 'Use a named constant.',
+        model: { providerId: 'acp', resolvedId: 'reviewer' },
+        ruleId: rule === 'coding-agent'
+          ? 'review/code-review'
+          : 'e2e/review',
+      },
+    ])
     expect(stderr.join('')).toBe('')
     if (runtime === 'fake') {
       await vi.waitFor(async () => {

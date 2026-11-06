@@ -51,22 +51,42 @@ export function createRunRequest(
 
   return {
     codexOptions: {
-      ...(options.codexPath ? { codexPathOverride: options.codexPath } : {}),
-      ...(options.config ? { config: options.config } : {}),
-      ...(options.env ? { env: options.env } : {}),
+      ...(options.codexPath
+        ? { codexPathOverride: options.codexPath }
+        : {}),
+      ...(options.config
+        ? { config: options.config }
+        : {}),
+      ...(options.env
+        ? { env: options.env }
+        : {}),
     },
     input: formatPrompt(request),
     threadOptions: {
-      ...(options.additionalDirectories ? { additionalDirectories: options.additionalDirectories } : {}),
-      ...(options.approvalPolicy ? { approvalPolicy: options.approvalPolicy } : {}),
-      ...(options.sandbox ? { sandboxMode: options.sandbox } : {}),
-      ...(options.skipGitRepoCheck !== undefined ? { skipGitRepoCheck: options.skipGitRepoCheck } : {}),
-      ...(options.useRequestModel ? { model: request.model.id } : {}),
+      ...(options.additionalDirectories
+        ? { additionalDirectories: options.additionalDirectories }
+        : {}),
+      ...(options.approvalPolicy
+        ? { approvalPolicy: options.approvalPolicy }
+        : {}),
+      ...(options.sandbox
+        ? { sandboxMode: options.sandbox }
+        : {}),
+      ...(options.skipGitRepoCheck !== undefined
+        ? { skipGitRepoCheck: options.skipGitRepoCheck }
+        : {}),
+      ...(options.useRequestModel
+        ? { model: request.model.id }
+        : {}),
       workingDirectory: cwd,
     },
     turnOptions: {
-      ...(options.outputSchema ? { outputSchema: options.outputSchema } : {}),
-      ...(request.signal ? { signal: request.signal } : {}),
+      ...(options.outputSchema
+        ? { outputSchema: options.outputSchema }
+        : {}),
+      ...(request.signal
+        ? { signal: request.signal }
+        : {}),
     },
   }
 }

@@ -97,13 +97,23 @@ export function createProjectJobs(options: {
     return {
       execution,
       jobRef: {
-        id: stableHash({ input: options.project.target.root, ruleId, targetIdentity: 'project', targetIndex: 0 }),
+        id: stableHash({
+          input: options.project.target.root,
+          ruleId,
+          targetIdentity: 'project',
+          targetIndex: 0,
+        }),
         index: 0,
         inputPath: options.project.target.root,
         ruleId,
         target: { identity: 'project', kind: 'project' },
       },
-      orderKey: { inputIndex: 0, ruleIndex: execution.runtime.ruleIndex, scope: 'project', targetIndex: 0 },
+      orderKey: {
+        inputIndex: 0,
+        ruleIndex: execution.runtime.ruleIndex,
+        scope: 'project',
+        targetIndex: 0,
+      },
       target,
     }
   })

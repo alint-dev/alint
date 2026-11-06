@@ -16,9 +16,13 @@ import { createTools, DEFAULT_IGNORE_PATTERNS } from '@alint-js/tools-fs'
 // Built-in ignores:
 const tools = createTools(ctx.cwd)
 // Extend the builtins:
-const py = createTools(ctx.cwd, { ignore: [...DEFAULT_IGNORE_PATTERNS, '**/.venv/**'] })
+const py = createTools(ctx.cwd, {
+  ignore: [...DEFAULT_IGNORE_PATTERNS, '**/.venv/**']
+})
 // Replace the builtins:
-const bare = createTools(ctx.cwd, { ignore: ['**/generated/**'] })
+const bare = createTools(ctx.cwd, {
+  ignore: ['**/generated/**']
+})
 ```
 
 `options.ignore` **replaces** the builtins (`git/build/dist/node_modules/vendor`); spread

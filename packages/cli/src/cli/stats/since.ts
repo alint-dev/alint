@@ -36,7 +36,9 @@ export function parseSince(time: string | undefined, now: number): number | unde
   if (calendar) {
     const year = Number(calendar[1])
     const month = Number(calendar[2])
-    const day = calendar[3] === undefined ? 1 : Number(calendar[3])
+    const day = calendar[3] === undefined
+      ? 1
+      : Number(calendar[3])
 
     return Date.UTC(year, month - 1, day)
   }

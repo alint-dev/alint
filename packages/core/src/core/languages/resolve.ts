@@ -29,7 +29,9 @@ export function resolveLanguageForPath(
   const language = registry.languages.get(languageName)
 
   if (!language) {
-    const registered = [...registry.languages.keys()].sort().join(', ')
+    const registered = [
+      ...registry.languages.keys(),
+    ].sort().join(', ')
 
     throw new Error(
       `Unknown language "${languageName}". Languages come from plugins, and these are registered: ${registered}.`,

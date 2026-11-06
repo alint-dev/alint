@@ -60,5 +60,7 @@ it('allows transitive imports outside the plugin entry directory', async () => {
   await writeFile(shared, 'export const rule = {}\n', 'utf8')
   await writeFile(source.entry, `import { rule } from ${JSON.stringify(pathToFileURL(shared).href)}\nexport default { rules: { shared: rule } }\n`, 'utf8')
 
-  await expect(importPlugin(source)).resolves.toEqual({ rules: { shared: {} } })
+  await expect(importPlugin(source)).resolves.toEqual({
+    rules: { shared: {} },
+  })
 })

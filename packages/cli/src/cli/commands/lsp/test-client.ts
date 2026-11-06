@@ -102,7 +102,10 @@ export function createTestClient(env?: NodeJS.ProcessEnv, cwd = process.cwd()): 
       stdout: {
         write: (chunk) => {
           stdoutText += chunk
-          pending = Buffer.concat([pending, Buffer.from(chunk, 'utf8')])
+          pending = Buffer.concat([
+            pending,
+            Buffer.from(chunk, 'utf8'),
+          ])
           deliver()
           return true
         },

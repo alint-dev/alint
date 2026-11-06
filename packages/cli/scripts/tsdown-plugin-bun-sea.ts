@@ -18,17 +18,25 @@ export interface BuildBunExecutableOptions {
 
 export async function pluginBunSea(options: BuildBunExecutableOptions): Promise<void> {
   const workspaceRoot = (await findWorkspaceDir(cwd()))!
-  const oxcPackage = await getPackageInfo('oxc-parser', { paths: [join(workspaceRoot, 'packages/core')] })
+  const oxcPackage = await getPackageInfo('oxc-parser', {
+    paths: [
+      join(workspaceRoot, 'packages/core'),
+    ],
+  })
   if (!oxcPackage) {
     throw new Error('Could not find oxc-parser package.')
   }
 
-  const oxcBindingPackage = await getPackageInfo(`@oxc-parser/binding-${options.oxcBinding}`, { paths: [oxcPackage.rootPath] })
+  const oxcBindingPackage = await getPackageInfo(`@oxc-parser/binding-${options.oxcBinding}`, {
+    paths: [oxcPackage.rootPath],
+  })
   if (!oxcBindingPackage) {
     throw new Error(`Could not find @oxc-parser/binding-${options.oxcBinding} package.`)
   }
 
-  const bindingPath = resolveModule(`@oxc-parser/binding-${options.oxcBinding}`, { paths: [oxcPackage.rootPath] })
+  const bindingPath = resolveModule(`@oxc-parser/binding-${options.oxcBinding}`, {
+    paths: [oxcPackage.rootPath],
+  })
   if (!bindingPath) {
     throw new Error(`Could not resolve @oxc-parser/binding-${options.oxcBinding} from oxc-parser.`)
   }
@@ -56,7 +64,14 @@ export async function pluginBunSea(options: BuildBunExecutableOptions): Promise<
 
     await mkdir(dirname(options.outfile), { recursive: true })
 
-    await x('bun', ['build', '--compile', `--target=${options.bunTarget}`, entryPath, '--outfile', options.outfile], {
+    await x('bun', [
+      'build',
+      '--compile',
+      `--target=${options.bunTarget}`,
+      entryPath,
+      '--outfile',
+      options.outfile,
+    ], {
       nodeOptions: { stdio: 'inherit' },
       throwOnError: true,
     })

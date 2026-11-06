@@ -73,7 +73,10 @@ function createAcpAdapter(io: CliIo): AcpAdapter {
           args: model.args,
           command: model.command,
           cwd: resolve(io.cwd, model.cwd ?? '.'),
-          env: { ...(io.env ?? process.env), ...model.env },
+          env: {
+            ...(io.env ?? process.env),
+            ...model.env,
+          },
           id: model.id,
           name: model.name ?? model.id,
           onStderr: createStderrWriter(io, model.id),

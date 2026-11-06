@@ -19,21 +19,55 @@ interface RenderCtx {
 const CHART_HEIGHT = 6
 const BAR_GAP = 2
 const COLUMN_STRIDE = 1 + BAR_GAP
-const VERTICAL_BLOCKS = [' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
+const VERTICAL_BLOCKS = [
+  ' ',
+  '▁',
+  '▂',
+  '▃',
+  '▄',
+  '▅',
+  '▆',
+  '▇',
+  '█',
+]
 const HORIZONTAL_BLOCKS = ['', '▏', '▎', '▍', '▌', '▋', '▊', '▉']
 const FULL_BLOCK = '█'
 const HORIZONTAL_BAR_MIN = 8
 const HORIZONTAL_BAR_MAX = 40
 const SUMMARY_GAP = 3
 const SUMMARY_MAX_COLUMNS = 4
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_LABELS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
 
 export function formatStatsTimeline(series: StatsSeries, options: FormatTimelineOptions = {}): string {
-  const paint: Paint = (text, style) => options.color === true ? style(text) : text
+  const paint: Paint = (text, style) => options.color === true
+    ? style(text)
+    : text
   const metric = options.metric ?? 'tokens'
   const exact = options.exact === true
-  const ctx: RenderCtx = { exact, interval: series.interval, metric, paint }
-  const lines = [summaryLine(series, paint, exact), '', caption(series, metric, options.rules)]
+  const ctx: RenderCtx = {
+    exact,
+    interval: series.interval,
+    metric,
+    paint,
+  }
+  const lines = [
+    summaryLine(series, paint, exact),
+    '',
+    caption(series, metric, options.rules),
+  ]
 
   if (series.buckets.length === 0) {
     lines.push('No stats recorded yet.')
@@ -51,15 +85,25 @@ export function formatStatsTimeline(series: StatsSeries, options: FormatTimeline
     const chart = renderVertical(series.buckets, values, maxValue, axisWidth, ctx)
     const list = summaryList(series.buckets, width, ctx)
 
-    return `${[...lines, ...chart, '', ...list].join('\n')}\n`
+    return `${[
+      ...lines,
+      ...chart,
+      '',
+      ...list,
+    ].join('\n')}\n`
   }
 
-  return `${[...lines, ...renderHorizontal(series.buckets, values, maxValue, width, ctx)].join('\n')}\n`
+  return `${[
+    ...lines,
+    ...renderHorizontal(series.buckets, values, maxValue, width, ctx),
+  ].join('\n')}\n`
 }
 
 function axisRows(buckets: StatsBucket[], interval: StatsInterval, chartWidth: number): string[] {
   if (interval === 'month') {
-    return [endpointAxis(buckets, chartWidth)]
+    return [
+      endpointAxis(buckets, chartWidth),
+    ]
   }
 
   const days = Array.from({ length: chartWidth + 4 }).fill(' ')
@@ -68,7 +112,9 @@ function axisRows(buckets: StatsBucket[], interval: StatsInterval, chartWidth: n
   buckets.forEach((bucket, index) => {
     const date = new Date(bucket.startMs)
     const at = BAR_GAP + index * COLUMN_STRIDE
-    const previous = index === 0 ? undefined : new Date(buckets[index - 1]!.startMs)
+    const previous = index === 0
+      ? undefined
+      : new Date(buckets[index - 1]!.startMs)
 
     writeAt(days, at, String(date.getUTCDate()).padStart(2, '0'))
 
@@ -77,11 +123,16 @@ function axisRows(buckets: StatsBucket[], interval: StatsInterval, chartWidth: n
     }
   })
 
-  return [days.join('').replace(/\s+$/u, ''), months.join('').replace(/\s+$/u, '')]
+  return [
+    days.join('').replace(/\s+$/u, ''),
+    months.join('').replace(/\s+$/u, ''),
+  ]
 }
 
 function caption(series: StatsSeries, metric: StatsMetric, rules: string[] | undefined): string {
-  const filter = rules && rules.length > 0 ? ` — ${rules.join(', ')}` : ''
+  const filter = rules && rules.length > 0
+    ? ` — ${rules.join(', ')}`
+    : ''
 
   return `${metric} by ${series.interval}${filter}`
 }
@@ -118,14 +169,18 @@ function renderHorizontal(
   )
 
   return buckets.map((bucket, index) => {
-    const bar = renderHorizontalBar(maxValue === 0 ? 0 : values[index]! / maxValue, barWidth)
+    const bar = renderHorizontalBar(maxValue === 0
+      ? 0
+      : values[index]! / maxValue, barWidth)
 
     return `${bucket.key.padEnd(keyWidth)}  ${ctx.paint(bar, colors.cyan)}  ${labels[index]!.padStart(valueWidth)}`
   })
 }
 
 function renderHorizontalBar(fraction: number, width: number): string {
-  const eighths = fraction <= 0 ? 0 : Math.max(1, Math.round(fraction * width * 8))
+  const eighths = fraction <= 0
+    ? 0
+    : Math.max(1, Math.round(fraction * width * 8))
   const full = Math.floor(eighths / 8)
 
   return `${FULL_BLOCK.repeat(full)}${HORIZONTAL_BLOCKS[eighths % 8]}`.padEnd(width)
@@ -157,8 +212,12 @@ function renderVertical(
       cells[columnAt(index)] = VERTICAL_BLOCKS[Math.max(0, Math.min(8, total - row * 8))]!
     })
 
-    const label = row === CHART_HEIGHT - 1 ? formatMetricValue(maxValue, ctx.metric, ctx.exact).padStart(axisWidth) : gutter
-    const axis = row === CHART_HEIGHT - 1 ? '┤' : '│'
+    const label = row === CHART_HEIGHT - 1
+      ? formatMetricValue(maxValue, ctx.metric, ctx.exact).padStart(axisWidth)
+      : gutter
+    const axis = row === CHART_HEIGHT - 1
+      ? '┤'
+      : '│'
 
     lines.push(`${label} ${axis}${ctx.paint(cells.join('').replace(/\s+$/u, ''), colors.cyan)}`)
   }

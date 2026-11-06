@@ -50,7 +50,14 @@ describe('createRunProgress', () => {
     progress.finish('queued', 'cancelled')
 
     expect(progress.snapshot()).toEqual({
-      execution: counts({ cached: 1, cancelled: 3, completed: 1, failed: 1, planned: 7, skipped: 1 }),
+      execution: counts({
+        cached: 1,
+        cancelled: 3,
+        completed: 1,
+        failed: 1,
+        planned: 7,
+        skipped: 1,
+      }),
       filesPlanned: 2,
       filesTotal: 2,
       jobsCompleted: 7,
@@ -78,7 +85,12 @@ describe('createRunProgress', () => {
     expect(() => progress.completeFilePlanning()).toThrow('planning is complete')
     progress.finish('queued', 'cancelled')
 
-    expect(progress.finalize()).toMatchObject({ jobsCompleted: 1, jobsStarted: 1, jobsTotal: 1, planningComplete: true })
+    expect(progress.finalize()).toMatchObject({
+      jobsCompleted: 1,
+      jobsStarted: 1,
+      jobsTotal: 1,
+      planningComplete: true,
+    })
     expect(progress.snapshot().planningComplete).toBe(true)
   })
 

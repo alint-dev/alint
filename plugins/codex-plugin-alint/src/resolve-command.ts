@@ -14,9 +14,13 @@ export interface Command {
 
 export async function resolveCommands(gitRoot: string): Promise<Command[]> {
   const commands: Command[] = []
-  const local = join(gitRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'alint.cmd' : 'alint')
+  const local = join(gitRoot, 'node_modules', '.bin', process.platform === 'win32'
+    ? 'alint.cmd'
+    : 'alint')
 
-  if (await canAccess(local, process.platform === 'win32' ? constants.F_OK : constants.X_OK)) {
+  if (await canAccess(local, process.platform === 'win32'
+    ? constants.F_OK
+    : constants.X_OK)) {
     commands.push({ args: [], executable: local, source: 'local' })
   }
 
@@ -24,10 +28,28 @@ export async function resolveCommands(gitRoot: string): Promise<Command[]> {
 
   if (packageManager !== undefined) {
     commands.push(packageManager === 'npm'
-      ? { args: ['exec', '--offline', '--yes=false', '--', 'alint'], executable: 'npm', source: 'package-manager' }
+      ? {
+          args: [
+            'exec',
+            '--offline',
+            '--yes=false',
+            '--',
+            'alint',
+          ],
+          executable: 'npm',
+          source: 'package-manager',
+        }
       : packageManager === 'bun'
-        ? { args: ['x', '--no-install', 'alint'], executable: 'bun', source: 'package-manager' }
-        : { args: ['exec', 'alint'], executable: packageManager, source: 'package-manager' })
+        ? {
+            args: ['x', '--no-install', 'alint'],
+            executable: 'bun',
+            source: 'package-manager',
+          }
+        : {
+            args: ['exec', 'alint'],
+            executable: packageManager,
+            source: 'package-manager',
+          })
   }
 
   commands.push({ args: [], executable: 'alint', source: 'path' })

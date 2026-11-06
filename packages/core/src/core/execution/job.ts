@@ -44,8 +44,12 @@ export async function executeRuleJob(job: RuleJob, options: ExecuteRuleJobOption
         targetIdentity: job.target.identity,
       }
     : undefined
-  const fingerprint = slot ? createFingerprint(job, options.cache.modelHash) : undefined
-  const cachedEntry = slot && fingerprint ? job.target.cacheOwner?.lookup(slot, fingerprint) : undefined
+  const fingerprint = slot
+    ? createFingerprint(job, options.cache.modelHash)
+    : undefined
+  const cachedEntry = slot && fingerprint
+    ? job.target.cacheOwner?.lookup(slot, fingerprint)
+    : undefined
   if (slot && cachedEntry) {
     try {
       replayCachedEntry(cachedEntry, bucket, job.jobRef, options.progress, options.runProgress)
@@ -130,7 +134,9 @@ export async function executeRuleJob(job: RuleJob, options: ExecuteRuleJobOption
   if (handlerFailed) {
     return finish(job, bucket, {
       cache: 'miss',
-      failure: failure(handlerCause, job, handlerCause instanceof SourceChangedError ? 'source-changed' : 'handler'),
+      failure: failure(handlerCause, job, handlerCause instanceof SourceChangedError
+        ? 'source-changed'
+        : 'handler'),
       state: 'failed',
     })
   }
@@ -192,7 +198,9 @@ function errorCause(error: unknown): unknown {
     return undefined
 
   try {
-    return 'cause' in error ? error.cause : undefined
+    return 'cause' in error
+      ? error.cause
+      : undefined
   }
   catch {
     return undefined
@@ -204,8 +212,12 @@ function errorCode(error: unknown): string | undefined {
     return undefined
 
   try {
-    const code = 'code' in error ? error.code : undefined
-    return typeof code === 'string' || typeof code === 'number' ? String(code) : undefined
+    const code = 'code' in error
+      ? error.code
+      : undefined
+    return typeof code === 'string' || typeof code === 'number'
+      ? String(code)
+      : undefined
   }
   catch {
     return undefined
@@ -243,7 +255,9 @@ function failureCauses(error: unknown): AlintFailureCause[] {
 
     const code = errorCode(cause)
     causes.push({
-      ...(code === undefined ? {} : { code }),
+      ...(code === undefined
+        ? {}
+        : { code }),
       message: failureMessage(cause),
     })
     current = cause
@@ -265,7 +279,10 @@ function finish(
   terminal: TerminalOutcome,
 ): RuleJobOutcome {
   const detachedTerminal: TerminalOutcome = terminal.state === 'failed'
-    ? { ...terminal, failure: snapshotFailure(terminal.failure) }
+    ? {
+        ...terminal,
+        failure: snapshotFailure(terminal.failure),
+      }
     : terminal
   const outcome: RuleJobOutcome = {
     diagnostics: snapshotDiagnostics(bucket.diagnostics),
@@ -297,13 +314,21 @@ function replayCachedEntry(
   for (const cachedDiagnostic of diagnostics) {
     const diagnostic: Diagnostic = snapshotDiagnostic({ ...cachedDiagnostic, cached: true })
     bucket.diagnostics.push(diagnostic)
-    progress?.onDiagnostic?.({ diagnostic: snapshotDiagnostic(diagnostic), job: snapshotProgressJobRef(job), progress: runProgress.snapshot() })
+    progress?.onDiagnostic?.({
+      diagnostic: snapshotDiagnostic(diagnostic),
+      job: snapshotProgressJobRef(job),
+      progress: runProgress.snapshot(),
+    })
   }
 
   for (const record of usage) {
     const usageRecord = snapshotUsage(record)
     bucket.usage.push(usageRecord)
-    progress?.onUsage?.({ job: snapshotProgressJobRef(job), progress: runProgress.snapshot(), record: snapshotUsage(usageRecord) })
+    progress?.onUsage?.({
+      job: snapshotProgressJobRef(job),
+      progress: runProgress.snapshot(),
+      record: snapshotUsage(usageRecord),
+    })
   }
 }
 

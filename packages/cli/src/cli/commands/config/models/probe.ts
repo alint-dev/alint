@@ -15,7 +15,9 @@ export const probe = defineCommand({
 
     try {
       const models = await probeModels(options.endpoint, providerHeadersFromOptions(options))
-      context.io.stdout.write(`${models.join('\n')}${models.length > 0 ? '\n' : ''}`)
+      context.io.stdout.write(`${models.join('\n')}${models.length > 0
+        ? '\n'
+        : ''}`)
       return 0
     }
     catch (error) {

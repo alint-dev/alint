@@ -77,8 +77,12 @@ export class RuleScheduler {
   }
 
   schedule(jobs: readonly RuleJob[]): ScheduledRuleBatch {
-    if (!this.accepting || jobs.length === 0)
-      return { jobsAdded: 0, outcomes: Promise.resolve([]) }
+    if (!this.accepting || jobs.length === 0) {
+      return {
+        jobsAdded: 0,
+        outcomes: Promise.resolve([]),
+      }
+    }
 
     const lane = createLane()
     this.lanes.push(lane)
@@ -190,7 +194,9 @@ export class RuleScheduler {
       this.options.reporter?.onJobEnd?.({
         cache: outcome.cache,
         endedAt: this.options.clock(),
-        failure: outcome.failure ? snapshotFailure(outcome.failure) : undefined,
+        failure: outcome.failure
+          ? snapshotFailure(outcome.failure)
+          : undefined,
         job: snapshotProgressJobRef(item.job.jobRef),
         progress,
         startedAt,

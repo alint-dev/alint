@@ -62,7 +62,9 @@ export async function runProviderEditor(
     return runAcpProviderEditor(input, input.source, prompts)
   }
 
-  const existingProvider = input.mode === 'update' ? input.existingProvider : undefined
+  const existingProvider = input.mode === 'update'
+    ? input.existingProvider
+    : undefined
   const configuredHeaders = { ...existingProvider?.headers }
   const initialHeaders = applyHeaderSelection(
     configuredHeaders,
@@ -220,14 +222,19 @@ export async function runProviderEditor(
     if (step === 'defaultModel') {
       const provisionalConfig = input.mode === 'update'
         ? replaceSetupProvider(input.config, provider)
-        : mergeSetupConfigs(input.config, { providers: [provider], version: 1 })
+        : mergeSetupConfigs(input.config, {
+            providers: [provider],
+            version: 1,
+          })
       const existingModelIds = new Set(existingProvider?.models.map(model => model.id) ?? [])
       const addedModelIds = provider.models
         .map(model => model.id)
         .filter(modelId => !existingModelIds.has(modelId))
       const candidates = createDefaultModelCandidates(provisionalConfig, provider.id, addedModelIds)
       const selectedDefault = await prompts.defaultModel(candidates.map(candidate => ({
-        hint: candidate.isCurrentDefault ? 'current default' : candidate.isNew ? 'new' : undefined,
+        hint: candidate.isCurrentDefault
+          ? 'current default'
+          : candidate.isNew ? 'new' : undefined,
         label: candidate.label,
         value: candidate.value,
       })))
@@ -272,13 +279,19 @@ function createAcpProvider(
 ): ProviderDefinition {
   return {
     id: providerId,
-    models: [{
-      ...(source.args === undefined ? {} : { args: [...source.args] }),
-      capabilities: ['tool-call'],
-      command: source.command,
-      driver: 'acp',
-      ...source.model,
-    }],
+    models: [
+      {
+        ...(source.args === undefined
+          ? {}
+          : {
+              args: [...source.args],
+            }),
+        capabilities: ['tool-call'],
+        command: source.command,
+        driver: 'acp',
+        ...source.model,
+      },
+    ],
   }
 }
 
@@ -290,13 +303,21 @@ function createAcpSummary(
   const model = provider.models[0]!
 
   return [
-    `${input.mode === 'create' ? 'Create' : 'Update'} provider?`,
+    `${input.mode === 'create'
+      ? 'Create'
+      : 'Update'} provider?`,
     `Provider: ${escapeLineValue(provider.id)}`,
     'Driver: ACP',
-    `Command: ${escapeLineValue('command' in model ? model.command : '-')}`,
-    `Arguments: ${'args' in model ? formatSummaryValues(model.args ?? []) : '(none)'}`,
+    `Command: ${escapeLineValue('command' in model
+      ? model.command
+      : '-')}`,
+    `Arguments: ${'args' in model
+      ? formatSummaryValues(model.args ?? [])
+      : '(none)'}`,
     `Model: ${escapeLineValue(model.id)}`,
-    `Default: ${defaultAliasTarget === undefined ? 'unchanged' : escapeLineValue(`${defaultAliasTarget.providerId}/${defaultAliasTarget.modelId}`)}`,
+    `Default: ${defaultAliasTarget === undefined
+      ? 'unchanged'
+      : escapeLineValue(`${defaultAliasTarget.providerId}/${defaultAliasTarget.modelId}`)}`,
   ].join('\n')
 }
 
@@ -328,13 +349,17 @@ function createSummary(
     : `${defaultAliasTarget.providerId}/${defaultAliasTarget.modelId}`
 
   return [
-    `${input.mode === 'create' ? 'Create' : 'Update'} provider?`,
+    `${input.mode === 'create'
+      ? 'Create'
+      : 'Update'} provider?`,
     `Provider: ${escapeLineValue(provider.id)}`,
     `Endpoint: ${escapeLineValue(provider.endpoint ?? '-')}`,
     `Headers: ${formatSummaryValues(Object.keys(provider.headers ?? {}))}`,
     `Added models: ${formatSummaryValues(additions)}`,
     `Removed models: ${formatSummaryValues(removals)}`,
-    `Default: ${defaultAliasTarget === undefined ? defaultChange : escapeLineValue(defaultChange)}`,
+    `Default: ${defaultAliasTarget === undefined
+      ? defaultChange
+      : escapeLineValue(defaultChange)}`,
   ].join('\n')
 }
 
@@ -343,7 +368,9 @@ function effectiveHeaders(draft: EditorDraft): Record<string, string> | undefine
 }
 
 function formatSummaryValues(values: readonly string[]): string {
-  return values.length > 0 ? values.map(escapeLineValue).join(', ') : '(none)'
+  return values.length > 0
+    ? values.map(escapeLineValue).join(', ')
+    : '(none)'
 }
 
 /**
@@ -401,19 +428,26 @@ async function runAcpProviderEditor(
       defaultAliasTarget = result.value === 'yes'
         ? { modelId: source.model.id, providerId }
         : undefined
-      step = result.value === 'selectAnother' ? 'defaultModel' : 'confirm'
+      step = result.value === 'selectAnother'
+        ? 'defaultModel'
+        : 'confirm'
       continue
     }
 
     if (step === 'defaultModel') {
-      const provisionalConfig = mergeSetupConfigs(input.config, { providers: [provider], version: 1 })
+      const provisionalConfig = mergeSetupConfigs(input.config, {
+        providers: [provider],
+        version: 1,
+      })
       const candidates = createDefaultModelCandidates(
         provisionalConfig,
         provider.id,
         [source.model.id],
       )
       const selectedDefault = await prompts.defaultModel(candidates.map(candidate => ({
-        hint: candidate.isCurrentDefault ? 'current default' : candidate.isNew ? 'new' : undefined,
+        hint: candidate.isCurrentDefault
+          ? 'current default'
+          : candidate.isNew ? 'new' : undefined,
         label: candidate.label,
         value: candidate.value,
       })))
@@ -445,7 +479,9 @@ async function runAcpProviderEditor(
     }
 
     return {
-      ...(defaultAliasTarget === undefined ? {} : { defaultAliasTarget }),
+      ...(defaultAliasTarget === undefined
+        ? {}
+        : { defaultAliasTarget }),
       provider,
       status: 'confirmed',
     }

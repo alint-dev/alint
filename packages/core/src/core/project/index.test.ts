@@ -15,19 +15,21 @@ function createSnapshot(fileIndex: number, path: string): ProjectFileSnapshot {
       targetCount: 1,
     },
     fileIndex,
-    targets: [{
-      descriptor: {
-        filePath: path,
-        identity: `file:${path}`,
-        kind: 'file',
-        name: `name:${path}`,
-        range: {
-          end: 4,
-          start: 1,
+    targets: [
+      {
+        descriptor: {
+          filePath: path,
+          identity: `file:${path}`,
+          kind: 'file',
+          name: `name:${path}`,
+          range: {
+            end: 4,
+            start: 1,
+          },
         },
+        semanticHash: `semantic-${path}`,
       },
-      semanticHash: `semantic-${path}`,
-    }],
+    ],
   }
 }
 

@@ -88,7 +88,9 @@ export async function executeCli(argv: string[], io: CliIo, runtime: CliRuntimeO
     ].join('\n\n'),
   })
 
-  const restoreConsole = interceptConsoleOutput(shouldCaptureHelp(argv) ? io.stdout : io.stderr)
+  const restoreConsole = interceptConsoleOutput(shouldCaptureHelp(argv)
+    ? io.stdout
+    : io.stderr)
 
   try {
     cli.parse(argv)

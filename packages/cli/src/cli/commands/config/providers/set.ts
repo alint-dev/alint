@@ -95,5 +95,7 @@ async function runSetProviderCommand(
 }
 
 function scalarProvider(provider: string | string[] | undefined): string | undefined {
-  return Array.isArray(provider) ? undefined : provider
+  return Array.isArray(provider)
+    ? undefined
+    : provider
 }

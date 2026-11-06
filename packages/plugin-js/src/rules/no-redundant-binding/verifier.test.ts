@@ -16,9 +16,24 @@ describe('acceptedVerificationDecisions', () => {
     expect(acceptedVerificationDecisions([
       { ...base, boundary: 'none' },
       { ...base, boundary: 'snapshot-or-restoration', line: 2 },
-      { ...base, boundary: 'none', initializer: 'indexed-or-dynamic', line: 3 },
-      { ...base, boundary: 'none', initializer: 'computed-or-constructed', line: 4 },
-      { ...base, boundary: 'none', line: 5, safeSubstitution: false },
+      {
+        ...base,
+        boundary: 'none',
+        initializer: 'indexed-or-dynamic',
+        line: 3,
+      },
+      {
+        ...base,
+        boundary: 'none',
+        initializer: 'computed-or-constructed',
+        line: 4,
+      },
+      {
+        ...base,
+        boundary: 'none',
+        line: 5,
+        safeSubstitution: false,
+      },
     ])).toEqual([
       {
         confidence: 'high',

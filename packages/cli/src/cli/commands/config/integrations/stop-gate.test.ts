@@ -12,8 +12,12 @@ async function run(cwd: string, args: string[]) {
   let stdout = ''
   const exitCode = await executeCli(['node', 'alint', ...args], {
     cwd,
-    stderr: { write: chunk => stderr += chunk },
-    stdout: { write: chunk => stdout += chunk },
+    stderr: {
+      write: chunk => stderr += chunk,
+    },
+    stdout: {
+      write: chunk => stdout += chunk,
+    },
   })
 
   return { exitCode, stderr, stdout }
@@ -23,7 +27,12 @@ describe('config integrations stop-gate', () => {
   it('shows defaults when no config exists', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'alint-stop-gate-cli-'))
 
-    const result = await run(cwd, ['config', 'integrations', 'stop-gate', 'show'])
+    const result = await run(cwd, [
+      'config',
+      'integrations',
+      'stop-gate',
+      'show',
+    ])
 
     expect(result.exitCode).toBe(0)
     expect(result.stderr).toBe('')
@@ -39,14 +48,24 @@ describe('config integrations stop-gate', () => {
   it('explicitly enables and disables Stop Gate for the repository', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'alint-stop-gate-cli-'))
 
-    const enabled = await run(cwd, ['config', 'integrations', 'stop-gate', 'enable'])
+    const enabled = await run(cwd, [
+      'config',
+      'integrations',
+      'stop-gate',
+      'enable',
+    ])
 
     expect(enabled.exitCode).toBe(0)
     expect(enabled.stderr).toBe('')
     expect(enabled.stdout).toContain('enabled: true\n')
     expect(await readFile(join(cwd, 'alint.config.toml'), 'utf8')).toContain('enabled = true')
 
-    const disabled = await run(cwd, ['config', 'integrations', 'stop-gate', 'disable'])
+    const disabled = await run(cwd, [
+      'config',
+      'integrations',
+      'stop-gate',
+      'disable',
+    ])
 
     expect(disabled.exitCode).toBe(0)
     expect(disabled.stderr).toBe('')

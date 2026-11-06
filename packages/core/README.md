@@ -81,14 +81,20 @@ import { generateStructured } from '@alint-js/core/structured-output'
 import { array, description, object, pipe } from 'valibot'
 
 const responseSchema = pipe(
-  object({ findings: array(findingSchema) }),
+  object({
+    findings: array(findingSchema)
+  }),
   description('Report findings for this file.'),
 )
 
 const { findings } = await generateStructured({
   createMessages: retryFeedback => [
     { content: prompt, role: 'system' },
-    ...(retryFeedback ? [{ content: retryFeedback, role: 'user' as const }] : []),
+    ...(retryFeedback
+      ? [
+          { content: retryFeedback, role: 'user' as const }
+        ]
+      : []),
     { content: numberedSource, role: 'user' },
   ],
   logger: ctx.logger,
@@ -112,7 +118,9 @@ which languages it can read and core decides what to hand it:
 
 ```ts
 defineRule({
-  create: () => ({ onTargetFunction: (target) => { /* ... */ } }),
+  create: () => ({
+    onTargetFunction: (target) => { /* ... */ }
+  }),
   languages: 'any',
 })
 ```

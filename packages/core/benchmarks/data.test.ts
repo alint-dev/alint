@@ -34,7 +34,13 @@ describe('benchmark fixtures', () => {
     const lineBytes = Buffer.byteLength(line)
     const equivalent20MiBRemainder = 2 * lineBytes + (20 * 1024 * 1024) % lineBytes
 
-    for (const bytes of [0, 5, lineBytes, 1024, equivalent20MiBRemainder]) {
+    for (const bytes of [
+      0,
+      5,
+      lineBytes,
+      1024,
+      equivalent20MiBRemainder,
+    ]) {
       const fixture = createLargeFile(bytes)
       const fullLines = Math.floor(bytes / lineBytes)
       const padding = bytes % lineBytes

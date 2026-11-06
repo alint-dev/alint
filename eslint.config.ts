@@ -30,7 +30,12 @@ export default defineConfig({
     'import/order': 'off',
     'markdown/require-alt-text': 'off',
 
-    'no-console': ['error', { allow: ['warn', 'error', 'info'] }],
+    'no-console': [
+      'error',
+      {
+        allow: ['warn', 'error', 'info'],
+      },
+    ],
     'no-restricted-syntax': [
       'warn',
       // Catches the manual `error instanceof Error ? error.message : ...`

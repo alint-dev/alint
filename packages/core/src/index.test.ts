@@ -100,12 +100,16 @@ describe('core public entrypoints', () => {
           },
         }),
       })
-      const plugin = core.definePlugin({ rules: { project: projectRule } })
+      const plugin = core.definePlugin({
+        rules: { project: projectRule },
+      })
       const result = await core.runAlint({
-        config: core.defineConfig([{
-          plugins: { test: plugin },
-          rules: { 'test/project': 'warn' },
-        }]),
+        config: core.defineConfig([
+          {
+            plugins: { test: plugin },
+            rules: { 'test/project': 'warn' },
+          },
+        ]),
         cwd: root,
         files: [filePath],
         runner: { cache: false },

@@ -44,7 +44,10 @@ export function createReinventedHelperTools(
   cwd: string,
   findings: ReinventedHelperFinding[],
 ): AgentTool[] {
-  return [createReadFileTool(src, cwd), createReportFindingTool(findings)]
+  return [
+    createReadFileTool(src, cwd),
+    createReportFindingTool(findings),
+  ]
 }
 
 export function createReportFindingTool(findings: ReinventedHelperFinding[]): AgentTool {

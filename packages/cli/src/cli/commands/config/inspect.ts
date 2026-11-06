@@ -42,7 +42,9 @@ async function runConfigInspectCommand(
   io.stdout.write('rules:\n')
 
   for (const [id, entry] of Object.entries(result.config.rules)) {
-    io.stdout.write(`  ${id}: ${Array.isArray(entry) ? entry[0] : entry}\n`)
+    io.stdout.write(`  ${id}: ${Array.isArray(entry)
+      ? entry[0]
+      : entry}\n`)
   }
 
   return 0

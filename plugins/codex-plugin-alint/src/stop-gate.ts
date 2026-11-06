@@ -33,7 +33,9 @@ function inactiveEnvelope(): StopGateEnvelope {
 
 function readHookInput(): HookInput {
   const input = readFileSync(0, 'utf8').trim()
-  return input.length === 0 ? {} : JSON.parse(input) as HookInput
+  return input.length === 0
+    ? {}
+    : JSON.parse(input) as HookInput
 }
 
 function requiredString(value: string | undefined, message: string): string {
@@ -114,13 +116,17 @@ async function runForInput(
   const gitRoot = await findGitRoot(input.cwd ?? process.cwd())
 
   if (gitRoot === undefined || !await hasProjectConfig(gitRoot)) {
-    return { envelope: inactiveEnvelope() }
+    return {
+      envelope: inactiveEnvelope(),
+    }
   }
 
   const stopGate = await resolveAlintStopGate(gitRoot)
 
   if (!stopGate.enabled) {
-    return { envelope: inactiveEnvelope() }
+    return {
+      envelope: inactiveEnvelope(),
+    }
   }
 
   if (stopGate.target === 'dirty-files' && await isHeadDetached(gitRoot)) {
@@ -132,7 +138,9 @@ async function runForInput(
   }
 
   if (state.lintRounds >= maximumLintRounds) {
-    return { decision: lintLimitDecision(state) }
+    return {
+      decision: lintLimitDecision(state),
+    }
   }
 
   return { envelope: await stopGate.run(sessionId) }

@@ -31,6 +31,7 @@
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
+    "@alint-js/agent-apeira": "workspace:*",
     "@alint-js/core": "workspace:*",
     "@alint-js/tools-fs": "workspace:*",
     "@alint-js/utils": "workspace:*",
@@ -51,7 +52,6 @@
     "xdg-basedir": "catalog:"
   },
   "devDependencies": {
-    "@types/tar-stream": "catalog:",
     "h3": "catalog:"
   }
 }

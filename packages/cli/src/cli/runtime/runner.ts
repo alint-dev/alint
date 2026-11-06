@@ -30,7 +30,12 @@ export function mergeRunnerConfigs(
 /** The last `runner` block in the flattened config takes precedence, key by key. */
 export function resolveConfigRunner(config: AlintConfig): RunnerConfig | undefined {
   return normalizeConfig(config).reduce<RunnerConfig | undefined>(
-    (merged, item) => item.runner ? { ...merged, ...item.runner } : merged,
+    (merged, item) => item.runner
+      ? {
+          ...merged,
+          ...item.runner,
+        }
+      : merged,
     undefined,
   )
 }
@@ -49,7 +54,10 @@ function mergeCacheConfig(
   }
 
   if (typeof setupCache === 'object') {
-    return { ...setupCache, ...configCache }
+    return {
+      ...setupCache,
+      ...configCache,
+    }
   }
 
   return configCache
@@ -68,7 +76,10 @@ function mergeStatsConfig(
   }
 
   if (typeof setupStats === 'object') {
-    return { ...setupStats, ...configStats }
+    return {
+      ...setupStats,
+      ...configStats,
+    }
   }
 
   return configStats

@@ -4,7 +4,11 @@ export function snapshotDiagnostic(diagnostic: Diagnostic): Diagnostic {
   const snapshot = { ...diagnostic }
   if (diagnostic.loc) {
     snapshot.loc = {
-      ...(diagnostic.loc.end ? { end: { ...diagnostic.loc.end } } : {}),
+      ...(diagnostic.loc.end
+        ? {
+            end: { ...diagnostic.loc.end },
+          }
+        : {}),
       start: { ...diagnostic.loc.start },
     }
   }

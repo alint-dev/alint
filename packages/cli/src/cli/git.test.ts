@@ -43,8 +43,12 @@ describe('git discovery', () => {
 
     expect(changes.files).toContain('unstaged.ts')
     expect(changes.files).toContain('untracked.ts')
-    expect(changes.changedLines.get('unstaged.ts')).toEqual([{ endLine: 3, startLine: 1 }])
-    expect(changes.changedLines.get('untracked.ts')).toEqual([{ endLine: 2, startLine: 1 }])
+    expect(changes.changedLines.get('unstaged.ts')).toEqual([
+      { endLine: 3, startLine: 1 },
+    ])
+    expect(changes.changedLines.get('untracked.ts')).toEqual([
+      { endLine: 2, startLine: 1 },
+    ])
   })
 
   it('maps renamed and quoted Git paths to their current worktree paths', async () => {
@@ -59,15 +63,26 @@ describe('git discovery', () => {
 
     const changes = await findDirtyChanges(cwd)
 
-    expect(changes.changedLines.get(unicodePath)).toEqual([{ endLine: 1, startLine: 1 }])
-    expect(changes.changedLines.get('renamed-new.ts')).toEqual([{ endLine: 1, startLine: 1 }])
+    expect(changes.changedLines.get(unicodePath)).toEqual([
+      { endLine: 1, startLine: 1 },
+    ])
+    expect(changes.changedLines.get('renamed-new.ts')).toEqual([
+      { endLine: 1, startLine: 1 },
+    ])
     expect(changes.changedLines.has('renamed-old.ts')).toBe(false)
   })
 
   it('keeps registered submodules outside the repository lint boundary', async () => {
     const cwd = await createRepository()
     const source = await createSubmoduleRepository()
-    await git(cwd, ['-c', 'protocol.file.allow=always', 'submodule', 'add', source, 'vendor/example'])
+    await git(cwd, [
+      '-c',
+      'protocol.file.allow=always',
+      'submodule',
+      'add',
+      source,
+      'vendor/example',
+    ])
     await git(cwd, ['commit', '-am', 'add submodule'])
     await writeFile(join(source, 'input.ts'), 'updated upstream\n', 'utf8')
     await git(source, ['add', 'input.ts'])
@@ -91,7 +106,12 @@ async function createRepository(): Promise<string> {
   await git(cwd, ['config', 'user.email', 'test@example.com'])
   await git(cwd, ['config', 'user.name', 'Test'])
 
-  for (const file of ['deleted.ts', 'renamed-old.ts', 'staged.ts', 'unstaged.ts']) {
+  for (const file of [
+    'deleted.ts',
+    'renamed-old.ts',
+    'staged.ts',
+    'unstaged.ts',
+  ]) {
     await writeFile(join(cwd, file), 'original\n', 'utf8')
   }
 

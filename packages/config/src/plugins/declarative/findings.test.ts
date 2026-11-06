@@ -8,7 +8,9 @@ function createFinding(message: string, suggestion?: string): DeclarativeFinding
   return {
     line: 1,
     message,
-    ...(suggestion === undefined ? {} : { suggestion }),
+    ...(suggestion === undefined
+      ? {}
+      : { suggestion }),
   }
 }
 

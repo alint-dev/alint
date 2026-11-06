@@ -42,8 +42,14 @@ describe('probeModels', () => {
     { body: null, label: 'null' },
     { body: [], label: 'an array body' },
     { body: {}, label: 'an object without data' },
-    { body: { data: null }, label: 'null data' },
-    { body: { data: {} }, label: 'non-array data' },
+    {
+      body: { data: null },
+      label: 'null data',
+    },
+    {
+      body: { data: {} },
+      label: 'non-array data',
+    },
   ])('rejects $label with the stable response-shape error', async ({ body }) => {
     await withJsonServer(body, async (endpoint) => {
       await expect(probeModels(endpoint)).rejects.toThrowError(
@@ -55,7 +61,9 @@ describe('probeModels', () => {
   it.each([null, 'model', 42])(
     'rejects a non-object data member %j with the stable response-shape error',
     async (member) => {
-      await withJsonServer({ data: [member] }, async (endpoint) => {
+      await withJsonServer({
+        data: [member],
+      }, async (endpoint) => {
         await expect(probeModels(endpoint)).rejects.toThrowError(
           new TypeError(invalidResponseMessage),
         )
@@ -68,9 +76,13 @@ describe('probeModels', () => {
     { id: null },
     { id: 42 },
     { id: '' },
-    [{ id: 'nested' }],
+    [
+      { id: 'nested' },
+    ],
   ])('rejects an object data member without a non-empty string id: %j', async (member) => {
-    await withJsonServer({ data: [member] }, async (endpoint) => {
+    await withJsonServer({
+      data: [member],
+    }, async (endpoint) => {
       await expect(probeModels(endpoint)).rejects.toThrowError(
         new TypeError(invalidResponseMessage),
       )
@@ -78,7 +90,12 @@ describe('probeModels', () => {
   })
 
   it('rejects a mixed valid and invalid data array', async () => {
-    await withJsonServer({ data: [{ id: 'valid' }, {}] }, async (endpoint) => {
+    await withJsonServer({
+      data: [
+        { id: 'valid' },
+        {},
+      ],
+    }, async (endpoint) => {
       await expect(probeModels(endpoint)).rejects.toThrowError(
         new TypeError(invalidResponseMessage),
       )
@@ -126,21 +143,27 @@ describe('formatAmbiguousModels', () => {
 describe('formatModelBenchmarkList', () => {
   it('renders speed columns in repeat, non-repeat, throughput, success order', () => {
     const output = formatModelBenchmarkList({
-      providers: [{
-        endpoint: 'https://example.test/v1',
-        id: 'remote',
-        models: [{ id: 'model', name: 'Example' }],
-        type: 'openai-compatible',
-      }],
+      providers: [
+        {
+          endpoint: 'https://example.test/v1',
+          id: 'remote',
+          models: [
+            { id: 'model', name: 'Example' },
+          ],
+          type: 'openai-compatible',
+        },
+      ],
       version: 1,
-    }, [{
-      modelId: 'model',
-      nonRepeatMs: 1_230,
-      providerId: 'remote',
-      repeatMs: 450,
-      success: { attempted: 7, completed: 7 },
-      throughput: 42.34,
-    }])
+    }, [
+      {
+        modelId: 'model',
+        nonRepeatMs: 1_230,
+        providerId: 'remote',
+        repeatMs: 450,
+        success: { attempted: 7, completed: 7 },
+        throughput: 42.34,
+      },
+    ])
 
     expect(output).toContain('repeat  non-repeat  throughput  success')
     expect(output).toContain('450ms   1.23s       42.3 tok/s  7/7')
@@ -148,19 +171,25 @@ describe('formatModelBenchmarkList', () => {
 
   it('renders errored speed cells in red when color is enabled', () => {
     const output = formatModelBenchmarkList({
-      providers: [{
-        endpoint: 'http://localhost:11434/v1',
-        id: 'ollama',
-        models: [{ id: 'qwen' }],
-        type: 'openai-compatible',
-      }],
+      providers: [
+        {
+          endpoint: 'http://localhost:11434/v1',
+          id: 'ollama',
+          models: [
+            { id: 'qwen' },
+          ],
+          type: 'openai-compatible',
+        },
+      ],
       version: 1,
-    }, [{
-      error: 'fetch failed',
-      modelId: 'qwen',
-      providerId: 'ollama',
-      success: { attempted: 1, completed: 0 },
-    }], { color: true })
+    }, [
+      {
+        error: 'fetch failed',
+        modelId: 'qwen',
+        providerId: 'ollama',
+        success: { attempted: 1, completed: 0 },
+      },
+    ], { color: true })
 
     expect(output).toContain('\u001B[31merrored\u001B[39m')
     expect(output).toContain('0/1')
@@ -170,44 +199,62 @@ describe('formatModelBenchmarkList', () => {
 describe('formatModelBenchmarkProgressList', () => {
   it('renders concurrent active phases with spinners and keeps completed model results visible', () => {
     const config = {
-      providers: [{
-        endpoint: 'https://example.test/v1',
-        id: 'remote',
-        models: [{ id: 'done' }, { id: 'running' }, { id: 'pending' }],
-        type: 'openai-compatible' as const,
-      }],
+      providers: [
+        {
+          endpoint: 'https://example.test/v1',
+          id: 'remote',
+          models: [
+            { id: 'done' },
+            { id: 'running' },
+            { id: 'pending' },
+          ],
+          type: 'openai-compatible' as const,
+        },
+      ],
       version: 1 as const,
     }
     const output = formatModelBenchmarkProgressList(config, {
-      active: [{
-        modelId: 'running',
-        modelIndex: 1,
-        phase: 'non-repeat',
-        providerId: 'remote',
-        sample: 2,
-        samples: 3,
-        success: { attempted: 6, completed: 5 },
-        warmup: false,
-      }, {
-        modelId: 'pending',
-        modelIndex: 2,
-        phase: 'repeat',
-        providerId: 'remote',
-        sample: 0,
-        samples: 3,
-        success: { attempted: 1, completed: 0 },
-        warmup: true,
-      }],
+      active: [
+        {
+          modelId: 'running',
+          modelIndex: 1,
+          phase: 'non-repeat',
+          providerId: 'remote',
+          sample: 2,
+          samples: 3,
+          success: { attempted: 6, completed: 5 },
+          warmup: false,
+        },
+        {
+          modelId: 'pending',
+          modelIndex: 2,
+          phase: 'repeat',
+          providerId: 'remote',
+          sample: 0,
+          samples: 3,
+          success: { attempted: 1, completed: 0 },
+          warmup: true,
+        },
+      ],
       modelsTotal: 3,
-      results: [{
-        modelId: 'done',
-        nonRepeatMs: 1_200,
-        providerId: 'remote',
-        repeatMs: 400,
-        success: { attempted: 7, completed: 7 },
-        throughput: 30,
-      }, undefined, undefined],
-    }, { color: false, frame: '⠋', maxRows: 8, tick: 0 })
+      results: [
+        {
+          modelId: 'done',
+          nonRepeatMs: 1_200,
+          providerId: 'remote',
+          repeatMs: 400,
+          success: { attempted: 7, completed: 7 },
+          throughput: 30,
+        },
+        undefined,
+        undefined,
+      ],
+    }, {
+      color: false,
+      frame: '⠋',
+      maxRows: 8,
+      tick: 0,
+    })
 
     expect(output).toContain('done')
     expect(output).toContain('400ms')
@@ -223,27 +270,36 @@ describe('formatModelBenchmarkProgressList', () => {
   it('keeps the current model visible when the table exceeds terminal height', () => {
     const models = Array.from({ length: 20 }, (_, index) => ({ id: `model-${index}` }))
     const output = formatModelBenchmarkProgressList({
-      providers: [{
-        endpoint: 'https://example.test/v1',
-        id: 'remote',
-        models,
-        type: 'openai-compatible',
-      }],
+      providers: [
+        {
+          endpoint: 'https://example.test/v1',
+          id: 'remote',
+          models,
+          type: 'openai-compatible',
+        },
+      ],
       version: 1,
     }, {
-      active: [{
-        modelId: 'model-15',
-        modelIndex: 15,
-        phase: 'repeat',
-        providerId: 'remote',
-        sample: 1,
-        samples: 3,
-        success: { attempted: 2, completed: 1 },
-        warmup: false,
-      }],
+      active: [
+        {
+          modelId: 'model-15',
+          modelIndex: 15,
+          phase: 'repeat',
+          providerId: 'remote',
+          sample: 1,
+          samples: 3,
+          success: { attempted: 2, completed: 1 },
+          warmup: false,
+        },
+      ],
       modelsTotal: 20,
       results: [],
-    }, { color: false, frame: '⠋', maxRows: 6, tick: 0 })
+    }, {
+      color: false,
+      frame: '⠋',
+      maxRows: 6,
+      tick: 0,
+    })
 
     expect(output).toContain('model-15')
     expect(output).toContain('showing models')

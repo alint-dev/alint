@@ -2,7 +2,7 @@
   "name": "@alint-js/root",
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@11.18.0",
+  "packageManager": "pnpm@12.18.0",
   "license": "MIT",
   "scripts": {
     "alint": "pnpm -F @alint-js/cli run alint",

@@ -30,7 +30,9 @@ it('detaches a completed outcome from the active rule job', async () => {
     scope: 'source' as const,
     targetIndex: 0,
   }
-  const rule = defineRule({ create: () => ({}) })
+  const rule = defineRule({
+    create: () => ({}),
+  })
   const cacheOwner: CacheOwnerTransaction = {
     checkpoint: async () => {},
     commit: () => {},
@@ -102,31 +104,47 @@ it('detaches a completed outcome from the active rule job', async () => {
 
   expect(outcome).toEqual({
     cache: 'miss',
-    diagnostics: [{
-      filePath: '/repo/source.ts',
-      message: 'diagnostic',
-      ruleId: 'company/review',
-      severity: 'warn',
-    }],
+    diagnostics: [
+      {
+        filePath: '/repo/source.ts',
+        message: 'diagnostic',
+        ruleId: 'company/review',
+        severity: 'warn',
+      },
+    ],
     jobRef,
     orderKey,
     state: 'completed',
-    usage: [{
-      inputTokens: 1,
-      modelId: 'model',
-      providerId: 'provider',
-      ruleId: 'company/review',
-    }],
+    usage: [
+      {
+        inputTokens: 1,
+        modelId: 'model',
+        providerId: 'provider',
+        ruleId: 'company/review',
+      },
+    ],
   })
   expect(JSON.stringify(outcome)).not.toContain('retained source sentinel')
 })
 
 it.each([
-  ['throwing message getter', () => Object.defineProperty({}, 'message', { get: () => { throw new Error('hostile getter') } })],
-  ['hostile proxy', () => new Proxy({}, { get: () => { throw new Error('hostile proxy') } })],
+  [
+    'throwing message getter',
+    () => Object.defineProperty({}, 'message', {
+      get: () => { throw new Error('hostile getter') },
+    }),
+  ],
+  [
+    'hostile proxy',
+    () => new Proxy({}, {
+      get: () => { throw new Error('hostile proxy') },
+    }),
+  ],
 ])('turns a %s into a detached handler failure', async (_name, createCause) => {
   const executionState = new AsyncLocalStorage<RuleRuntimeState>()
-  const rule = defineRule({ create: () => ({}) })
+  const rule = defineRule({
+    create: () => ({}),
+  })
   const job = createTestJob({
     executionState,
     rule,
@@ -149,11 +167,17 @@ it.each([
 })
 
 it.each([
-  ['Error', new Error('ordinary failure'), 'ordinary failure'],
+  [
+    'Error',
+    new Error('ordinary failure'),
+    'ordinary failure',
+  ],
   ['string', 'string failure', 'string failure'],
 ])('preserves an ordinary %s failure message', async (_name, cause, message) => {
   const executionState = new AsyncLocalStorage<RuleRuntimeState>()
-  const rule = defineRule({ create: () => ({}) })
+  const rule = defineRule({
+    create: () => ({}),
+  })
   const outcome = await executeRuleJob(createTestJob({
     executionState,
     rule,
@@ -165,12 +189,18 @@ it.each([
     runProgress: startedProgress(),
   })
 
-  expect(outcome).toMatchObject({ failure: { message }, state: 'failed' })
+  expect(outcome).toMatchObject({
+    failure: { message },
+    state: 'failed',
+  })
 })
 
 it('skips the handler and its execution-time source read on a cache hit', async () => {
   const executionState = new AsyncLocalStorage<RuleRuntimeState>()
-  const rule = defineRule({ cache: true, create: () => ({}) })
+  const rule = defineRule({
+    cache: true,
+    create: () => ({}),
+  })
   const run = vi.fn()
   const job = createTestJob({ executionState, rule, run })
   job.execution.runtime.cacheable = true
@@ -204,7 +234,10 @@ it('skips the handler and its execution-time source read on a cache hit', async 
 it('rejects a completed job when its cache transaction write fails', async () => {
   const executionState = new AsyncLocalStorage<RuleRuntimeState>()
   const sentinel = new Error('cache transaction write failed')
-  const rule = defineRule({ cache: true, create: () => ({}) })
+  const rule = defineRule({
+    cache: true,
+    create: () => ({}),
+  })
   const job = createTestJob({
     cacheOwner: {
       checkpoint: async () => {},
@@ -230,7 +263,10 @@ it('rejects a completed job when its cache transaction write fails', async () =>
 it('checkpoints a completed cacheable job without deriving owner metadata', async () => {
   const executionState = new AsyncLocalStorage<RuleRuntimeState>()
   const checkpoint = vi.fn(async () => {})
-  const rule = defineRule({ cache: true, create: () => ({}) })
+  const rule = defineRule({
+    cache: true,
+    create: () => ({}),
+  })
   const job = createTestJob({
     cacheOwner: {
       checkpoint,
@@ -256,7 +292,9 @@ it('checkpoints a completed cacheable job without deriving owner metadata', asyn
 
 it('reports descriptor mismatches as source-changed failures with both hashes', async () => {
   const executionState = new AsyncLocalStorage<RuleRuntimeState>()
-  const rule = defineRule({ create: () => ({}) })
+  const rule = defineRule({
+    create: () => ({}),
+  })
   const plannedHash = hashText('planned')
   const actualHash = hashText('changed')
   const job = createTestJob({
@@ -284,7 +322,9 @@ it('reports descriptor mismatches as source-changed failures with both hashes', 
 
 it('detaches a failed outcome from the active rule job', async () => {
   const executionState = new AsyncLocalStorage<RuleRuntimeState>()
-  const rule = defineRule({ create: () => ({}) })
+  const rule = defineRule({
+    create: () => ({}),
+  })
   const job = createTestJob({
     executionState,
     rule,
@@ -301,10 +341,16 @@ it('detaches a failed outcome from the active rule job', async () => {
 
   expect(outcome).toMatchObject({
     failure: {
-      job: { id: 'job-1', target: { identity: 'source.ts', kind: 'file' } },
+      job: {
+        id: 'job-1',
+        target: { identity: 'source.ts', kind: 'file' },
+      },
       message: 'original failure',
     },
-    jobRef: { id: 'job-1', target: { identity: 'source.ts', kind: 'file' } },
+    jobRef: {
+      id: 'job-1',
+      target: { identity: 'source.ts', kind: 'file' },
+    },
     state: 'failed',
   })
   expect(outcome.state === 'failed' && outcome.failure.job).not.toBe(outcome.jobRef)
@@ -324,7 +370,9 @@ it('seals terminal records and isolates progress, cache, and outcome snapshots',
       onTargetFile: () => {
         ctx.report({
           evidence,
-          loc: { start: { column: 2, line: 1 } },
+          loc: {
+            start: { column: 2, line: 1 },
+          },
           message: 'original diagnostic',
         })
         ctx.metering.recordUsage({
@@ -359,16 +407,18 @@ it('seals terminal records and isolates progress, cache, and outcome snapshots',
         record.inputTokens = 99
       },
     },
-    rules: [{
-      enabledRule: {
-        id: 'company/review',
-        localId: 'review',
-        options: [],
-        rule,
-        severity: 'warn',
+    rules: [
+      {
+        enabledRule: {
+          id: 'company/review',
+          localId: 'review',
+          options: [],
+          rule,
+          severity: 'warn',
+        },
+        ruleIndex: 0,
       },
-      ruleIndex: 0,
-    }],
+    ],
     runOptions: {},
     runProgress,
     setupConfig: { providers: [], version: 1 },
@@ -430,22 +480,28 @@ it('seals terminal records and isolates progress, cache, and outcome snapshots',
 
   expect(diagnosticsProgress).toEqual(['original diagnostic'])
   expect(usageProgress).toEqual([3])
-  expect(outcome.diagnostics).toEqual([{
-    evidence,
-    filePath: '/repo/source.ts',
-    loc: { start: { column: 2, line: 1 } },
-    message: 'original diagnostic',
-    model: undefined,
-    ruleId: 'company/review',
-    severity: 'warn',
-  }])
-  expect(outcome.usage).toEqual([{
-    inputTokens: 3,
-    metadata,
-    modelId: 'model',
-    providerId: 'provider',
-    ruleId: 'company/review',
-  }])
+  expect(outcome.diagnostics).toEqual([
+    {
+      evidence,
+      filePath: '/repo/source.ts',
+      loc: {
+        start: { column: 2, line: 1 },
+      },
+      message: 'original diagnostic',
+      model: undefined,
+      ruleId: 'company/review',
+      severity: 'warn',
+    },
+  ])
+  expect(outcome.usage).toEqual([
+    {
+      inputTokens: 3,
+      metadata,
+      modelId: 'model',
+      providerId: 'provider',
+      ruleId: 'company/review',
+    },
+  ])
   expect(cachedEntry?.diagnostics).toEqual(outcome.diagnostics)
   expect(cachedEntry?.usage).toEqual(outcome.usage)
   expect(cachedEntry?.diagnostics).not.toBe(outcome.diagnostics)
@@ -479,21 +535,81 @@ it('seals terminal records and isolates progress, cache, and outcome snapshots',
 
 it('compares job order by scope, input, target, then prepared rule index', () => {
   const keys: JobOrderKey[] = [
-    { inputIndex: 0, ruleIndex: 0, scope: 'project', targetIndex: 0 },
-    { inputIndex: 0, ruleIndex: 2, scope: 'source', targetIndex: 0 },
-    { inputIndex: 0, ruleIndex: 1, scope: 'directory', targetIndex: 0 },
-    { inputIndex: 1, ruleIndex: 0, scope: 'source', targetIndex: 0 },
-    { inputIndex: 0, ruleIndex: 0, scope: 'source', targetIndex: 1 },
-    { inputIndex: 0, ruleIndex: 1, scope: 'source', targetIndex: 0 },
+    {
+      inputIndex: 0,
+      ruleIndex: 0,
+      scope: 'project',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 2,
+      scope: 'source',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 1,
+      scope: 'directory',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 1,
+      ruleIndex: 0,
+      scope: 'source',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 0,
+      scope: 'source',
+      targetIndex: 1,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 1,
+      scope: 'source',
+      targetIndex: 0,
+    },
   ]
 
   expect(keys.toSorted(compareJobOrder)).toEqual([
-    { inputIndex: 0, ruleIndex: 1, scope: 'source', targetIndex: 0 },
-    { inputIndex: 0, ruleIndex: 2, scope: 'source', targetIndex: 0 },
-    { inputIndex: 0, ruleIndex: 0, scope: 'source', targetIndex: 1 },
-    { inputIndex: 1, ruleIndex: 0, scope: 'source', targetIndex: 0 },
-    { inputIndex: 0, ruleIndex: 1, scope: 'directory', targetIndex: 0 },
-    { inputIndex: 0, ruleIndex: 0, scope: 'project', targetIndex: 0 },
+    {
+      inputIndex: 0,
+      ruleIndex: 1,
+      scope: 'source',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 2,
+      scope: 'source',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 0,
+      scope: 'source',
+      targetIndex: 1,
+    },
+    {
+      inputIndex: 1,
+      ruleIndex: 0,
+      scope: 'source',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 1,
+      scope: 'directory',
+      targetIndex: 0,
+    },
+    {
+      inputIndex: 0,
+      ruleIndex: 0,
+      scope: 'project',
+      targetIndex: 0,
+    },
   ])
 })
 
@@ -531,7 +647,12 @@ function createTestJob(options: {
       ruleId: 'company/review',
       target: { identity: 'source.ts', kind: 'file' },
     },
-    orderKey: { inputIndex: 0, ruleIndex: 0, scope: 'source', targetIndex: 0 },
+    orderKey: {
+      inputIndex: 0,
+      ruleIndex: 0,
+      scope: 'source',
+      targetIndex: 0,
+    },
     target: {
       activeFilePath: '/repo/source.ts',
       cacheOwner: options.cacheOwner,

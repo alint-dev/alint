@@ -188,7 +188,12 @@ python = "@alint-js/plugin-python@0.3.1"
 local = "./plugins/local"
 `)
     await writePluginLock(cwd, {
-      local: { alias: 'local', path: pluginRoot, specifier: './plugins/local', type: 'directory' },
+      local: {
+        alias: 'local',
+        path: pluginRoot,
+        specifier: './plugins/local',
+        type: 'directory',
+      },
     })
 
     try {
@@ -251,15 +256,42 @@ python = "@alint-js/plugin-python@0.3.1"
     const cwd = await mkdtemp(join(tmpdir(), 'alint-config-live-local-'))
     const pluginRoot = join(cwd, 'plugins', 'local')
     await mkdir(join(pluginRoot, 'dist'), { recursive: true })
-    await writeFile(join(pluginRoot, 'package.json'), JSON.stringify({ exports: { '.': './dist/index.mjs' }, name: 'local', type: 'module' }))
+    await writeFile(join(pluginRoot, 'package.json'), JSON.stringify({
+      exports: { '.': './dist/index.mjs' },
+      name: 'local',
+      type: 'module',
+    }))
     const entry = join(pluginRoot, 'dist', 'index.mjs')
     await writeFile(entry, 'export default { rules: { first: {} } }\n')
     await writeFile(join(cwd, 'alint.config.toml'), `[[config.group]]\n[config.group.plugins]\nlocal = "./plugins/local"\n`)
-    await writePluginLock(cwd, { local: { alias: 'local', path: pluginRoot, specifier: './plugins/local', type: 'directory' } })
+    await writePluginLock(cwd, {
+      local: {
+        alias: 'local',
+        path: pluginRoot,
+        specifier: './plugins/local',
+        type: 'directory',
+      },
+    })
 
-    expect(await loadAlintConfig(cwd)).toEqual([{ plugins: { local: { rules: { first: {} } } } }])
+    expect(await loadAlintConfig(cwd)).toEqual([
+      {
+        plugins: {
+          local: {
+            rules: { first: {} },
+          },
+        },
+      },
+    ])
     await writeFile(entry, 'export default { rules: { second: {} } }\n')
-    expect(await loadAlintConfig(cwd)).toEqual([{ plugins: { local: { rules: { second: {} } } } }])
+    expect(await loadAlintConfig(cwd)).toEqual([
+      {
+        plugins: {
+          local: {
+            rules: { second: {} },
+          },
+        },
+      },
+    ])
   })
 
   it('loads declarative structured rules from a static TOML config and lockfile', async () => {
@@ -287,7 +319,12 @@ arch = "./rules/architecture"
 "arch/semantic-boundary" = "warn"
 `)
     await writePluginLock(cwd, {
-      arch: { alias: 'arch', path: pluginRoot, specifier: './rules/architecture', type: 'directory' },
+      arch: {
+        alias: 'arch',
+        path: pluginRoot,
+        specifier: './rules/architecture',
+        type: 'directory',
+      },
     })
 
     const config = await loadAlintConfig(cwd)
@@ -322,7 +359,12 @@ arch = "./rules/architecture"
 arch = "./rules/architecture"
 `)
     await writePluginLock(cwd, {
-      arch: { alias: 'arch', path: pluginRoot, specifier: './rules/architecture', type: 'directory' },
+      arch: {
+        alias: 'arch',
+        path: pluginRoot,
+        specifier: './rules/architecture',
+        type: 'directory',
+      },
     })
 
     try {
@@ -401,14 +443,22 @@ export default [
     expect(config).toEqual([
       {
         files: ['**/*.ts'],
-        plugins: { company: { rules: { shared: {} } } },
+        plugins: {
+          company: {
+            rules: { shared: {} },
+          },
+        },
         rules: { 'company/shared': 'warn' },
       },
       {
         basePath: 'packages/app',
         directories: ['**'],
         files: ['**/*'],
-        plugins: { app: { rules: { 'layer-boundary': {} } } },
+        plugins: {
+          app: {
+            rules: { 'layer-boundary': {} },
+          },
+        },
         rules: { 'app/layer-boundary': 'error' },
       },
     ])
@@ -470,7 +520,11 @@ export default [
     await mkdir(join(cwd, 'dist', 'pkg'), { recursive: true })
     await writeFile(join(cwd, 'alint.config.ts'), 'export default []\n')
 
-    for (const directory of ['.config', join('node_modules', 'pkg'), join('dist', 'pkg')]) {
+    for (const directory of [
+      '.config',
+      join('node_modules', 'pkg'),
+      join('dist', 'pkg'),
+    ]) {
       await writeFile(join(cwd, directory, 'alint.config.ts'), 'export default [{ name: \'skipped\' }]\n')
     }
 

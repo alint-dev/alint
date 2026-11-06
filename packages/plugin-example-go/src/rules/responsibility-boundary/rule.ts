@@ -12,7 +12,12 @@ import { responsibilityBoundaryPrompt } from './prompt'
 export const responsibilityBoundaryFindingSchema = pipe(
   object({
     category: pipe(
-      picklist(['responsibility-boundary', 'constructor-cohesion', 'domain-placement', 'testability']),
+      picklist([
+        'responsibility-boundary',
+        'constructor-cohesion',
+        'domain-placement',
+        'testability',
+      ]),
       description('Finding category. Use exactly one of responsibility-boundary, constructor-cohesion, domain-placement, or testability.'),
     ),
     confidence: pipe(
@@ -135,7 +140,9 @@ export function createResponsibilityBoundaryMessages(
     {
       content: [
         formatOutputLanguageInstruction(outputLanguage),
-        context ? `Supplemental project context:\n\n${context}` : undefined,
+        context
+          ? `Supplemental project context:\n\n${context}`
+          : undefined,
         `Go code with line numbers:\n\n${formatSourceWithLineNumbers(source)}`,
       ].filter(Boolean).join('\n\n'),
       role: 'user' as const,
@@ -154,7 +161,9 @@ export function reportResponsibilityBoundaryFindings(
     const evidence = {
       category: finding.category,
       confidence: finding.confidence,
-      ...(finding.relatedDeclarations ? { relatedDeclarations: finding.relatedDeclarations } : {}),
+      ...(finding.relatedDeclarations
+        ? { relatedDeclarations: finding.relatedDeclarations }
+        : {}),
       suggestion: finding.suggestion,
     }
 

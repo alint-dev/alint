@@ -42,7 +42,10 @@ beforeAll(async () => {
     location: lookupFixture.cachePath,
     readOnly: true,
   })
-  lookupOwner = readOnlyLookupStore.beginOwner({ kind: 'file', path: join(lookupFixture.root, 'src', 'file-0.ts') })
+  lookupOwner = readOnlyLookupStore.beginOwner({
+    kind: 'file',
+    path: join(lookupFixture.root, 'src', 'file-0.ts'),
+  })
   assertCount('lookup smoke', lookupAll(lookupOwner, 0), slotsPerOwner)
 
   replaceFixture = await createFixture('replace', false)

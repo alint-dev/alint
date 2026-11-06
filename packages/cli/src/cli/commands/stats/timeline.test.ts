@@ -5,7 +5,14 @@ import { describe, expect, it } from 'vitest'
 import { formatStatsTimeline } from './timeline'
 
 function bucket(key: string, startMs: number, runs: number, totalTok: number): StatsBucket {
-  return { inTok: totalTok, key, outTok: 0, runs, startMs, totalTok }
+  return {
+    inTok: totalTok,
+    key,
+    outTok: 0,
+    runs,
+    startMs,
+    totalTok,
+  }
 }
 
 function series(buckets: StatsBucket[], interval: StatsInterval = 'day', overrides: Partial<StatsSeries> = {}): StatsSeries {
@@ -30,7 +37,10 @@ describe('formatStatsTimeline', () => {
 
   it('defaults to horizontal bars with values inline', () => {
     const output = formatStatsTimeline(
-      series([bucket('01-10', 1, 2, 200), bucket('01-12', 3, 5, 1000)]),
+      series([
+        bucket('01-10', 1, 2, 200),
+        bucket('01-12', 3, 5, 1000),
+      ]),
       { columns: 80, metric: 'tokens' },
     )
     const rows = output.split('\n')
@@ -43,7 +53,11 @@ describe('formatStatsTimeline', () => {
 
   it('draws a vertical chart with --vertical', () => {
     const output = formatStatsTimeline(
-      series([bucket('01-10', 1, 2, 200), bucket('01-11', 2, 0, 0), bucket('01-12', 3, 5, 1000)]),
+      series([
+        bucket('01-10', 1, 2, 200),
+        bucket('01-11', 2, 0, 0),
+        bucket('01-12', 3, 5, 1000),
+      ]),
       { columns: 80, metric: 'tokens', vertical: true },
     )
 
@@ -56,7 +70,11 @@ describe('formatStatsTimeline', () => {
 
   it('falls back to horizontal when --vertical does not fit', () => {
     const output = formatStatsTimeline(
-      series([bucket('01-10', 1, 2, 200), bucket('01-11', 2, 3, 900), bucket('01-12', 3, 5, 1000)]),
+      series([
+        bucket('01-10', 1, 2, 200),
+        bucket('01-11', 2, 3, 900),
+        bucket('01-12', 3, 5, 1000),
+      ]),
       { columns: 12, metric: 'tokens', vertical: true },
     )
 
@@ -65,8 +83,17 @@ describe('formatStatsTimeline', () => {
 
   it('lists exact per-bucket values under a vertical chart', () => {
     const output = formatStatsTimeline(
-      series([bucket('01-10', 1, 2, 250), bucket('01-11', 2, 0, 0), bucket('01-12', 3, 5, 12345)]),
-      { columns: 80, exact: true, metric: 'tokens', vertical: true },
+      series([
+        bucket('01-10', 1, 2, 250),
+        bucket('01-11', 2, 0, 0),
+        bucket('01-12', 3, 5, 12345),
+      ]),
+      {
+        columns: 80,
+        exact: true,
+        metric: 'tokens',
+        vertical: true,
+      },
     )
 
     // 250 is neither the max nor zero, so it is unreadable from the axis alone —
@@ -102,19 +129,27 @@ describe('formatStatsTimeline', () => {
   })
 
   it('compacts large token counts by default and expands them with exact', () => {
-    const big = series([bucket('01-10', 1, 2, 1_200_000)])
+    const big = series([
+      bucket('01-10', 1, 2, 1_200_000),
+    ])
 
     expect(formatStatsTimeline(big, { columns: 80, metric: 'tokens' })).toContain('1.20M')
     expect(formatStatsTimeline(big, { columns: 80, exact: true, metric: 'tokens' })).toContain('1,200,000')
   })
 
   it('plots the chosen metric and labels the caption', () => {
-    expect(formatStatsTimeline(series([bucket('01-10', 1, 8, 5)], 'week'), { metric: 'runs' }))
+    expect(formatStatsTimeline(series([
+      bucket('01-10', 1, 8, 5),
+    ], 'week'), { metric: 'runs' }))
       .toContain('runs by week')
   })
 
   it('shows the rule filter in the caption', () => {
-    const output = formatStatsTimeline(series([bucket('01-10', 1, 1, 5)]), { rules: ['r1', 'r2'] })
+    const output = formatStatsTimeline(series([
+      bucket('01-10', 1, 1, 5),
+    ]), {
+      rules: ['r1', 'r2'],
+    })
 
     expect(output).toContain('tokens by day — r1, r2')
   })

@@ -19,7 +19,9 @@ for (const targetCount of [10_000, 50_000, 100_000]) {
 
 function createSnapshots(targetCount: number): ProjectFileSnapshot[] {
   const targetsPerFile = 100
-  return Array.from({ length: Math.ceil(targetCount / targetsPerFile) }, (_, fileIndex) => {
+  return Array.from({
+    length: Math.ceil(targetCount / targetsPerFile),
+  }, (_, fileIndex) => {
     const path = `/benchmark/file-${fileIndex}.mock`
     const start = fileIndex * targetsPerFile
     const count = Math.min(targetsPerFile, targetCount - start)

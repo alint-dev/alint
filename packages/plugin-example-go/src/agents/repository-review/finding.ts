@@ -73,7 +73,11 @@ export function createSubmitReviewTool<Category extends string>(
 
         submitted = result.output.findings.map(finding => ({
           category: finding.category,
-          ...(finding.futureFailure ? { futureFailure: finding.futureFailure.trim() } : {}),
+          ...(finding.futureFailure
+            ? {
+                futureFailure: finding.futureFailure.trim(),
+              }
+            : {}),
           line: finding.line,
           message: finding.message.trim(),
           proof: finding.proof.trim(),
@@ -84,7 +88,9 @@ export function createSubmitReviewTool<Category extends string>(
         return 'review submitted'
       },
       name: 'submit_review',
-      parameters: { ...toolParametersFromSchema(schema) },
+      parameters: {
+        ...toolParametersFromSchema(schema),
+      },
     }),
   }
 }
@@ -111,7 +117,9 @@ function createSubmissionSchema<Category extends string>(options: SubmitReviewOp
   })
 
   return pipe(
-    strictObject({ findings: array(finding) }),
+    strictObject({
+      findings: array(finding),
+    }),
     description('The complete repository review. Use findings: [] when clean.'),
   )
 }

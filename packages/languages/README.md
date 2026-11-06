@@ -45,7 +45,9 @@ A rule opts in to what it can read by declaring `languages`:
 
 ```ts
 defineRule({
-  create: () => ({ onTargetFunction: (target) => { /* ... */ } }),
+  create: () => ({
+    onTargetFunction: (target) => { /* ... */ }
+  }),
   languages: 'any', // or ['go', 'rust'] to scope, which fails the run if nothing provides them
 })
 ```

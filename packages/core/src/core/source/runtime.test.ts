@@ -17,7 +17,11 @@ describe('source runtime', () => {
     await writeFile(path, text)
     const runtime = createSourceRuntime()
 
-    const file = await runtime.readFile({ contentHash: hashText(text), language: 'custom', path })
+    const file = await runtime.readFile({
+      contentHash: hashText(text),
+      language: 'custom',
+      path,
+    })
 
     expect(file.path).toBe(path)
     expect(file.text).toBe(text)

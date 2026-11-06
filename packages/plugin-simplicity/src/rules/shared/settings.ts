@@ -39,7 +39,9 @@ export function readSimplicitySettings(ctx: RuleContext): SimplicitySettings {
       .map((issue) => {
         const path = getDotPath(issue)
 
-        return path === null ? issue.message : `"${path}": ${issue.message}`
+        return path === null
+          ? issue.message
+          : `"${path}": ${issue.message}`
       })
       .join('; ')
 

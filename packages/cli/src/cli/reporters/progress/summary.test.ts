@@ -39,34 +39,58 @@ function createSummaryProgressReporter(options: Parameters<typeof createActualSu
       execution = counts({ planned: jobsTotal })
       started.clear()
       reporter.onPrepareStart?.({ startedAt })
-      reporter.onExecuteStart?.({ progress: snapshot(execution, true), startedAt })
+      reporter.onExecuteStart?.({
+        progress: snapshot(execution, true),
+        startedAt,
+      })
     },
     getRows: reporter.getRows,
-    onDiagnostic: (payload: Omit<DiagnosticProgressPayload, 'progress'>) => reporter.onDiagnostic?.({ ...payload, progress: snapshot(execution, true) }),
+    onDiagnostic: (payload: Omit<DiagnosticProgressPayload, 'progress'>) => reporter.onDiagnostic?.({
+      ...payload,
+      progress: snapshot(execution, true),
+    }),
     onJobEnd: (payload: Omit<JobEndPayload, 'progress'>) => {
       if (started.delete(payload.job.id))
         execution.running -= 1
       else
         execution.queued -= 1
       execution[payload.state] += 1
-      reporter.onJobEnd?.({ ...payload, progress: snapshot(execution, true) })
+      reporter.onJobEnd?.({
+        ...payload,
+        progress: snapshot(execution, true),
+      })
     },
     onJobQueued: (payload: Omit<JobQueuedPayload, 'progress'>) => {
       execution.queued += 1
-      reporter.onJobQueued?.({ ...payload, progress: snapshot(execution, true) })
+      reporter.onJobQueued?.({
+        ...payload,
+        progress: snapshot(execution, true),
+      })
     },
-    onJobRetry: (payload: Omit<JobRetryPayload, 'progress'>) => reporter.onJobRetry?.({ ...payload, progress: snapshot(execution, true) }),
+    onJobRetry: (payload: Omit<JobRetryPayload, 'progress'>) => reporter.onJobRetry?.({
+      ...payload,
+      progress: snapshot(execution, true),
+    }),
     onJobStart: (payload: Omit<JobStartPayload, 'progress'>) => {
       execution.queued -= 1
       execution.running += 1
       started.add(payload.job.id)
-      reporter.onJobStart?.({ ...payload, progress: snapshot(execution, true) })
+      reporter.onJobStart?.({
+        ...payload,
+        progress: snapshot(execution, true),
+      })
     },
     onRunEnd: (payload: Omit<RunEndPayload, 'progress'>) => {
       execution = { ...payload.execution }
-      reporter.onRunEnd?.({ ...payload, progress: snapshot(execution, true) })
+      reporter.onRunEnd?.({
+        ...payload,
+        progress: snapshot(execution, true),
+      })
     },
-    onUsage: (payload: Omit<UsageProgressPayload, 'progress'>) => reporter.onUsage?.({ ...payload, progress: snapshot(execution, true) }),
+    onUsage: (payload: Omit<UsageProgressPayload, 'progress'>) => reporter.onUsage?.({
+      ...payload,
+      progress: snapshot(execution, true),
+    }),
     tick: reporter.tick,
   }
 }
@@ -109,7 +133,10 @@ describe('createSummaryProgressReporter', () => {
       spinnerFrames: ['⠋'],
     })
     reporter.onPrepareStart?.({ startedAt: 0 })
-    reporter.onExecuteStart?.({ progress: snapshot(counts()), startedAt: 0 })
+    reporter.onExecuteStart?.({
+      progress: snapshot(counts()),
+      startedAt: 0,
+    })
     reporter.onFileReady?.({
       fileIndex: 0,
       inputPath: '/repo/src/input.ts',
@@ -131,7 +158,9 @@ describe('createSummaryProgressReporter', () => {
       spinnerFrames: ['⠋'],
     })
     reporter.onPrepareStart?.({ startedAt: 0 })
-    reporter.onPlanningEnd?.({ progress: snapshot(counts({ completed: 3, planned: 7, running: 4 }), true) })
+    reporter.onPlanningEnd?.({
+      progress: snapshot(counts({ completed: 3, planned: 7, running: 4 }), true),
+    })
 
     expect(reporter.getRows().at(-3)).toBe('3/7 [▓████░░░░░] 49.8s -> ~1 minute 6 seconds')
     expect(reporter.getRows().at(-1)).toBe('0 tokens (0 cached) -> ~0 tokens')
@@ -147,7 +176,9 @@ describe('createSummaryProgressReporter', () => {
       spinnerFrames: ['⠋'],
     })
     reporter.onPrepareStart?.({ startedAt: 0 })
-    reporter.onPlanningEnd?.({ progress: snapshot(counts({ completed: 1, planned: 2, queued: 1 }), true) })
+    reporter.onPlanningEnd?.({
+      progress: snapshot(counts({ completed: 1, planned: 2, queued: 1 }), true),
+    })
 
     expect(reporter.getRows().at(-3)).toBe('1/2 [▓█████░░░░] 1 hour 8 minutes 9 seconds -> ~1 hour 8 minutes 9 seconds')
   })
@@ -170,12 +201,24 @@ describe('createSummaryProgressReporter', () => {
       const terminalExecution = index === total - 1
         ? counts({ completed: index, failed: 1, planned: index + 1 })
         : counts({ completed: index + 1, planned: index + 1 })
-      reporter.onJobQueued?.({ job: current, progress: snapshot(counts({ completed: index, planned: index + 1, queued: 1 })) })
-      reporter.onJobStart?.({ job: current, progress: snapshot(counts({ completed: index, planned: index + 1, running: 1 })), startedAt: index })
+      reporter.onJobQueued?.({
+        job: current,
+        progress: snapshot(counts({ completed: index, planned: index + 1, queued: 1 })),
+      })
+      reporter.onJobStart?.({
+        job: current,
+        progress: snapshot(counts({ completed: index, planned: index + 1, running: 1 })),
+        startedAt: index,
+      })
       reporter.onUsage?.({
         job: current,
         progress: snapshot(counts({ completed: index, planned: index + 1, running: 1 })),
-        record: { modelId: 'model', providerId: 'provider', ruleId: current.ruleId, totalTokens: 1 },
+        record: {
+          modelId: 'model',
+          providerId: 'provider',
+          ruleId: current.ruleId,
+          totalTokens: 1,
+        },
       })
       reporter.onJobEnd?.({
         cache: 'miss',
@@ -183,10 +226,14 @@ describe('createSummaryProgressReporter', () => {
         job: current,
         progress: snapshot(terminalExecution),
         startedAt: index,
-        state: index === total - 1 ? 'failed' : 'completed',
+        state: index === total - 1
+          ? 'failed'
+          : 'completed',
       })
     }
-    reporter.onExecuteEnd?.({ progress: snapshot(counts({ completed: total - 1, failed: 1, planned: total }), true) })
+    reporter.onExecuteEnd?.({
+      progress: snapshot(counts({ completed: total - 1, failed: 1, planned: total }), true),
+    })
 
     const rows = reporter.getRows().join('\n')
     expect(rows).toContain(`rule/bulk ${total}/${total} 100%`)
@@ -204,9 +251,18 @@ describe('createSummaryProgressReporter', () => {
       rows: 8,
       spinnerFrames: ['⠋', '⠙'],
     })
-    const first = { ...job(1, '/repo/alint.config.ts'), ruleId: 'js/no-redundant-jsdoc' }
-    const second = { ...job(2, '/repo/packages/cli/src/cli/stats/index.ts'), ruleId: 'js/no-redundant-jsdoc' }
-    const third = { ...job(3, '/repo/packages/core/src/core/run.ts'), ruleId: 'js/no-vacuous-function' }
+    const first = {
+      ...job(1, '/repo/alint.config.ts'),
+      ruleId: 'js/no-redundant-jsdoc',
+    }
+    const second = {
+      ...job(2, '/repo/packages/cli/src/cli/stats/index.ts'),
+      ruleId: 'js/no-redundant-jsdoc',
+    }
+    const third = {
+      ...job(3, '/repo/packages/core/src/core/run.ts'),
+      ruleId: 'js/no-vacuous-function',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 10, startedAt: 0 })
     for (const current of [first, second, third])
@@ -214,7 +270,12 @@ describe('createSummaryProgressReporter', () => {
     reporter.onJobStart?.({ job: first, startedAt: 47_400 })
     reporter.onJobStart?.({ job: second, startedAt: 7_200 })
     reporter.onJobStart?.({ job: third, startedAt: 43_000 })
-    reporter.onJobRetry?.({ attempt: 1, job: first, maxAttempts: 3, startedAt: 47_400 })
+    reporter.onJobRetry?.({
+      attempt: 1,
+      job: first,
+      maxAttempts: 3,
+      startedAt: 47_400,
+    })
 
     expect(reporter.getRows()).toEqual([
       '⠋ js/no-redundant-jsdoc 0/2 0% [░░░░░░░░░░] eta ? 2 running',
@@ -238,21 +299,56 @@ describe('createSummaryProgressReporter', () => {
       rows: 8,
       spinnerFrames: ['⠋'],
     })
-    const active = { ...job(1, '/repo/src/active.ts'), ruleId: 'rule/active' }
-    const oneFailure = { ...job(2, '/repo/src/one-failure.ts'), ruleId: 'rule/one-failure' }
-    const firstFailure = { ...job(3, '/repo/src/first-failure.ts'), ruleId: 'rule/two-failures' }
-    const secondFailure = { ...job(4, '/repo/src/second-failure.ts'), ruleId: 'rule/two-failures' }
+    const active = {
+      ...job(1, '/repo/src/active.ts'),
+      ruleId: 'rule/active',
+    }
+    const oneFailure = {
+      ...job(2, '/repo/src/one-failure.ts'),
+      ruleId: 'rule/one-failure',
+    }
+    const firstFailure = {
+      ...job(3, '/repo/src/first-failure.ts'),
+      ruleId: 'rule/two-failures',
+    }
+    const secondFailure = {
+      ...job(4, '/repo/src/second-failure.ts'),
+      ruleId: 'rule/two-failures',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 4, startedAt: 0 })
-    for (const current of [active, oneFailure, firstFailure, secondFailure])
+    for (const current of [
+      active,
+      oneFailure,
+      firstFailure,
+      secondFailure,
+    ])
       reporter.onJobQueued?.({ job: current })
     reporter.onJobStart?.({ job: active, startedAt: 9_000 })
     reporter.onJobStart?.({ job: oneFailure, startedAt: 1_000 })
-    reporter.onJobEnd?.({ cache: 'miss', endedAt: 2_000, job: oneFailure, startedAt: 1_000, state: 'failed' })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      endedAt: 2_000,
+      job: oneFailure,
+      startedAt: 1_000,
+      state: 'failed',
+    })
     reporter.onJobStart?.({ job: firstFailure, startedAt: 3_000 })
-    reporter.onJobEnd?.({ cache: 'miss', endedAt: 4_000, job: firstFailure, startedAt: 3_000, state: 'failed' })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      endedAt: 4_000,
+      job: firstFailure,
+      startedAt: 3_000,
+      state: 'failed',
+    })
     reporter.onJobStart?.({ job: secondFailure, startedAt: 5_000 })
-    reporter.onJobEnd?.({ cache: 'miss', endedAt: 6_000, job: secondFailure, startedAt: 5_000, state: 'failed' })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      endedAt: 6_000,
+      job: secondFailure,
+      startedAt: 5_000,
+      state: 'failed',
+    })
 
     expect(reporter.getRows()).toEqual([
       '⠋ rule/active 0/1 0% [░░░░░░░░░░] eta ? 1 running',
@@ -275,9 +371,18 @@ describe('createSummaryProgressReporter', () => {
       rows: 8,
       spinnerFrames: ['⠋'],
     })
-    const first = { ...job(1, '/repo/src/first.ts'), ruleId: 'rule/first' }
-    const second = { ...job(2, '/repo/src/second.ts'), ruleId: 'rule/second' }
-    const third = { ...job(3, '/repo/src/third.ts'), ruleId: 'rule/third' }
+    const first = {
+      ...job(1, '/repo/src/first.ts'),
+      ruleId: 'rule/first',
+    }
+    const second = {
+      ...job(2, '/repo/src/second.ts'),
+      ruleId: 'rule/second',
+    }
+    const third = {
+      ...job(3, '/repo/src/third.ts'),
+      ruleId: 'rule/third',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 3, startedAt: 0 })
     for (const current of [first, second, third]) {
@@ -303,19 +408,42 @@ describe('createSummaryProgressReporter', () => {
       cwd: '/repo',
       spinnerFrames: ['⠋'],
     })
-    const current = { ...job(1), ruleId: 'js/rule' }
+    const current = {
+      ...job(1),
+      ruleId: 'js/rule',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 4, startedAt: 0 })
     reporter.onJobQueued?.({ job: current })
     reporter.onJobStart?.({ job: current, startedAt: 0 })
-    reporter.onUsage?.({ job: current, record: { inputTokens: 100, modelId: 'model', outputTokens: 20, providerId: 'provider', ruleId: current.ruleId, totalTokens: 120 } })
-    reporter.onJobEnd?.({ cache: 'miss', job: current, startedAt: 0, state: 'failed' })
+    reporter.onUsage?.({
+      job: current,
+      record: {
+        inputTokens: 100,
+        modelId: 'model',
+        outputTokens: 20,
+        providerId: 'provider',
+        ruleId: current.ruleId,
+        totalTokens: 120,
+      },
+    })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      job: current,
+      startedAt: 0,
+      state: 'failed',
+    })
     reporter.onRunEnd?.({
       diagnostics: [],
       execution: counts({ failed: 1, planned: 4 }),
       startedAt: 0,
       usage: {
-        cached: { inputTokens: 50, outputTokens: 10, records: [], totalTokens: 60 },
+        cached: {
+          inputTokens: 50,
+          outputTokens: 10,
+          records: [],
+          totalTokens: 60,
+        },
         inputTokens: 100,
         outputTokens: 20,
         records: [],
@@ -343,10 +471,18 @@ describe('createSummaryProgressReporter', () => {
 
     reporter.beginFixedRun?.({ jobsTotal: 10, startedAt: 0 })
     for (let index = 1; index <= 5; index++) {
-      const current = { ...job(index), ruleId: 'rule/progress' }
+      const current = {
+        ...job(index),
+        ruleId: 'rule/progress',
+      }
       reporter.onJobQueued?.({ job: current })
       reporter.onJobStart?.({ job: current, startedAt: 0 })
-      reporter.onJobEnd?.({ cache: 'miss', job: current, startedAt: 0, state: 'completed' })
+      reporter.onJobEnd?.({
+        cache: 'miss',
+        job: current,
+        startedAt: 0,
+        state: 'completed',
+      })
     }
 
     reporter.tick()
@@ -368,7 +504,10 @@ describe('createSummaryProgressReporter', () => {
       rows: 4,
       spinnerFrames: ['⠋'],
     })
-    const current = { ...job(1, '/repo/alint.config.ts'), ruleId: 'js/no-redundant-jsdoc' }
+    const current = {
+      ...job(1, '/repo/alint.config.ts'),
+      ruleId: 'js/no-redundant-jsdoc',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 10, startedAt: 0 })
     reporter.onJobQueued?.({ job: current })
@@ -391,13 +530,31 @@ describe('createSummaryProgressReporter', () => {
       cwd: '/repo',
       spinnerFrames: ['⠋'],
     })
-    const current = { ...job(1), ruleId: 'js/cached-rule' }
+    const current = {
+      ...job(1),
+      ruleId: 'js/cached-rule',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 1, startedAt: 0 })
     reporter.onJobQueued?.({ job: current })
     reporter.onJobStart?.({ job: current, startedAt: 0 })
-    reporter.onUsage?.({ job: current, record: { inputTokens: 8, modelId: 'model', outputTokens: 2, providerId: 'provider', ruleId: current.ruleId, totalTokens: 10 } })
-    reporter.onJobEnd?.({ cache: 'hit', job: current, startedAt: 0, state: 'cached' })
+    reporter.onUsage?.({
+      job: current,
+      record: {
+        inputTokens: 8,
+        modelId: 'model',
+        outputTokens: 2,
+        providerId: 'provider',
+        ruleId: current.ruleId,
+        totalTokens: 10,
+      },
+    })
+    reporter.onJobEnd?.({
+      cache: 'hit',
+      job: current,
+      startedAt: 0,
+      state: 'cached',
+    })
 
     expect(reporter.getRows().at(-1)).toBe('0 tokens (10 cached) -> ~10 tokens')
   })
@@ -409,25 +566,56 @@ describe('createSummaryProgressReporter', () => {
       cwd: '/repo',
       spinnerFrames: ['⠋'],
     })
-    const failed = { ...job(1, '/repo/src/failed.ts'), ruleId: 'rule/terminal' }
-    const cancelled = { ...job(2, '/repo/src/cancelled.ts'), ruleId: 'rule/terminal' }
-    const skipped = { ...job(3, '/repo/src/skipped.ts'), ruleId: 'rule/terminal' }
+    const failed = {
+      ...job(1, '/repo/src/failed.ts'),
+      ruleId: 'rule/terminal',
+    }
+    const cancelled = {
+      ...job(2, '/repo/src/cancelled.ts'),
+      ruleId: 'rule/terminal',
+    }
+    const skipped = {
+      ...job(3, '/repo/src/skipped.ts'),
+      ruleId: 'rule/terminal',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 3, startedAt: 0 })
     for (const current of [failed, cancelled, skipped]) {
       reporter.onJobQueued?.({ job: current })
       reporter.onJobStart?.({ job: current, startedAt: 0 })
     }
-    reporter.onJobEnd?.({ cache: 'miss', endedAt: 1_000, job: failed, startedAt: 0, state: 'failed' })
-    reporter.onJobEnd?.({ cache: 'miss', endedAt: 2_000, job: cancelled, startedAt: 0, state: 'cancelled' })
-    reporter.onJobEnd?.({ cache: 'miss', endedAt: 3_000, job: skipped, startedAt: 0, state: 'skipped' })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      endedAt: 1_000,
+      job: failed,
+      startedAt: 0,
+      state: 'failed',
+    })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      endedAt: 2_000,
+      job: cancelled,
+      startedAt: 0,
+      state: 'cancelled',
+    })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      endedAt: 3_000,
+      job: skipped,
+      startedAt: 0,
+      state: 'skipped',
+    })
 
     expect(reporter.getRows()[0]).toBe('⠋ rule/terminal 3/3 100% [██████████] eta ~0.0s 0 running 1 failed')
   })
 
   it('limits rows, reports hidden jobs, and preserves the footer', () => {
     const reporter = createReporter(4)
-    const jobs = [job(1), job(2), job(3)]
+    const jobs = [
+      job(1),
+      job(2),
+      job(3),
+    ]
 
     reporter.beginFixedRun?.({ jobsTotal: jobs.length })
     for (const running of jobs) {
@@ -446,9 +634,18 @@ describe('createSummaryProgressReporter', () => {
   it('uses a collapsed active summary when only one content row fits', () => {
     const reporter = createReporter(5)
     const jobs = [
-      { ...job(1), ruleId: 'rule/first' },
-      { ...job(2), ruleId: 'rule/second' },
-      { ...job(3), ruleId: 'rule/third' },
+      {
+        ...job(1),
+        ruleId: 'rule/first',
+      },
+      {
+        ...job(2),
+        ruleId: 'rule/second',
+      },
+      {
+        ...job(3),
+        ruleId: 'rule/third',
+      },
     ]
 
     reporter.beginFixedRun?.({ jobsTotal: jobs.length })
@@ -470,15 +667,27 @@ describe('createSummaryProgressReporter', () => {
     vi.useFakeTimers()
     vi.setSystemTime(0)
     const reporter = createReporter(5)
-    const running = { ...job(1), ruleId: 'rule/running' }
-    const failed = { ...job(2), ruleId: 'rule/failed' }
+    const running = {
+      ...job(1),
+      ruleId: 'rule/running',
+    }
+    const failed = {
+      ...job(2),
+      ruleId: 'rule/failed',
+    }
 
     reporter.beginFixedRun?.({ jobsTotal: 2 })
     for (const current of [running, failed]) {
       reporter.onJobQueued?.({ job: current })
       reporter.onJobStart?.({ job: current, startedAt: 0 })
     }
-    reporter.onJobEnd?.({ cache: 'miss', endedAt: 1_000, job: failed, startedAt: 0, state: 'failed' })
+    reporter.onJobEnd?.({
+      cache: 'miss',
+      endedAt: 1_000,
+      job: failed,
+      startedAt: 0,
+      state: 'failed',
+    })
 
     const rows = reporter.getRows()
     expect(rows).toEqual([
@@ -497,8 +706,12 @@ describe('createSummaryProgressReporter', () => {
 
     for (const reporter of [oneRow, zeroRows]) {
       reporter.beginFixedRun?.({ jobsTotal: 1 })
-      reporter.onJobQueued?.({ job: job(1) })
-      reporter.onJobStart?.({ job: job(1) })
+      reporter.onJobQueued?.({
+        job: job(1),
+      })
+      reporter.onJobStart?.({
+        job: job(1),
+      })
     }
 
     expect(oneRow.getRows()).toEqual(['0/1 [░░░░░░░░░░] 0.0s -> ~?'])
@@ -509,14 +722,26 @@ describe('createSummaryProgressReporter', () => {
     vi.useFakeTimers()
     vi.setSystemTime(0)
     const reporter = createReporter()
-    const terminalStates = ['cached', 'cancelled', 'completed', 'failed', 'skipped'] as const
+    const terminalStates = [
+      'cached',
+      'cancelled',
+      'completed',
+      'failed',
+      'skipped',
+    ] as const
 
     reporter.beginFixedRun?.({ jobsTotal: terminalStates.length })
     terminalStates.forEach((state, index) => {
       const current = job(index + 1)
       reporter.onJobQueued?.({ job: current })
       reporter.onJobStart?.({ job: current })
-      reporter.onJobEnd?.({ cache: state === 'cached' ? 'hit' : 'miss', job: current, state })
+      reporter.onJobEnd?.({
+        cache: state === 'cached'
+          ? 'hit'
+          : 'miss',
+        job: current,
+        state,
+      })
     })
 
     expect(reporter.getRows()).toEqual([
@@ -529,8 +754,20 @@ describe('createSummaryProgressReporter', () => {
 
     reporter.onRunEnd?.({
       diagnostics: [],
-      execution: counts({ cached: 1, cancelled: 1, completed: 1, failed: 1, planned: 5, skipped: 1 }),
-      usage: { inputTokens: 2, outputTokens: 3, records: [], totalTokens: 5 },
+      execution: counts({
+        cached: 1,
+        cancelled: 1,
+        completed: 1,
+        failed: 1,
+        planned: 5,
+        skipped: 1,
+      }),
+      usage: {
+        inputTokens: 2,
+        outputTokens: 3,
+        records: [],
+        totalTokens: 5,
+      },
     })
     expect(reporter.getRows()).toEqual([
       '⠋ rule/4 1/1 100% [██████████] eta ? 0 running 1 failed',
@@ -547,10 +784,45 @@ describe('createSummaryProgressReporter', () => {
 
     reporter.beginFixedRun?.({ jobsTotal: 1 })
     reporter.onJobQueued?.({ job: current })
-    reporter.onDiagnostic?.({ diagnostic: { filePath: current.inputPath, message: 'warned', ruleId: current.ruleId, severity: 'warn' }, job: current })
-    reporter.onDiagnostic?.({ diagnostic: { filePath: current.inputPath, message: 'errored', ruleId: current.ruleId, severity: 'error' }, job: current })
-    reporter.onUsage?.({ job: current, record: { inputTokens: 3, modelId: 'model', outputTokens: 4, providerId: 'provider', ruleId: current.ruleId, totalTokens: 7 } })
-    reporter.onUsage?.({ job: current, record: { inputTokens: Number.NaN, modelId: 'model', outputTokens: 2, providerId: 'provider', ruleId: current.ruleId } })
+    reporter.onDiagnostic?.({
+      diagnostic: {
+        filePath: current.inputPath,
+        message: 'warned',
+        ruleId: current.ruleId,
+        severity: 'warn',
+      },
+      job: current,
+    })
+    reporter.onDiagnostic?.({
+      diagnostic: {
+        filePath: current.inputPath,
+        message: 'errored',
+        ruleId: current.ruleId,
+        severity: 'error',
+      },
+      job: current,
+    })
+    reporter.onUsage?.({
+      job: current,
+      record: {
+        inputTokens: 3,
+        modelId: 'model',
+        outputTokens: 4,
+        providerId: 'provider',
+        ruleId: current.ruleId,
+        totalTokens: 7,
+      },
+    })
+    reporter.onUsage?.({
+      job: current,
+      record: {
+        inputTokens: Number.NaN,
+        modelId: 'model',
+        outputTokens: 2,
+        providerId: 'provider',
+        ruleId: current.ruleId,
+      },
+    })
 
     expect(reporter.getRows().at(-1)).toBe('7 tokens (0 cached) -> ~?')
   })
@@ -558,7 +830,12 @@ describe('createSummaryProgressReporter', () => {
   it('preserves width-safe grapheme and ANSI truncation and semantic color', () => {
     const current = job(1, '/repo/\u001B[31m中文目录😀😀😀😀😀\u001B[39m/文件.ts', 'function', '解析中文😀')
     current.ruleId = '\u001B[31m规则😀😀😀😀😀😀😀😀\u001B[39m'
-    const reporter = createSummaryProgressReporter({ color: false, columns: 32, cwd: '/repo', spinnerFrames: ['⠋'] })
+    const reporter = createSummaryProgressReporter({
+      color: false,
+      columns: 32,
+      cwd: '/repo',
+      spinnerFrames: ['⠋'],
+    })
 
     reporter.beginFixedRun?.({ jobsTotal: 1 })
     reporter.onJobQueued?.({ job: current })
@@ -570,11 +847,24 @@ describe('createSummaryProgressReporter', () => {
     expect(rows[0]).not.toMatch(/[\uD800-\uDBFF]$/)
     expect(rows.some(row => row.includes('…'))).toBe(true)
 
-    const colored = createSummaryProgressReporter({ color: true, columns: 120, cwd: '/repo', spinnerFrames: ['⠋'] })
+    const colored = createSummaryProgressReporter({
+      color: true,
+      columns: 120,
+      cwd: '/repo',
+      spinnerFrames: ['⠋'],
+    })
     colored.beginFixedRun?.({ jobsTotal: 1 })
     colored.onJobQueued?.({ job: current })
     colored.onJobStart?.({ job: current })
-    colored.onDiagnostic?.({ diagnostic: { filePath: current.inputPath, message: 'failure', ruleId: current.ruleId, severity: 'error' }, job: current })
+    colored.onDiagnostic?.({
+      diagnostic: {
+        filePath: current.inputPath,
+        message: 'failure',
+        ruleId: current.ruleId,
+        severity: 'error',
+      },
+      job: current,
+    })
 
     expect(colored.getRows()[0]).toContain('\u001B[36m⠋')
     expect(colored.getRows().at(-2)).toContain('\u001B[36m1 concurrency')
@@ -598,7 +888,12 @@ describe('createSummaryProgressReporter', () => {
       reporter.onJobQueued({ job: current })
     for (const current of jobs.slice(0, 5)) {
       reporter.onJobStart?.({ job: current, startedAt: 0 })
-      reporter.onJobEnd?.({ cache: 'miss', job: current, startedAt: 0, state: 'completed' })
+      reporter.onJobEnd?.({
+        cache: 'miss',
+        job: current,
+        startedAt: 0,
+        state: 'completed',
+      })
     }
 
     for (const running of jobs.slice(5, 6))
@@ -613,8 +908,12 @@ describe('createSummaryProgressReporter', () => {
     const reporter = createReporter()
     reporter.tick()
     reporter.beginFixedRun?.({ jobsTotal: 1 })
-    reporter.onJobQueued?.({ job: job(1) })
-    reporter.onJobStart?.({ job: job(1) })
+    reporter.onJobQueued?.({
+      job: job(1),
+    })
+    reporter.onJobStart?.({
+      job: job(1),
+    })
 
     expect(reporter.getRows()[0]?.startsWith('⠋ ')).toBe(true)
   })
