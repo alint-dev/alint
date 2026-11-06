@@ -71,7 +71,9 @@ function mergeProviderHeaders(
     headers[replacementName] = replacementValue
   }
 
-  return Object.keys(headers).length > 0 ? headers : undefined
+  return Object.keys(headers).length > 0
+    ? headers
+    : undefined
 }
 
 async function runNonInteractiveUpdate(
@@ -213,5 +215,7 @@ function toArray(value: string | string[] | undefined): string[] {
     return []
   }
 
-  return Array.isArray(value) ? value : [value]
+  return Array.isArray(value)
+    ? value
+    : [value]
 }

@@ -19,7 +19,12 @@ describe('languages omitted — extraction off', () => {
     const [first] = await writeZigFiles(cwd)
     const { rule, seen } = watchingRule()
 
-    const result = await runOn({ cwd, files: [first], rule, withLanguage: true })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+      withLanguage: true,
+    })
 
     expect(seen).toStrictEqual(['file:zig'])
     expect(result.diagnostics).toStrictEqual([])
@@ -47,7 +52,12 @@ describe('languages omitted — extraction off', () => {
       }),
     })
 
-    const error = await runOn({ cwd, files: [first], rule, withLanguage: true }).then(
+    const error = await runOn({
+      cwd,
+      files: [first],
+      rule,
+      withLanguage: true,
+    }).then(
       () => {
         throw new Error('expected the run to fail')
       },
@@ -67,7 +77,12 @@ describe('languages: any', () => {
     const [first] = await writeZigFiles(cwd)
     const { rule, seen } = watchingRule('any')
 
-    const result = await runOn({ cwd, files: [first], rule, withLanguage: true })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+      withLanguage: true,
+    })
 
     expect(seen).toStrictEqual(['file:zig', 'function:zig'])
     expect(result.diagnostics).toStrictEqual([])
@@ -78,7 +93,11 @@ describe('languages: any', () => {
     const [first, second] = await writeZigFiles(cwd)
     const { rule } = watchingRule('any')
 
-    const result = await runOn({ cwd, files: [first, second], rule })
+    const result = await runOn({
+      cwd,
+      files: [first, second],
+      rule,
+    })
 
     expect(result.diagnostics).toHaveLength(1)
     const [diagnostic] = result.diagnostics
@@ -94,7 +113,11 @@ describe('languages: any', () => {
     const [first] = await writeZigFiles(cwd)
     const { rule, seen } = watchingRule('any')
 
-    const result = await runOn({ cwd, files: [first], rule })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+    })
 
     expect(seen).toStrictEqual([])
     expect(result.diagnostics).toHaveLength(1)
@@ -106,7 +129,12 @@ describe('languages: any', () => {
     const files = await writeZigFiles(cwd)
     const { rule } = watchingRule('any')
 
-    const result = await runOn({ configItem: { language: 'plaintext' }, cwd, files, rule })
+    const result = await runOn({
+      configItem: { language: 'plaintext' },
+      cwd,
+      files,
+      rule,
+    })
 
     expect(result.diagnostics).toStrictEqual([])
   })
@@ -116,7 +144,9 @@ describe('languages: any', () => {
     const files = await writeZigFiles(cwd)
 
     const off = await runOn({
-      configItem: { linterOptions: { reportUnregisteredLanguages: 'off' } },
+      configItem: {
+        linterOptions: { reportUnregisteredLanguages: 'off' },
+      },
       cwd,
       files,
       rule: watchingRule('any').rule,
@@ -124,7 +154,9 @@ describe('languages: any', () => {
     expect(off.diagnostics).toStrictEqual([])
 
     const escalated = await runOn({
-      configItem: { linterOptions: { reportUnregisteredLanguages: 'error' } },
+      configItem: {
+        linterOptions: { reportUnregisteredLanguages: 'error' },
+      },
       cwd,
       files,
       rule: watchingRule('any').rule,
@@ -140,7 +172,12 @@ describe('languages: a list', () => {
     const [first] = await writeZigFiles(cwd)
     const { rule, seen } = watchingRule(['zig'])
 
-    const result = await runOn({ cwd, files: [first], rule, withLanguage: true })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+      withLanguage: true,
+    })
 
     expect(seen).toStrictEqual(['file:zig', 'function:zig'])
     expect(result.diagnostics).toStrictEqual([])
@@ -155,7 +192,10 @@ describe('languages: a list', () => {
       config: defineConfig([
         {
           plugins: {
-            probe: definePlugin({ languages: { ruby: rubyLanguage, zig: zigLanguage }, rules: { rule } }),
+            probe: definePlugin({
+              languages: { ruby: rubyLanguage, zig: zigLanguage },
+              rules: { rule },
+            }),
           },
           rules: { 'probe/rule': 'warn' },
         },
@@ -176,7 +216,11 @@ describe('languages: a list', () => {
     const [first] = await writeZigFiles(cwd)
     const { rule, seen } = watchingRule(['plaintext'])
 
-    const result = await runOn({ cwd, files: [first], rule })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+    })
 
     // A rule may deliberately handle raw text. Listing it is intent, so the file is neither withheld
     // nor reported — plain text is registered like any other language.
@@ -189,7 +233,12 @@ describe('languages: a list', () => {
     const [first] = await writeZigFiles(cwd)
     const { rule, seen } = watchingRule(['go'])
 
-    const result = await runOn({ cwd, files: [first], rule, withLanguage: true })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+      withLanguage: true,
+    })
 
     expect(result.diagnostics).toHaveLength(1)
     const [diagnostic] = result.diagnostics
@@ -231,9 +280,16 @@ describe('languages: a list', () => {
   it('fails a missing language for the object form as well, when skipMissing is absent', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'alint-languages-list-object-missing-'))
     const [first] = await writeZigFiles(cwd)
-    const { rule, seen } = watchingRule({ ids: ['go'] })
+    const { rule, seen } = watchingRule({
+      ids: ['go'],
+    })
 
-    const result = await runOn({ cwd, files: [first], rule, withLanguage: true })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+      withLanguage: true,
+    })
 
     // `{ ids }` is the bare list with room for options, so omitting `skipMissing` has to behave
     // exactly as `['go']` does. Failing is the default in both spellings; skipping is only ever
@@ -247,9 +303,17 @@ describe('languages: a list', () => {
   it('skips a missing language instead of reporting it when skipMissing is set', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'alint-languages-list-skip-missing-'))
     const [first] = await writeZigFiles(cwd)
-    const { rule, seen } = watchingRule({ ids: ['go'], skipMissing: true })
+    const { rule, seen } = watchingRule({
+      ids: ['go'],
+      skipMissing: true,
+    })
 
-    const result = await runOn({ cwd, files: [first], rule, withLanguage: true })
+    const result = await runOn({
+      cwd,
+      files: [first],
+      rule,
+      withLanguage: true,
+    })
 
     expect(result.diagnostics).toStrictEqual([])
     expect(seen).toStrictEqual([])
@@ -262,7 +326,9 @@ describe('the unregistered-language warning', () => {
     const files = await writeZigFiles(cwd)
 
     const result = await runAlint({
-      config: defineConfig([{ settings: {} }]),
+      config: defineConfig([
+        { settings: {} },
+      ]),
       cwd,
       files,
       projectTargets: false,
@@ -290,7 +356,12 @@ describe('targets no language extracted', () => {
     const [first] = await writeZigFiles(cwd)
     const { rule, seen } = watchingRule('any')
 
-    await runOn({ cwd, files: [first], projectTargets: true, rule })
+    await runOn({
+      cwd,
+      files: [first],
+      projectTargets: true,
+      rule,
+    })
 
     expect(seen).toStrictEqual(['project'])
   })
@@ -309,7 +380,11 @@ async function runOn(options: {
       {
         plugins: {
           probe: definePlugin({
-            ...(options.withLanguage ? { languages: { zig: zigLanguage } } : {}),
+            ...(options.withLanguage
+              ? {
+                  languages: { zig: zigLanguage },
+                }
+              : {}),
             rules: { rule: options.rule },
           }),
         },
@@ -332,8 +407,23 @@ function testLanguage(name: string, extension: string): LanguageDefinition {
   return {
     extensions: [extension],
     extract: file => [
-      { file, identity: 'file', kind: 'file', language: name, origin: { physicalPath: file.path }, text: file.text },
-      { file, identity: 'fn:main', kind: 'function', language: name, name: 'main', origin: { physicalPath: file.path }, text: file.text },
+      {
+        file,
+        identity: 'file',
+        kind: 'file',
+        language: name,
+        origin: { physicalPath: file.path },
+        text: file.text,
+      },
+      {
+        file,
+        identity: 'fn:main',
+        kind: 'function',
+        language: name,
+        name: 'main',
+        origin: { physicalPath: file.path },
+        text: file.text,
+      },
     ],
     name,
   }
@@ -347,10 +437,14 @@ function watchingRule(languages?: RuleLanguages) {
     create: () => ({
       onTargetWith: (target) => {
         // Directory and project targets carry no language, and reach every rule regardless.
-        seen.push('language' in target ? `${target.kind}:${target.language}` : target.kind)
+        seen.push('language' in target
+          ? `${target.kind}:${target.language}`
+          : target.kind)
       },
     }),
-    ...(languages === undefined ? {} : { languages }),
+    ...(languages === undefined
+      ? {}
+      : { languages }),
   })
 
   return { rule, seen }

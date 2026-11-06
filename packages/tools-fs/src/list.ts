@@ -34,5 +34,7 @@ export function toStringArray(value: readonly string[] | string | undefined): st
     return [...value]
   }
 
-  return typeof value === 'string' ? [value] : []
+  return typeof value === 'string'
+    ? [value]
+    : []
 }

@@ -32,9 +32,17 @@ describe('stop gate findings fingerprint', () => {
     const base = diagnostic()
     const fingerprint = fingerprintDiagnostics([base])
     const changes: Diagnostic[] = [
-      { ...base, evidence: { reason: 'different' } },
+      {
+        ...base,
+        evidence: { reason: 'different' },
+      },
       { ...base, filePath: 'different.ts' },
-      { ...base, loc: { start: { column: 2, line: 1 } } },
+      {
+        ...base,
+        loc: {
+          start: { column: 2, line: 1 },
+        },
+      },
       { ...base, message: 'Different finding' },
       { ...base, ruleId: 'test/different' },
       { ...base, severity: 'warn' },
@@ -55,7 +63,10 @@ describe('stop gate findings fingerprint', () => {
 function diagnostic(overrides: Partial<Diagnostic> = {}): Diagnostic {
   return {
     filePath: 'input.ts',
-    loc: { end: { column: 4, line: 1 }, start: { column: 1, line: 1 } },
+    loc: {
+      end: { column: 4, line: 1 },
+      start: { column: 1, line: 1 },
+    },
     message: 'Test finding',
     ruleId: 'test/finding',
     severity: 'error',

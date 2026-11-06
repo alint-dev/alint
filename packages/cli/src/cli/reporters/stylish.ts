@@ -9,8 +9,12 @@ export interface StylishReporterOptions {
 }
 
 export function formatStylish(input: Diagnostic[] | RunResult, options: StylishReporterOptions = {}): string {
-  const diagnostics = Array.isArray(input) ? input : input.diagnostics
-  const result = Array.isArray(input) ? undefined : input
+  const diagnostics = Array.isArray(input)
+    ? input
+    : input.diagnostics
+  const result = Array.isArray(input)
+    ? undefined
+    : input
   const style = createStyle(options.color === true)
 
   if (diagnostics.length === 0) {
@@ -86,7 +90,9 @@ function createStyle(color: boolean) {
 }
 
 function formatDiagnosticCount(total: number, cached: number, label: string): string {
-  return `${total} ${label}${cached > 0 ? ` (${cached} cached)` : ''}`
+  return `${total} ${label}${cached > 0
+    ? ` (${cached} cached)`
+    : ''}`
 }
 
 function formatExecutionSummary(execution: RunResult['execution'] | undefined): string | undefined {
@@ -120,7 +126,11 @@ function formatSummary(
 
   const execution = formatExecutionSummary(result?.execution)
 
-  return [problemSummary, style.summaryToken(tokens), execution]
+  return [
+    problemSummary,
+    style.summaryToken(tokens),
+    execution,
+  ]
     .filter((segment): segment is string => segment !== undefined)
     .join(' | ')
 }
@@ -129,7 +139,9 @@ function formatTokenSummary(result: RunResult): string {
   const liveTokens = result.usage.totalTokens.toLocaleString('en-US')
   const cachedTokens = result.usage.cached?.totalTokens ?? 0
 
-  return `${liveTokens} tokens${cachedTokens > 0 ? ` (${cachedTokens.toLocaleString('en-US')} cached)` : ''}`
+  return `${liveTokens} tokens${cachedTokens > 0
+    ? ` (${cachedTokens.toLocaleString('en-US')} cached)`
+    : ''}`
 }
 
 function identity(value: string): string {

@@ -176,7 +176,9 @@ export function reportDeclarativeFindings(options: ReportDeclarativeFindingsOpti
     const evidence = createFindingEvidence(finding)
 
     options.ctx.report({
-      ...(evidence ? { evidence } : {}),
+      ...(evidence
+        ? { evidence }
+        : {}),
       filePath,
       loc: {
         start: {
@@ -226,11 +228,17 @@ async function collectSupplementalFiles(options: {
 
 function createFindingEvidence(finding: DeclarativeFinding): undefined | { confidence?: DeclarativeFinding['confidence'], suggestion?: string } {
   const evidence = {
-    ...(finding.confidence ? { confidence: finding.confidence } : {}),
-    ...(finding.suggestion ? { suggestion: finding.suggestion } : {}),
+    ...(finding.confidence
+      ? { confidence: finding.confidence }
+      : {}),
+    ...(finding.suggestion
+      ? { suggestion: finding.suggestion }
+      : {}),
   }
 
-  return Object.keys(evidence).length > 0 ? evidence : undefined
+  return Object.keys(evidence).length > 0
+    ? evidence
+    : undefined
 }
 
 function formatSupplementalFiles(cwd: string, files: readonly SupplementalFile[]): string | undefined {

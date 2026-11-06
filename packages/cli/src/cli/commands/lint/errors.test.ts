@@ -7,8 +7,22 @@ import { formatCancelledError, formatRunError } from './errors'
 
 const EMPTY_RESULT: RunResult = {
   diagnostics: [],
-  execution: { cached: 0, cancelled: 0, completed: 0, failed: 0, planned: 0, queued: 0, running: 0, skipped: 0 },
-  usage: { inputTokens: 0, outputTokens: 0, records: [], totalTokens: 0 },
+  execution: {
+    cached: 0,
+    cancelled: 0,
+    completed: 0,
+    failed: 0,
+    planned: 0,
+    queued: 0,
+    running: 0,
+    skipped: 0,
+  },
+  usage: {
+    inputTokens: 0,
+    outputTokens: 0,
+    records: [],
+    totalTokens: 0,
+  },
 }
 
 type AlintRuleFailure = Extract<AlintRunFailure, { job: unknown }>
@@ -89,7 +103,9 @@ describe('formatRunError', () => {
   })
 
   it('renders FAIL as a red-background label when color is enabled', () => {
-    const error = new AlintRunError('1 rule execution failed.', EMPTY_RESULT, { failures: failures.slice(0, 1) })
+    const error = new AlintRunError('1 rule execution failed.', EMPTY_RESULT, {
+      failures: failures.slice(0, 1),
+    })
     const output = formatRunError(error, true)
 
     expect(output).toContain('\u001B[41m\u001B[1m FAIL \u001B[22m\u001B[49m rule/a 1 target')
@@ -99,8 +115,16 @@ describe('formatRunError', () => {
 
   it('formats file failures before rule failures without admission-index sorting', () => {
     const mixed: AlintRunFailure[] = [
-      { file: { index: 0, path: 'src/read.ts' }, kind: 'read', message: 'cannot read' },
-      { file: { index: 1, path: 'src/extract.ts' }, kind: 'extract', message: 'cannot parse' },
+      {
+        file: { index: 0, path: 'src/read.ts' },
+        kind: 'read',
+        message: 'cannot read',
+      },
+      {
+        file: { index: 1, path: 'src/extract.ts' },
+        kind: 'extract',
+        message: 'cannot parse',
+      },
       failure(9, 'handler', 'src/later.ts', 'file', 'rule/a', 'later failed'),
       failure(2, 'timeout', 'src/earlier.ts', 'function', 'rule/a', 'earlier timed out', 'parse'),
     ]

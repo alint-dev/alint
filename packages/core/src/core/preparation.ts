@@ -183,7 +183,9 @@ export function prepareRun(options: RunOptions = {}): PreparationIndex {
     })
   }
 
-  const project = options.projectTargets === false ? undefined : prepareProject(cwd, config, prepareRulesFor)
+  const project = options.projectTargets === false
+    ? undefined
+    : prepareProject(cwd, config, prepareRulesFor)
 
   if (ruleFilter.length > 0 && !hasPreparedRule(files, directories, project))
     throw new Error(formatUnmatchedRuleFilter(ruleFilter, knownRuleIds))
@@ -213,7 +215,9 @@ function formatUnmatchedRuleFilter(ruleFilter: readonly string[], knownRuleIds: 
   const knownIds = [...knownRuleIds].sort()
   const known = knownIds.length === 0
     ? 'This run enabled no rule at all. Run `alint config inspect <file>` to see which rules apply to a file.'
-    : `Enabled rules: ${knownIds.slice(0, 20).join(', ')}${knownIds.length > 20 ? ', ...' : ''}.`
+    : `Enabled rules: ${knownIds.slice(0, 20).join(', ')}${knownIds.length > 20
+      ? ', ...'
+      : ''}.`
 
   return `No enabled rule matched --rule ${patterns}. ${known}`
 }

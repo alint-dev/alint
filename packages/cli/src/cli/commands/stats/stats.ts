@@ -21,13 +21,20 @@ export async function runStatsCommand(options: StatsCommandOptions, io: CliIo): 
   try {
     const metric = parseMetric(options.metric)
     const rules = parseRules(options.rule)
-    const cwd = options.here === true ? io.cwd : options.cwd
+    const cwd = options.here === true
+      ? io.cwd
+      : options.cwd
     const color = io.stdout.isTTY === true
     const exact = options.exactNumbers === true
     const store = await resolveStore(io)
 
     if (options.chart === true) {
-      const series = await store.querySeries({ cwd, interval: parseInterval(options.interval), rules, since: options.since })
+      const series = await store.querySeries({
+        cwd,
+        interval: parseInterval(options.interval),
+        rules,
+        since: options.since,
+      })
 
       io.stdout.write(options.json === true
         ? `${JSON.stringify(series, null, 2)}\n`
@@ -106,7 +113,9 @@ function parseRules(value: string | undefined): string[] | undefined {
 
   const rules = value.split(',').map(rule => rule.trim()).filter(Boolean)
 
-  return rules.length > 0 ? rules : undefined
+  return rules.length > 0
+    ? rules
+    : undefined
 }
 
 async function resolveStore(io: CliIo): Promise<StatsStore> {
@@ -124,5 +133,7 @@ async function resolveStore(io: CliIo): Promise<StatsStore> {
 }
 
 function statsLocation(stats: RunnerConfig['stats']): string | undefined {
-  return typeof stats === 'object' ? stats.location : undefined
+  return typeof stats === 'object'
+    ? stats.location
+    : undefined
 }

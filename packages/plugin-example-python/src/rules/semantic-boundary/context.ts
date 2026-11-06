@@ -28,7 +28,9 @@ export async function collectPythonSemanticBoundaryContext(
     ].join('\n'))
   }
 
-  return sections.length > 0 ? sections.join('\n\n') : undefined
+  return sections.length > 0
+    ? sections.join('\n\n')
+    : undefined
 }
 
 function declarationName(line: string): string | undefined {

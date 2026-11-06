@@ -14,7 +14,9 @@ function toArray(value: string | string[] | undefined): string[] {
     return []
   }
 
-  return (Array.isArray(value) ? value : [value]).filter(
+  return (Array.isArray(value)
+    ? value
+    : [value]).filter(
     (item): item is string => typeof item === 'string',
   )
 }

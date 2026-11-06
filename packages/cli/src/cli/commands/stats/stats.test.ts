@@ -22,12 +22,28 @@ async function seedStats(): Promise<{ cwd: string, io: TestIo }> {
 
   const run = {
     cwd,
-    ruleCounts: { cached: 0, cancelled: 0, completed: 1, failed: 0, planned: 1 },
+    ruleCounts: {
+      cached: 0,
+      cancelled: 0,
+      completed: 1,
+      failed: 0,
+      planned: 1,
+    },
     ts: Date.UTC(2026, 0, 10),
     usage: {
       inTok: 100,
       outTok: 20,
-      records: [{ inTok: 100, modelId: 'gpt-4o', operation: 'judge', outTok: 20, providerId: 'openai', ruleId: 'r1', totalTok: 120 }],
+      records: [
+        {
+          inTok: 100,
+          modelId: 'gpt-4o',
+          operation: 'judge',
+          outTok: 20,
+          providerId: 'openai',
+          ruleId: 'r1',
+          totalTok: 120,
+        },
+      ],
       totalTok: 120,
     },
   }
@@ -37,9 +53,13 @@ async function seedStats(): Promise<{ cwd: string, io: TestIo }> {
   const io: TestIo = {
     cwd,
     env: { XDG_CONFIG_HOME: configHome },
-    stderr: { write: (chunk: string) => void (io.stderrText += chunk) },
+    stderr: {
+      write: (chunk: string) => void (io.stderrText += chunk),
+    },
     stderrText: '',
-    stdout: { write: (chunk: string) => void (io.stdoutText += chunk) },
+    stdout: {
+      write: (chunk: string) => void (io.stdoutText += chunk),
+    },
     stdoutText: '',
   }
 
@@ -63,7 +83,14 @@ describe('alint stats command', () => {
   it('groups by operation', async () => {
     const { io } = await seedStats()
 
-    const code = await executeCli(['node', 'alint', 'stats', '--by', 'operation', '--json'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--by',
+      'operation',
+      '--json',
+    ], io)
 
     expect(code).toBe(0)
     const output = JSON.parse(io.stdoutText)
@@ -74,7 +101,13 @@ describe('alint stats command', () => {
   it('reports an invalid --by dimension', async () => {
     const { io } = await seedStats()
 
-    const code = await executeCli(['node', 'alint', 'stats', '--by', 'bogus'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--by',
+      'bogus',
+    ], io)
 
     expect(code).toBe(2)
     expect(io.stderrText).toContain('Invalid --by "bogus"')
@@ -97,7 +130,13 @@ describe('alint stats command', () => {
   it('draws vertical bars with --chart --vertical', async () => {
     const { io } = await seedStats()
 
-    const code = await executeCli(['node', 'alint', 'stats', '--chart', '--vertical'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--chart',
+      '--vertical',
+    ], io)
 
     expect(code).toBe(0)
     expect(io.stdoutText).toContain('┼')
@@ -118,7 +157,13 @@ describe('alint stats command', () => {
   it('dumps the series as JSON with --chart --json', async () => {
     const { io } = await seedStats()
 
-    const code = await executeCli(['node', 'alint', 'stats', '--chart', '--json'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--chart',
+      '--json',
+    ], io)
 
     expect(code).toBe(0)
     expect(io.stdoutText).not.toContain('█')
@@ -131,7 +176,15 @@ describe('alint stats command', () => {
   it('honors --interval for the chart bucket', async () => {
     const { io } = await seedStats()
 
-    const code = await executeCli(['node', 'alint', 'stats', '--chart', '--interval', 'month', '--json'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--chart',
+      '--interval',
+      'month',
+      '--json',
+    ], io)
 
     expect(code).toBe(0)
     const output = JSON.parse(io.stdoutText)
@@ -141,13 +194,29 @@ describe('alint stats command', () => {
 
   it('filters the chart by rule', async () => {
     const present = await seedStats()
-    const kept = await executeCli(['node', 'alint', 'stats', '--chart', '--rule', 'r1', '--json'], present.io)
+    const kept = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--chart',
+      '--rule',
+      'r1',
+      '--json',
+    ], present.io)
 
     expect(kept).toBe(0)
     expect(JSON.parse(present.io.stdoutText).totalTok).toBe(120)
 
     const absent = await seedStats()
-    await executeCli(['node', 'alint', 'stats', '--chart', '--rule', 'nope', '--json'], absent.io)
+    await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--chart',
+      '--rule',
+      'nope',
+      '--json',
+    ], absent.io)
 
     expect(JSON.parse(absent.io.stdoutText).buckets).toHaveLength(0)
   })
@@ -155,7 +224,14 @@ describe('alint stats command', () => {
   it('reports an invalid --interval', async () => {
     const { io } = await seedStats()
 
-    const code = await executeCli(['node', 'alint', 'stats', '--chart', '--interval', 'bogus'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--chart',
+      '--interval',
+      'bogus',
+    ], io)
 
     expect(code).toBe(2)
     expect(io.stderrText).toContain('Invalid --interval "bogus"')
@@ -164,7 +240,13 @@ describe('alint stats command', () => {
   it('reports an invalid --metric', async () => {
     const { io } = await seedStats()
 
-    const code = await executeCli(['node', 'alint', 'stats', '--metric', 'bogus'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      'stats',
+      '--metric',
+      'bogus',
+    ], io)
 
     expect(code).toBe(2)
     expect(io.stderrText).toContain('Invalid --metric "bogus"')

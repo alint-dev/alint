@@ -40,7 +40,13 @@ export function createRuleRuntimes(options: {
               return
             const startedAt = Date.now()
             try {
-              options.progress?.onJobRetry?.({ attempt, job: snapshotProgressJobRef(state.jobRef), maxAttempts, progress: state.runProgress.snapshot(), startedAt })
+              options.progress?.onJobRetry?.({
+                attempt,
+                job: snapshotProgressJobRef(state.jobRef),
+                maxAttempts,
+                progress: state.runProgress.snapshot(),
+                startedAt,
+              })
             }
             catch (cause) {
               if (!state.reporterFailed) {
@@ -76,7 +82,11 @@ export function createRuleRuntimes(options: {
 
           state.bucket.usage.push(usageRecord)
           try {
-            options.progress?.onUsage?.({ job: snapshotProgressJobRef(state.jobRef), progress: state.runProgress.snapshot(), record: snapshotUsage(usageRecord) })
+            options.progress?.onUsage?.({
+              job: snapshotProgressJobRef(state.jobRef),
+              progress: state.runProgress.snapshot(),
+              record: snapshotUsage(usageRecord),
+            })
           }
           catch (cause) {
             if (!state.reporterFailed) {
@@ -89,7 +99,9 @@ export function createRuleRuntimes(options: {
       },
       model: async (selector) => {
         const explicitRequest = options.runOptions.modelOverride
-          ?? (typeof selector === 'string' ? selector : undefined)
+          ?? (typeof selector === 'string'
+            ? selector
+            : undefined)
         const fallbackRequest = explicitRequest === undefined
           && selector === undefined
           && enabledRule.rule.model === undefined
@@ -98,7 +110,9 @@ export function createRuleRuntimes(options: {
         const request = explicitRequest ?? fallbackRequest
         const requirement = mergeModelRequirement(
           enabledRule.rule.model,
-          typeof selector === 'string' ? undefined : selector,
+          typeof selector === 'string'
+            ? undefined
+            : selector,
         )
         let resolvedModel: ResolvedModel
 
@@ -144,7 +158,9 @@ export function createRuleRuntimes(options: {
           throw new Error(`Diagnostic for rule "${enabledRule.id}" is missing filePath.`)
         }
 
-        const diagnosticModel = state.currentModel ? { ...state.currentModel } : undefined
+        const diagnosticModel = state.currentModel
+          ? { ...state.currentModel }
+          : undefined
 
         state.currentModel = undefined
 
@@ -160,7 +176,11 @@ export function createRuleRuntimes(options: {
 
         state.bucket.diagnostics.push(diagnostic)
         try {
-          options.progress?.onDiagnostic?.({ diagnostic: snapshotDiagnostic(diagnostic), job: snapshotProgressJobRef(state.jobRef), progress: state.runProgress.snapshot() })
+          options.progress?.onDiagnostic?.({
+            diagnostic: snapshotDiagnostic(diagnostic),
+            job: snapshotProgressJobRef(state.jobRef),
+            progress: state.runProgress.snapshot(),
+          })
         }
         catch (cause) {
           if (!state.reporterFailed) {
@@ -204,7 +224,12 @@ function mergeCapabilities(
   if (!base && !extra)
     return undefined
 
-  return [...new Set([...(base ?? []), ...(extra ?? [])])]
+  return [
+    ...new Set([
+      ...(base ?? []),
+      ...(extra ?? []),
+    ]),
+  ]
 }
 
 function mergeMinContextWindow(
@@ -234,7 +259,9 @@ function mergeModelRequirement(
   return {
     capabilities,
     minContextWindow: mergeMinContextWindow(base?.minContextWindow, extra?.minContextWindow),
-    params: Object.keys(params).length > 0 ? params : undefined,
+    params: Object.keys(params).length > 0
+      ? params
+      : undefined,
     size: extra?.size ?? base?.size,
   }
 }

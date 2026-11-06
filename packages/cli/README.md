@@ -645,7 +645,10 @@ import { defineRule } from '@alint-js/core'
 export const checkFunctionRule = defineRule({
   create: ctx => ({
     async onTargetFunction(target) {
-      const model = await ctx.model({ capabilities: ['tool-call'], size: 'small' })
+      const model = await ctx.model({
+        capabilities: ['tool-call'],
+        size: 'small'
+      })
 
       ctx.report({
         filePath: target.file.path,

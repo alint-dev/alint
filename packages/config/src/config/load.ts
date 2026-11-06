@@ -214,7 +214,9 @@ async function discoverNestedConfigFiles(cwd: string): Promise<string[]> {
   return found.sort((left, right) => {
     const depthDifference = directoryDepth(left) - directoryDepth(right)
 
-    return depthDifference === 0 ? left.localeCompare(right) : depthDifference
+    return depthDifference === 0
+      ? left.localeCompare(right)
+      : depthDifference
   })
 }
 
@@ -291,7 +293,9 @@ async function loadSingleStaticConfigSource(
   // resolved config-file marker is the only result field that distinguishes
   // "not found" from an intentionally exported empty object.
   if ((result as C12LoadConfigResult)._configFile === undefined) {
-    return { config: parseStaticConfig(undefined) }
+    return {
+      config: parseStaticConfig(undefined),
+    }
   }
 
   const resolvedConfigFile = (result as C12LoadConfigResult)._configFile
@@ -320,7 +324,10 @@ async function loadStaticConfigSource(
     return root
   }
 
-  assertDistinctPluginAliases([{ config: root.config, configFile: root.configFile }, ...nested])
+  assertDistinctPluginAliases([
+    { config: root.config, configFile: root.configFile },
+    ...nested,
+  ])
 
   return {
     config: {

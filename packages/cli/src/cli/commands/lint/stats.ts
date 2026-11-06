@@ -19,13 +19,21 @@ interface StatsWriteTarget {
 }
 
 export function createStatsCollector(): StatsCollector {
-  const counts: RunRuleCounts = { cached: 0, cancelled: 0, completed: 0, failed: 0, planned: 0 }
+  const counts: RunRuleCounts = {
+    cached: 0,
+    cancelled: 0,
+    completed: 0,
+    failed: 0,
+    planned: 0,
+  }
   let startedAt: number | undefined
   let endedAt: number | undefined
 
   return {
     counts,
-    durationMs: () => (startedAt !== undefined && endedAt !== undefined ? endedAt - startedAt : undefined),
+    durationMs: () => (startedAt !== undefined && endedAt !== undefined
+      ? endedAt - startedAt
+      : undefined),
     reporter: {
       onPrepareStart: (payload: PrepareStartPayload) => {
         startedAt = payload.startedAt
@@ -132,13 +140,17 @@ export function resolveStatsWrite(
 
   const enabled = stats === false
     ? false
-    : (stats === undefined || stats === true ? true : stats.enabled !== false)
+    : (stats === undefined || stats === true
+        ? true
+        : stats.enabled !== false)
 
   if (!enabled) {
     return undefined
   }
 
-  const config = typeof stats === 'object' ? stats : undefined
+  const config = typeof stats === 'object'
+    ? stats
+    : undefined
 
   return { dir: config?.location ?? getStatsDir(env), retentionMonths: config?.retentionMonths }
 }
@@ -173,5 +185,7 @@ export async function writeRunStats(
 function normalizeReporterError(error: unknown): Error {
   if (error instanceof Error)
     return error
-  return new Error(error != null ? String(error) : 'Unknown progress reporter error.')
+  return new Error(error != null
+    ? String(error)
+    : 'Unknown progress reporter error.')
 }

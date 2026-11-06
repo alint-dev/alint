@@ -96,10 +96,18 @@ describe('define helpers', () => {
   it('does not imply rule enablement from plugin registration', () => {
     const plugin = definePlugin({
       rules: {
-        review: defineRule({ create: () => ({ onTargetWith: () => {} }) }),
+        review: defineRule({
+          create: () => ({
+            onTargetWith: () => {},
+          }),
+        }),
       },
     })
-    const [item] = defineConfig([{ plugins: { demo: plugin } }])
+    const [item] = defineConfig([
+      {
+        plugins: { demo: plugin },
+      },
+    ])
 
     expect(item).not.toHaveProperty('rules')
   })
@@ -133,7 +141,9 @@ describe('define helpers', () => {
   it('infers same-item plugin rule names and rule option entries in defineConfig', () => {
     const plugin = definePlugin({
       rules: {
-        noOptions: defineRule({ create: () => ({}) }),
+        noOptions: defineRule({
+          create: () => ({}),
+        }),
         review: defineRule({
           create: () => ({}),
           options: [
@@ -149,7 +159,10 @@ describe('define helpers', () => {
       {
         plugins: { demo: plugin },
         rules: {
-          'demo/review': ['warn', { maxLines: 20 }],
+          'demo/review': [
+            'warn',
+            { maxLines: 20 },
+          ],
         },
       },
     ])
@@ -159,7 +172,10 @@ describe('define helpers', () => {
         plugins: { demo: plugin },
         rules: {
           // @ts-expect-error known schema-less rules do not accept positional options.
-          'demo/noOptions': ['warn', { maxLines: 20 }],
+          'demo/noOptions': [
+            'warn',
+            { maxLines: 20 },
+          ],
         },
       },
     ])
@@ -178,7 +194,10 @@ describe('define helpers', () => {
         plugins: { demo: plugin },
         rules: {
           // @ts-expect-error maxLines must be a number.
-          'demo/review': ['warn', { maxLines: 'twenty' }],
+          'demo/review': [
+            'warn',
+            { maxLines: 'twenty' },
+          ],
         },
       },
     ])

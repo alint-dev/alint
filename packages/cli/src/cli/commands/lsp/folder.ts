@@ -107,7 +107,10 @@ export async function createFolderSession(
 
   const replaceMap = (next: Map<string, LspDiagnostic[]>): string[] => {
     // A document that lost its last diagnostic must still be published, as an empty list.
-    const changed = new Set([...next.keys(), ...diagnostics.keys()])
+    const changed = new Set([
+      ...next.keys(),
+      ...diagnostics.keys(),
+    ])
     diagnostics = next
 
     return [...changed]
@@ -120,7 +123,9 @@ export async function createFolderSession(
    */
   const readFiles = async (filePaths: string[]): Promise<string[]> => {
     const found = groupByUri(await runFromCache(session, { inputs: filePaths }), paths)
-    const changed = new Set([...found.keys()])
+    const changed = new Set([
+      ...found.keys(),
+    ])
 
     // The pass covers these files, so only their entries may be dropped.
     for (const filePath of filePaths) {
@@ -141,7 +146,9 @@ export async function createFolderSession(
   /** Drops the entry for a deleted path, and every entry under it if it was a directory. */
   const dropDeleted = (filePath: string): string[] => {
     const documentUri = toDocumentUri(filePath, paths)
-    const dropped = [...diagnostics.keys()]
+    const dropped = [
+      ...diagnostics.keys(),
+    ]
       .filter(uri => uri === documentUri || uri.startsWith(`${documentUri}/`))
 
     for (const uri of dropped) {
@@ -235,13 +242,18 @@ export async function createFolderSession(
           onDiagnostic: ({ diagnostic }) => {
             const uri = toDocumentUri(diagnostic.filePath, paths)
 
-            diagnostics.set(uri, [...diagnostics.get(uri) ?? [], toLspDiagnostic(diagnostic)])
+            diagnostics.set(uri, [
+              ...diagnostics.get(uri) ?? [],
+              toLspDiagnostic(diagnostic),
+            ])
             changed.add(uri)
           },
           onJobStart: ({ job, progress }) => runOptions.onProgress?.(progress, job.inputPath),
         },
         // The user asked for these files. A project rule would plan the whole project.
-        projectTargets: runPaths === undefined ? undefined : false,
+        projectTargets: runPaths === undefined
+          ? undefined
+          : false,
         runner: session.runner,
         signal: runOptions.signal,
       }))
@@ -385,7 +397,9 @@ function groupByUri(
       continue
     }
 
-    grouped.set(uri, [toLspDiagnostic(diagnostic)])
+    grouped.set(uri, [
+      toLspDiagnostic(diagnostic),
+    ])
   }
 
   return grouped
@@ -400,7 +414,9 @@ async function runFromCache(
       cacheOnly: true,
       inputs: options.inputs,
       // An edit changes the project target's identity, so its jobs miss the cache at any scope.
-      projectTargets: options.inputs === undefined ? undefined : false,
+      projectTargets: options.inputs === undefined
+        ? undefined
+        : false,
       // This pass runs on every load and save and calls no model. Do not record it as a run.
       runner: { ...session.runner, stats: false },
     })

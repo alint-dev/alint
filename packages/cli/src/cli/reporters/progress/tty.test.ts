@@ -110,7 +110,9 @@ describe('createTtyProgressRenderer', () => {
     const chunks: string[] = []
     const renderer = createTtyProgressRenderer({
       clearInterval: () => {},
-      createInterval: () => ({ unref: () => {} }),
+      createInterval: () => ({
+        unref: () => {},
+      }),
       getRows: () => ['live row', 'footer row'],
       intervalMs: 120,
       write: chunk => chunks.push(chunk),

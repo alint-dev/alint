@@ -20,7 +20,9 @@ export function resolveExactModelTarget(
   // A slash starts a provider qualifier only when its prefix names a provider in
   // this scope. Otherwise the complete request remains a valid slash-containing ID.
   const separatorIndex = request.indexOf('/')
-  const qualifier = separatorIndex === -1 ? undefined : request.slice(0, separatorIndex)
+  const qualifier = separatorIndex === -1
+    ? undefined
+    : request.slice(0, separatorIndex)
   const qualifiedProviders = qualifier === undefined
     ? []
     : config.providers.filter(provider => provider.id === qualifier)
@@ -49,13 +51,17 @@ export function resolveExactModelTarget(
     return { providerId: requestedProviderId, status: 'unknown-provider' }
   }
 
-  const selectedProviders = qualifiedProviders.length > 0 ? qualifiedProviders : requestedProviders
+  const selectedProviders = qualifiedProviders.length > 0
+    ? qualifiedProviders
+    : requestedProviders
   const selectedProvider = selectedProviders[0]
   if (selectedProvider !== undefined && selectedProviders.length > 1) {
     return { providerId: selectedProvider.id, status: 'duplicate-provider' }
   }
 
-  const searchedProviders = selectedProviders.length > 0 ? selectedProviders : config.providers
+  const searchedProviders = selectedProviders.length > 0
+    ? selectedProviders
+    : config.providers
   const matchingProviders = searchedProviders.filter(provider =>
     provider.models.some(model => model.id === modelId),
   )
@@ -72,7 +78,11 @@ export function resolveExactModelTarget(
 
   const candidates = matchingProviders.flatMap((provider) => {
     const model = findExactModel(provider, modelId)
-    return model === undefined ? [] : [{ model, provider }]
+    return model === undefined
+      ? []
+      : [
+          { model, provider },
+        ]
   })
 
   if (candidates.length === 0) {

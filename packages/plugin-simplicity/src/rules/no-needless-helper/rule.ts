@@ -90,7 +90,12 @@ export function judgeKey(outputLanguage: string | undefined, candidates: readonl
     .update([
       needlessHelperPrompt,
       outputLanguage ?? '',
-      ...candidates.map(helper => [helper.name, helper.exported, helper.usageCount, helper.text].join('\n')),
+      ...candidates.map(helper => [
+        helper.name,
+        helper.exported,
+        helper.usageCount,
+        helper.text,
+      ].join('\n')),
     ].join('\n--\n'))
     .digest('hex')
 }
@@ -149,9 +154,22 @@ async function judge(
   try {
     ({ findings } = await generateStructured({
       createMessages: retryFeedback => [
-        { content: [needlessHelperPrompt, formatOutputLanguageInstruction(ctx.outputLanguage)].filter(Boolean).join('\n\n'), role: 'system' },
-        { content: buildNeedlessHelperPrompt(candidates), role: 'user' },
-        ...(retryFeedback === undefined ? [] : [{ content: retryFeedback, role: 'user' as const }]),
+        {
+          content: [
+            needlessHelperPrompt,
+            formatOutputLanguageInstruction(ctx.outputLanguage),
+          ].filter(Boolean).join('\n\n'),
+          role: 'system',
+        },
+        {
+          content: buildNeedlessHelperPrompt(candidates),
+          role: 'user',
+        },
+        ...(retryFeedback === undefined
+          ? []
+          : [
+              { content: retryFeedback, role: 'user' as const },
+            ]),
       ],
       logger: ctx.logger,
       metering: ctx.metering,
@@ -192,7 +210,9 @@ function report(ctx: RuleContext, findings: readonly ResolvedFinding[]): void {
         usageCount: helper.usageCount,
       },
       filePath: helper.filePath,
-      loc: { start: { column: 0, line: helper.line } },
+      loc: {
+        start: { column: 0, line: helper.line },
+      },
       message: `Helper "${helper.name}" does not earn its existence: ${reason}`,
     })
   }

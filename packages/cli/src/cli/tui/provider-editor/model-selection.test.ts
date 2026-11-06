@@ -100,7 +100,11 @@ describe('interactive setup default model helpers', () => {
           id: 'openrouter',
           models: [
             { id: 'openrouter-large', name: 'openrouter-large' },
-            { aliases: ['default', 'fast'], id: 'openrouter-small', name: 'openrouter-small' },
+            {
+              aliases: ['default', 'fast'],
+              id: 'openrouter-small',
+              name: 'openrouter-small',
+            },
           ],
           type: 'openai-compatible',
         },
@@ -176,7 +180,11 @@ describe('interactive setup default model helpers', () => {
           endpoint: 'http://127.0.0.1:8317/v1',
           id: 'cliproxyapi',
           models: [
-            { aliases: ['default'], id: 'gpt-5.6-luna', name: 'gpt-5.6-luna' },
+            {
+              aliases: ['default'],
+              id: 'gpt-5.6-luna',
+              name: 'gpt-5.6-luna',
+            },
             { id: 'gpt-5.6-sol', name: 'gpt-5.6-sol' },
           ],
           type: 'openai-compatible',
@@ -213,8 +221,16 @@ describe('interactive setup default model helpers', () => {
           endpoint: 'http://127.0.0.1:8317/v1',
           id: 'cliproxyapi',
           models: [
-            { aliases: ['review'], id: 'gpt-5.6-luna', name: 'gpt-5.6-luna' },
-            { aliases: ['default'], id: 'gpt-5.6-sol', name: 'gpt-5.6-sol' },
+            {
+              aliases: ['review'],
+              id: 'gpt-5.6-luna',
+              name: 'gpt-5.6-luna',
+            },
+            {
+              aliases: ['default'],
+              id: 'gpt-5.6-sol',
+              name: 'gpt-5.6-sol',
+            },
           ],
           type: 'openai-compatible',
         },
@@ -239,7 +255,11 @@ describe('interactive setup default model helpers', () => {
           endpoint: 'https://openrouter.ai/api/v1',
           id: 'openrouter',
           models: [
-            { aliases: ['default'], id: 'openrouter-small', name: 'openrouter-small' },
+            {
+              aliases: ['default'],
+              id: 'openrouter-small',
+              name: 'openrouter-small',
+            },
           ],
           type: 'openai-compatible',
         },

@@ -27,13 +27,19 @@ describe('mergeRunnerConfigs', () => {
     // The cache location decides which file a run reads, so a project that only overrides
     // `enabled` must keep the setup file's location.
     expect(mergeRunnerConfigs(
-      { cache: { enabled: true, location: '.alintcache' } },
-      { cache: { enabled: false } },
+      {
+        cache: { enabled: true, location: '.alintcache' },
+      },
+      {
+        cache: { enabled: false },
+      },
     )?.cache).toEqual({ enabled: false, location: '.alintcache' })
   })
 
   it('lets a boolean cache switch replace the object form', () => {
-    expect(mergeRunnerConfigs({ cache: { location: '.alintcache' } }, { cache: false })?.cache).toBe(false)
+    expect(mergeRunnerConfigs({
+      cache: { location: '.alintcache' },
+    }, { cache: false })?.cache).toBe(false)
   })
 
   it('keeps the setup value when project config says nothing', () => {
@@ -53,12 +59,20 @@ describe('mergeRunnerConfigs', () => {
 describe('resolveConfigRunner', () => {
   it('lets the last runner block win key by key', () => {
     expect(resolveConfigRunner([
-      { runner: { ruleConcurrency: 2, timeoutMs: 100 } },
-      { runner: { timeoutMs: 200 } },
+      {
+        runner: { ruleConcurrency: 2, timeoutMs: 100 },
+      },
+      {
+        runner: { timeoutMs: 200 },
+      },
     ])).toEqual({ ruleConcurrency: 2, timeoutMs: 200 })
   })
 
   it('resolves to undefined when no config item declares a runner', () => {
-    expect(resolveConfigRunner([{ files: ['**/*.ts'] }])).toBeUndefined()
+    expect(resolveConfigRunner([
+      {
+        files: ['**/*.ts'],
+      },
+    ])).toBeUndefined()
   })
 })

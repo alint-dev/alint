@@ -12,15 +12,17 @@ import { runAlint } from '../run'
 
 const dslLanguage: LanguageDefinition = {
   extensions: ['.dsl'],
-  extract: file => [{
-    file,
-    identity: `dsl:${file.path}`,
-    kind: 'file',
-    language: 'dsl',
-    metadata: { lineCount: file.lines.length },
-    origin: { physicalPath: file.path },
-    text: file.text,
-  }],
+  extract: file => [
+    {
+      file,
+      identity: `dsl:${file.path}`,
+      kind: 'file',
+      language: 'dsl',
+      metadata: { lineCount: file.lines.length },
+      origin: { physicalPath: file.path },
+      text: file.text,
+    },
+  ],
   name: 'dsl',
 }
 
@@ -52,7 +54,12 @@ async function withExtract(
   await runAlint({
     config: defineConfig([
       {
-        plugins: { probe: definePlugin({ languages: { dsl: dslLanguage }, rules: { rule } }) },
+        plugins: {
+          probe: definePlugin({
+            languages: { dsl: dslLanguage },
+            rules: { rule },
+          }),
+        },
         rules: { 'probe/rule': 'warn' },
       },
     ]),
@@ -103,10 +110,17 @@ describe('src.extract', () => {
     await runAlint({
       config: defineConfig([
         {
-          plugins: { probe: definePlugin({ languages: { dsl: dslLanguage }, rules: { rule } }) },
+          plugins: {
+            probe: definePlugin({
+              languages: { dsl: dslLanguage },
+              rules: { rule },
+            }),
+          },
           rules: { 'probe/rule': 'warn' },
         },
-        { ignores: ['**/skip.dsl'] },
+        {
+          ignores: ['**/skip.dsl'],
+        },
       ]),
       cwd,
       files: [linted],
@@ -150,7 +164,12 @@ async function runExtractWith(cwd: string, name: string, language: string): Prom
   await runAlint({
     config: defineConfig([
       {
-        plugins: { probe: definePlugin({ languages: { dsl: dslLanguage }, rules: { rule } }) },
+        plugins: {
+          probe: definePlugin({
+            languages: { dsl: dslLanguage },
+            rules: { rule },
+          }),
+        },
         rules: { 'probe/rule': 'warn' },
       },
     ]),

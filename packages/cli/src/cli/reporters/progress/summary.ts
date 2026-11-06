@@ -179,8 +179,12 @@ export function createSummaryProgressReporter(options: SummaryProgressReporterOp
 }
 
 function compareRuleGroups(left: RuleGroup, right: RuleGroup): number {
-  const leftActive = left.jobs.some(job => job.state === 'running') ? 1 : 0
-  const rightActive = right.jobs.some(job => job.state === 'running') ? 1 : 0
+  const leftActive = left.jobs.some(job => job.state === 'running')
+    ? 1
+    : 0
+  const rightActive = right.jobs.some(job => job.state === 'running')
+    ? 1
+    : 0
   if (leftActive !== rightActive)
     return rightActive - leftActive
   if (left.failed !== right.failed)
@@ -254,14 +258,20 @@ function createRows(state: SummaryState, options: SummaryProgressReporterOptions
     return []
 
   const groups = createRuleGroups(state)
-  const footerRows = options.rows === undefined ? 3 : Math.min(options.rows, 3)
-  const separatorRows = options.rows === undefined || options.rows - footerRows > 1 ? 1 : 0
+  const footerRows = options.rows === undefined
+    ? 3
+    : Math.min(options.rows, 3)
+  const separatorRows = options.rows === undefined || options.rows - footerRows > 1
+    ? 1
+    : 0
   const contentBudget = options.rows === undefined
     ? Number.POSITIVE_INFINITY
     : Math.max(options.rows - footerRows - separatorRows, 0)
   const visible = formatContentRows(groups, state, options, now, contentBudget)
   const footer = formatFooters(state, options, now)
-  const actualSeparatorRows = visible.length > 0 ? separatorRows : 0
+  const actualSeparatorRows = visible.length > 0
+    ? separatorRows
+    : 0
   const visibleFooters = options.rows === undefined
     ? footer
     : footer.slice(0, Math.max(options.rows - visible.length - actualSeparatorRows, 0))
@@ -291,12 +301,17 @@ function createRuleGroup(job: ProgressJobRef): StoredRuleGroup {
 
 function createRuleGroups(state: SummaryState): RuleGroup[] {
   const groups = new Map<string, RuleGroup>(
-    [...state.ruleGroups].map(([ruleId, group]) => [ruleId, { ...group, jobs: [] }]),
+    [...state.ruleGroups].map(([ruleId, group]) => [
+      ruleId,
+      { ...group, jobs: [] },
+    ]),
   )
   for (const job of state.activeJobs.values())
     groups.get(job.job.ruleId)?.jobs.push(job)
 
-  return [...groups.values()]
+  return [
+    ...groups.values(),
+  ]
     .sort(compareRuleGroups)
 }
 
@@ -323,7 +338,9 @@ function fitRow(row: string, columns: number): string {
     // sequences cannot be split while preserving that ANSI-safe upper bound.
     const index = completeGraphemeBoundary(row, result.index)
     const visible = row.slice(0, index)
-    const reset = visible.includes('\u001B') ? '\u001B[0m' : ''
+    const reset = visible.includes('\u001B')
+      ? '\u001B[0m'
+      : ''
     const fitted = `${visible}${reset}${result.ellipsed ? '…' : ''}`
     const overflow = fastStringWidth(fitted) - columns
 
@@ -355,10 +372,16 @@ function formatContentRows(
 
   if (contentBudget === 1) {
     const failedGroup = renderableGroups.find(group => group.failed > 0)
-    if (failedGroup)
-      return [formatRuleRow(failedGroup, state, options)]
-    if (runningCount > 0)
-      return [formatCollapsedRunningRow(runningCount, options)]
+    if (failedGroup) {
+      return [
+        formatRuleRow(failedGroup, state, options),
+      ]
+    }
+    if (runningCount > 0) {
+      return [
+        formatCollapsedRunningRow(runningCount, options),
+      ]
+    }
   }
 
   for (const [groupIndex, group] of renderableGroups.entries()) {
@@ -405,20 +428,28 @@ function formatDuration(ms: number): string {
 
 function formatFooters(state: SummaryState, options: SummaryProgressReporterOptions, now: number): string[] {
   const terminal = terminalCount(state.execution)
-  const elapsed = state.runStartedAt === undefined ? 0 : now - state.runStartedAt
+  const elapsed = state.runStartedAt === undefined
+    ? 0
+    : now - state.runStartedAt
   const progressBar = state.progress.planningComplete
     ? formatMiniBarSegment(terminal, state.execution.planned, state.animationTick, options)
     : ''
-  const eta = state.progress.planningComplete ? estimateEta(elapsed, terminal, state.execution.planned) : 'eta ?'
+  const eta = state.progress.planningComplete
+    ? estimateEta(elapsed, terminal, state.execution.planned)
+    : 'eta ?'
   const projectedTokens = state.progress.planningComplete && terminal > 0 && state.execution.planned > 0
     ? Math.ceil((state.totalTokens + state.cachedTokens) * state.execution.planned / terminal)
     : undefined
   const discovering = state.progress.planningComplete ? '' : ' jobs (discovering)'
 
   return [
-    fitRow(`${terminal}/${state.execution.planned}${discovering}${progressBar} ${formatDuration(elapsed)} -> ${eta === 'eta ?' ? '~?' : eta.replace('eta ', '')}`, options.columns),
+    fitRow(`${terminal}/${state.execution.planned}${discovering}${progressBar} ${formatDuration(elapsed)} -> ${eta === 'eta ?'
+      ? '~?'
+      : eta.replace('eta ', '')}`, options.columns),
     fitRow(`${state.execution.running} concurrency / ${state.execution.queued} queued / ${state.execution.cached} cached / ${state.execution.failed} failed`, options.columns),
-    fitRow(`${state.totalTokens.toLocaleString('en-US')} tokens (${state.cachedTokens.toLocaleString('en-US')} cached) -> ${projectedTokens === undefined ? '~?' : `~${projectedTokens.toLocaleString('en-US')} tokens`}`, options.columns),
+    fitRow(`${state.totalTokens.toLocaleString('en-US')} tokens (${state.cachedTokens.toLocaleString('en-US')} cached) -> ${projectedTokens === undefined
+      ? '~?'
+      : `~${projectedTokens.toLocaleString('en-US')} tokens`}`, options.columns),
   ]
 }
 
@@ -432,10 +463,14 @@ function formatMiniBarSegment(completed: number, planned: number, tick: number, 
 function formatRuleRow(group: RuleGroup, state: SummaryState, options: SummaryProgressReporterOptions): string {
   const spinner = formatSpinnerFrame(state.animationTick, options.spinnerFrames)
   const terminal = group.completed + group.cached + group.failed + group.cancelled + group.skipped
-  const percent = group.planned > 0 ? Math.floor((terminal / group.planned) * 100) : 0
+  const percent = group.planned > 0
+    ? Math.floor((terminal / group.planned) * 100)
+    : 0
   const bar = formatMiniBarSegment(terminal, group.planned, state.animationTick, options)
   const running = group.jobs.filter(job => job.state === 'running').length
-  const failed = group.failed > 0 ? ` ${group.failed} failed` : ''
+  const failed = group.failed > 0
+    ? ` ${group.failed} failed`
+    : ''
   const eta = estimateEta(group.terminalDurationMs, terminal, group.planned)
 
   return fitRow(`${spinner} ${group.ruleId} ${terminal}/${group.planned} ${percent}%${bar} ${eta} ${running} running${failed}`, options.columns)
@@ -446,7 +481,9 @@ function formatSpinnerFrame(animationTick: number, spinnerFrames: string[]): str
 }
 
 function formatTargetRow(jobState: JobState, options: SummaryProgressReporterOptions, now: number, last: boolean): string {
-  const inputPath = options.cwd ? relative(options.cwd, jobState.job.inputPath) || '.' : jobState.job.inputPath
+  const inputPath = options.cwd
+    ? relative(options.cwd, jobState.job.inputPath) || '.'
+    : jobState.job.inputPath
   const target = jobState.job.target.name
     ? `${jobState.job.target.kind} ${jobState.job.target.name}`
     : jobState.job.target.kind
@@ -478,8 +515,12 @@ function styleRow(
     .replace(`(${state.cachedTokens.toLocaleString('en-US')} cached)`, colors.dim(`(${state.cachedTokens.toLocaleString('en-US')} cached)`))
     .replace(` / ${state.execution.cached} cached / `, ` / ${colors.dim(`${state.execution.cached} cached`)} / `)
     .replace(`${warnCount} warn`, colors.yellow(`${warnCount} warn`))
-    .replace(`${errorCount} error`, (errorCount > 0 ? colors.red : colors.gray)(`${errorCount} error`))
-    .replace(`${state.execution.failed} failed`, (state.execution.failed > 0 ? colors.red : colors.gray)(`${state.execution.failed} failed`))
+    .replace(`${errorCount} error`, (errorCount > 0
+      ? colors.red
+      : colors.gray)(`${errorCount} error`))
+    .replace(`${state.execution.failed} failed`, (state.execution.failed > 0
+      ? colors.red
+      : colors.gray)(`${state.execution.failed} failed`))
     // eslint-disable-next-line regexp/no-super-linear-backtracking
     .replace(/\[([█▓░]*?)(░+)\]/g, (_, active: string, pending: string) => `[${active}${colors.gray(pending)}]`)
     .replace(/\//g, colors.gray('/'))
@@ -491,5 +532,8 @@ function terminalCount(counts: ExecutionCounts): number {
 
 function updateProgress(state: SummaryState, progress: ProgressSnapshot): void {
   state.execution = { ...progress.execution }
-  state.progress = { ...progress, execution: { ...progress.execution } }
+  state.progress = {
+    ...progress,
+    execution: { ...progress.execution },
+  }
 }

@@ -98,7 +98,9 @@ describe('runAlint rule filter', () => {
       config: createConfig(createRules(), { 'company/naming': 'warn', 'company/review': 'warn' }),
       cwd: root,
       files: [filePath],
-      ...(ruleFilter === undefined ? {} : { ruleFilter }),
+      ...(ruleFilter === undefined
+        ? {}
+        : { ruleFilter }),
       setupConfig: createSetupConfig(),
     })
   }

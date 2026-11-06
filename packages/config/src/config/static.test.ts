@@ -87,8 +87,12 @@ describe('static config parsing', () => {
       {
         config: {
           group: [
-            { plugins: { python: '@alint-js/plugin-python@0.3.1' } },
-            { plugins: { python: '@alint-js/plugin-python@0.3.2' } },
+            {
+              plugins: { python: '@alint-js/plugin-python@0.3.1' },
+            },
+            {
+              plugins: { python: '@alint-js/plugin-python@0.3.2' },
+            },
           ],
         },
       },
@@ -100,8 +104,12 @@ describe('static config parsing', () => {
 
   it('accepts equivalent directory spellings for a repeated alias', () => {
     expect(() => parseStaticConfig([
-      { plugins: { local: './plugins/local' } },
-      { plugins: { local: './plugins/../plugins/local' } },
+      {
+        plugins: { local: './plugins/local' },
+      },
+      {
+        plugins: { local: './plugins/../plugins/local' },
+      },
     ], { configFile: '/repo/alint.config.ts' })).not.toThrow()
   })
 
@@ -109,7 +117,10 @@ describe('static config parsing', () => {
     const config = parseStaticConfig([
       {
         rules: {
-          'company/review': ['warn', { maxLines: 20 }],
+          'company/review': [
+            'warn',
+            { maxLines: 20 },
+          ],
         },
       },
     ])
@@ -118,7 +129,10 @@ describe('static config parsing', () => {
       {
         item: {
           rules: {
-            'company/review': ['warn', { maxLines: 20 }],
+            'company/review': [
+              'warn',
+              { maxLines: 20 },
+            ],
           },
         },
         plugins: [],
@@ -128,13 +142,17 @@ describe('static config parsing', () => {
 
   it('rejects static plugin specifiers without an exact package version while parsing', () => {
     expect(() => parseStaticConfig([
-      { plugins: { python: '@alint-js/plugin-python' } },
+      {
+        plugins: { python: '@alint-js/plugin-python' },
+      },
     ])).toThrow('Static plugin specifier "@alint-js/plugin-python" must include an exact package version.')
   })
 
   it('rejects invalid static plugin package names while parsing', () => {
     expect(() => parseStaticConfig([
-      { plugins: { python: 'plugin/outside@1.0.0' } },
+      {
+        plugins: { python: 'plugin/outside@1.0.0' },
+      },
     ])).toThrow('Invalid static plugin package name "plugin/outside".')
   })
 
@@ -214,8 +232,12 @@ describe('static config parsing', () => {
     const plugin = { rules: {} }
     const references: string[] = []
     const config = parseStaticConfig([
-      { plugins: { local: './plugins/local' } },
-      { plugins: { other: './plugins/../plugins/local' } },
+      {
+        plugins: { local: './plugins/local' },
+      },
+      {
+        plugins: { other: './plugins/../plugins/local' },
+      },
     ], { configFile: '/repo/alint.config.ts' })
 
     await toAlintConfig(config, {
@@ -313,7 +335,11 @@ describe('static config parsing', () => {
     expect(() =>
       normalizeLoadedAlintConfig(
         {
-          config: { group: { files: ['**/*.py'] } },
+          config: {
+            group: {
+              files: ['**/*.py'],
+            },
+          },
         },
         {
           configFile: '/repo/alint.config.yaml',

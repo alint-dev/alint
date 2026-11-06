@@ -155,7 +155,9 @@ interface ChildResult {
 
 function appendBounded(current: string, chunk: string): string {
   const combined = current + chunk
-  return combined.length <= outputLimit ? combined : combined.slice(-outputLimit)
+  return combined.length <= outputLimit
+    ? combined
+    : combined.slice(-outputLimit)
 }
 
 async function createRoot(prefix: string): Promise<string> {
@@ -215,7 +217,13 @@ async function runScenario(
       resolve(result)
     }
     onClose = (code: null | number, signal: NodeJS.Signals | null) => {
-      finish({ code, signal, stderr, stdout, timedOut })
+      finish({
+        code,
+        signal,
+        stderr,
+        stdout,
+        timedOut,
+      })
     }
     onError = (error: Error) => {
       if (settled)

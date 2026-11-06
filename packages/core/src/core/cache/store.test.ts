@@ -29,7 +29,12 @@ const createRoot = (): Promise<string> => mkdtemp(join(tmpdir(), 'alint-cache-st
 function entry(targetHash: string): CacheEntry {
   return {
     diagnostics: [],
-    fingerprint: { configHash: 'config', modelHash: 'model', ruleHash: 'rule', targetHash },
+    fingerprint: {
+      configHash: 'config',
+      modelHash: 'model',
+      ruleHash: 'rule',
+      targetHash,
+    },
     target: { hash: targetHash, identity: 'file:demo.ts', kind: 'file' },
     usage: [],
   }
@@ -53,7 +58,10 @@ describe('cache helpers', () => {
   })
 
   it('normalizes disabled and object runner cache config', () => {
-    expect(normalizeRunnerCacheConfig(false, '/repo')).toEqual({ enabled: false, location: join('/repo', '.alintcache') })
+    expect(normalizeRunnerCacheConfig(false, '/repo')).toEqual({
+      enabled: false,
+      location: join('/repo', '.alintcache'),
+    })
     expect(normalizeRunnerCacheConfig({ location: 'cache/alint.json' }, '/repo')).toEqual({
       enabled: true,
       location: join('/repo', 'cache/alint.json'),
@@ -70,14 +78,42 @@ describe('cache helpers', () => {
 
   it('adds ranges only to duplicate target identities', () => {
     const resolveIdentity = createTargetIdentityResolver([
-      { kind: 'function', name: 'handler', range: { end: 20, start: 10 } },
-      { kind: 'function', name: 'handler', range: { end: 40, start: 30 } },
-      { identity: 'same-range', kind: 'function', range: { end: 20, start: 10 } },
-      { identity: 'same-range', kind: 'function', range: { end: 20, start: 10 } },
+      {
+        kind: 'function',
+        name: 'handler',
+        range: { end: 20, start: 10 },
+      },
+      {
+        kind: 'function',
+        name: 'handler',
+        range: { end: 40, start: 30 },
+      },
+      {
+        identity: 'same-range',
+        kind: 'function',
+        range: { end: 20, start: 10 },
+      },
+      {
+        identity: 'same-range',
+        kind: 'function',
+        range: { end: 20, start: 10 },
+      },
     ])
-    expect(resolveIdentity({ kind: 'function', name: 'handler', range: { end: 20, start: 10 } }, 0)).toBe('function:handler:10:20')
-    expect(resolveIdentity({ kind: 'function', name: 'handler', range: { end: 40, start: 30 } }, 1)).toBe('function:handler:30:40')
-    expect(resolveIdentity({ identity: 'same-range', kind: 'function', range: { end: 20, start: 10 } }, 2)).toBe('function:same-range:10:20:2')
+    expect(resolveIdentity({
+      kind: 'function',
+      name: 'handler',
+      range: { end: 20, start: 10 },
+    }, 0)).toBe('function:handler:10:20')
+    expect(resolveIdentity({
+      kind: 'function',
+      name: 'handler',
+      range: { end: 40, start: 30 },
+    }, 1)).toBe('function:handler:30:40')
+    expect(resolveIdentity({
+      identity: 'same-range',
+      kind: 'function',
+      range: { end: 20, start: 10 },
+    }, 2)).toBe('function:same-range:10:20:2')
   })
 })
 
@@ -87,7 +123,12 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
     await writeFile(sourcePath, 'demo')
-    const store = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const store = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     const owner = store.beginOwner({ kind: 'file', path: sourcePath }, { contentHash: 'content' })
     owner.put(slot, entry('checkpoint'))
     await owner.checkpoint()
@@ -95,7 +136,12 @@ describe('jsonl cache store', () => {
     await store.reconcile()
 
     const lines = (await readFile(cachePath, 'utf8')).trim().split('\n').map(line => JSON.parse(line))
-    expect(lines[0]).toMatchObject({ alintVersion: '1.0.0', magic: 'ALINT_CACHE', schemaVersion: 2, type: 'metadata' })
+    expect(lines[0]).toMatchObject({
+      alintVersion: '1.0.0',
+      magic: 'ALINT_CACHE',
+      schemaVersion: 2,
+      type: 'metadata',
+    })
     expect(lines.slice(1).map(line => line.type)).toEqual(['put', 'replace-owner'])
     expect(Object.values((await readCacheBody(cachePath)).entries)[0]?.fingerprint.targetHash).toBe('checkpoint')
   })
@@ -105,7 +151,12 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
     await writeFile(sourcePath, 'demo')
-    const store = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const store = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     const owner = store.beginOwner({ kind: 'file', path: sourcePath })
     owner.put(slot, entry('first'))
     await owner.checkpoint()
@@ -125,14 +176,24 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
     await writeFile(sourcePath, 'demo')
-    const initial = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const initial = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     const owner = initial.beginOwner({ kind: 'file', path: sourcePath })
     owner.put(slot, entry('valid'))
     owner.commit()
     await initial.reconcile()
     await appendFile(cachePath, '{broken ordinary event\n')
 
-    const reopened = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const reopened = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     expect(reopened.beginOwner({ kind: 'file', path: sourcePath }).lookup(slot, entry('valid').fingerprint)).toBeDefined()
     expect(await readFile(cachePath, 'utf8')).not.toContain('{broken ordinary event')
   })
@@ -142,7 +203,12 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
     await writeFile(sourcePath, 'demo')
-    const initial = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const initial = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     await initial.reconcile()
     await appendFile(cachePath, '{"type":"put"')
     let lockAttempts = 0
@@ -172,7 +238,13 @@ describe('jsonl cache store', () => {
     const root = await createRoot()
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
-    const incompatible = { alintVersion: '0.0.0', createdAt: '2000-01-01T00:00:00.000Z', magic: 'ALINT_CACHE', schemaVersion: 2, type: 'metadata' }
+    const incompatible = {
+      alintVersion: '0.0.0',
+      createdAt: '2000-01-01T00:00:00.000Z',
+      magic: 'ALINT_CACHE',
+      schemaVersion: 2,
+      type: 'metadata',
+    }
     await writeFile(sourcePath, 'demo')
     await writeFile(cachePath, `${JSON.stringify(incompatible)}\n`)
     let lockAttempts = 0
@@ -202,12 +274,23 @@ describe('jsonl cache store', () => {
 
   it.each([
     ['damaged metadata', '{broken metadata\n'],
-    ['incompatible metadata', `${JSON.stringify({ alintVersion: '0.0.0', createdAt: '2000-01-01T00:00:00.000Z', magic: 'ALINT_CACHE', schemaVersion: 2, type: 'metadata' })}\n`],
+    ['incompatible metadata', `${JSON.stringify({
+      alintVersion: '0.0.0',
+      createdAt: '2000-01-01T00:00:00.000Z',
+      magic: 'ALINT_CACHE',
+      schemaVersion: 2,
+      type: 'metadata',
+    })}\n`],
   ])('rebuilds %s as an empty compatible cache', async (_, original) => {
     const root = await createRoot()
     const cachePath = join(root, '.alintcache')
     await writeFile(cachePath, original)
-    await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     const lines = (await readFile(cachePath, 'utf8')).trim().split('\n')
     expect(JSON.parse(lines[0]!)).toMatchObject({ alintVersion: '1.0.0', type: 'metadata' })
     expect(lines).toHaveLength(1)
@@ -218,7 +301,13 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const original = '{broken metadata\nold bytes\n'
     await writeFile(cachePath, original)
-    const store = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath, readOnly: true })
+    const store = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+      readOnly: true,
+    })
     await store.reconcile()
     expect(await readFile(cachePath, 'utf8')).toBe(original)
   })
@@ -240,7 +329,12 @@ describe('jsonl cache store', () => {
       },
     })
     expect(optionsSeen).toHaveLength(1)
-    expect(optionsSeen[0]).toMatchObject({ realpath: false, retries: 0, stale: 20_000, update: 3_000 })
+    expect(optionsSeen[0]).toMatchObject({
+      realpath: false,
+      retries: 0,
+      stale: 20_000,
+      update: 3_000,
+    })
     await expect(access(cachePath)).rejects.toMatchObject({ code: 'ENOENT' })
     expect(store.location).toBe(cachePath)
   })
@@ -278,7 +372,12 @@ describe('jsonl cache store', () => {
 
     expect(optionsSeen[1]).toMatchObject({
       realpath: false,
-      retries: { factor: 2, maxTimeout: 16_000, minTimeout: 2_000, retries: 4 },
+      retries: {
+        factor: 2,
+        maxTimeout: 16_000,
+        minTimeout: 2_000,
+        retries: 4,
+      },
       stale: 20_000,
       update: 3_000,
     })
@@ -344,14 +443,24 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
     await writeFile(sourcePath, 'demo')
-    const initial = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const initial = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     const owner = initial.beginOwner({ kind: 'file', path: sourcePath })
     owner.put(slot, entry('present'))
     owner.commit()
     await initial.reconcile()
     await rm(sourcePath)
 
-    const reopened = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const reopened = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     await reopened.reconcile()
     expect((await readFile(cachePath, 'utf8')).trim().split('\n').map(line => JSON.parse(line).type)).toContain('remove-owner')
     expect(Object.keys((await readCacheBody(cachePath)).owners)).toHaveLength(0)
@@ -362,7 +471,13 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
     await writeFile(sourcePath, 'demo')
-    const metadata = { alintVersion: '1.0.0', createdAt: '2000-01-01T00:00:00.000Z', magic: 'ALINT_CACHE', schemaVersion: 2, type: 'metadata' }
+    const metadata = {
+      alintVersion: '1.0.0',
+      createdAt: '2000-01-01T00:00:00.000Z',
+      magic: 'ALINT_CACHE',
+      schemaVersion: 2,
+      type: 'metadata',
+    }
     await writeFile(cachePath, `${JSON.stringify(metadata)}\n{"type":"put","bad":true}\n`)
     const store = await createCacheStore({
       alintVersion: '1.0.0',
@@ -462,7 +577,12 @@ describe('jsonl cache store', () => {
     const cachePath = join(root, '.alintcache')
     const sourcePath = join(root, 'demo.ts')
     await writeFile(sourcePath, 'demo')
-    const store = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    const store = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     const replaced = store.beginOwner({ kind: 'file', path: sourcePath })
     const merged = store.beginOwner({ kind: 'file', path: sourcePath })
     replaced.put(slot, entry('replaced'))
@@ -501,8 +621,21 @@ describe('jsonl cache store', () => {
     }
     await writeFile(sourcePath, 'demo')
     const malformed = entry('invalid')
-    malformed.diagnostics = [{ evidence, filePath: sourcePath, message: 'bad', ruleId: 'demo/rule', severity: 'warn' }]
-    const store = await createCacheStore({ alintVersion: '1.0.0', cwd: root, enabled: true, location: cachePath })
+    malformed.diagnostics = [
+      {
+        evidence,
+        filePath: sourcePath,
+        message: 'bad',
+        ruleId: 'demo/rule',
+        severity: 'warn',
+      },
+    ]
+    const store = await createCacheStore({
+      alintVersion: '1.0.0',
+      cwd: root,
+      enabled: true,
+      location: cachePath,
+    })
     const owner = store.beginOwner({ kind: 'file', path: sourcePath })
     owner.put(slot, malformed)
     owner.commit()
@@ -528,7 +661,10 @@ describe('jsonl cache store', () => {
     const root = await createRoot()
     const cachePath = join(root, '.alintcache')
     const store = await createCacheStore({ cwd: root, enabled: false, location: cachePath })
-    const owner = store.beginOwner({ kind: 'file', path: join(root, 'demo.ts') })
+    const owner = store.beginOwner({
+      kind: 'file',
+      path: join(root, 'demo.ts'),
+    })
     owner.put(slot, entry('ignored'))
     owner.commit()
     await store.reconcile()

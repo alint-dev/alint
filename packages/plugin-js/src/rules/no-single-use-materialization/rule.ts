@@ -18,13 +18,17 @@ export const singleUseMaterializationRule = defineRule({
         ctx.report({
           evidence: {
             category: finding.category,
-            ...(finding.futureFailure ? { futureFailure: finding.futureFailure } : {}),
+            ...(finding.futureFailure
+              ? { futureFailure: finding.futureFailure }
+              : {}),
             proof: finding.proof,
             relatedLocations: finding.relatedLocations,
             suggestion: finding.suggestion,
           },
           filePath: target.file.path,
-          loc: { start: { column: 0, line: finding.line } },
+          loc: {
+            start: { column: 0, line: finding.line },
+          },
           message: finding.message,
         })
       }

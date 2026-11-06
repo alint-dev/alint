@@ -54,7 +54,10 @@ describe('stop gate policy', () => {
   })
 
   it('explains when the lint limit is reached without a final report', () => {
-    const state = { ...emptyState(), lintRounds: 9 }
+    const state = {
+      ...emptyState(),
+      lintRounds: 9,
+    }
 
     expect(lintLimitDecision(state).systemMessage).toBe('alint-plugin: Stop Gate reached the maximum of 9 successful lint rounds for this session. The latest lint completed with no findings, so no report was written.')
   })
@@ -162,8 +165,12 @@ function hash(character: string): string {
 function runtimeEnvelope(reportPath?: string) {
   return {
     errorCount: 0,
-    message: reportPath === undefined ? 'missing provider' : '7 rule executions failed.',
-    ...(reportPath === undefined ? {} : { reportPath }),
+    message: reportPath === undefined
+      ? 'missing provider'
+      : '7 rule executions failed.',
+    ...(reportPath === undefined
+      ? {}
+      : { reportPath }),
     schemaVersion: 2 as const,
     status: 'runtime-error' as const,
     warningCount: 0,

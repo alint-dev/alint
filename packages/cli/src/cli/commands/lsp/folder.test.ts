@@ -40,8 +40,12 @@ export default [
     io: {
       cwd: process.cwd(),
       env: { ...process.env, XDG_CONFIG_HOME: configHome },
-      stderr: { write: () => true },
-      stdout: { write: () => true },
+      stderr: {
+        write: () => true,
+      },
+      stdout: {
+        write: () => true,
+      },
     },
   }
 }
@@ -146,19 +150,26 @@ describe('createFolderSession', () => {
     // An editor matches diagnostics by exact URI.
     const { io, linkPath } = await createSymlinkedFolder()
     const resolvedCwd = await realpath(linkPath)
-    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([{
-      filePath: join(resolvedCwd, 'date.ts'),
-      message: 'helper is duplicated',
-      ruleId: 'js/no-duplicated-helper',
-      severity: 'warn',
-    }]))
-    const folder = await createFolderSession({ folderUri: pathToFileURL(linkPath).toString(), io })
+    const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
+      {
+        filePath: join(resolvedCwd, 'date.ts'),
+        message: 'helper is duplicated',
+        ruleId: 'js/no-duplicated-helper',
+        severity: 'warn',
+      },
+    ]))
+    const folder = await createFolderSession({
+      folderUri: pathToFileURL(linkPath).toString(),
+      io,
+    })
 
     try {
       await folder.refreshFromCache()
 
       expect(folder.cwd).toBe(resolvedCwd)
-      expect([...folder.diagnostics.keys()]).toEqual([
+      expect([
+        ...folder.diagnostics.keys(),
+      ]).toEqual([
         pathToFileURL(join(linkPath, 'date.ts')).toString(),
       ])
     }
@@ -174,14 +185,19 @@ describe('createFolderSession', () => {
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
       {
         filePath: join(cwd, 'date.ts'),
-        loc: { end: { column: 9, line: 1 }, start: { column: 0, line: 1 } },
+        loc: {
+          end: { column: 9, line: 1 },
+          start: { column: 0, line: 1 },
+        },
         message: 'helper is duplicated in report.ts',
         ruleId: 'js/no-duplicated-helper',
         severity: 'warn',
       },
       {
         filePath: join(cwd, 'report.ts'),
-        loc: { start: { column: 0, line: 2 } },
+        loc: {
+          start: { column: 0, line: 2 },
+        },
         message: 'helper is duplicated in date.ts',
         ruleId: 'js/no-duplicated-helper',
         severity: 'error',
@@ -195,21 +211,33 @@ describe('createFolderSession', () => {
       const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
       const reportUri = pathToFileURL(join(cwd, 'report.ts')).toString()
 
-      expect([...folder.diagnostics.keys()].sort()).toEqual([dateUri, reportUri].sort())
-      expect(folder.diagnostics.get(dateUri)).toEqual([{
-        code: 'js/no-duplicated-helper',
-        message: 'helper is duplicated in report.ts',
-        range: { end: { character: 9, line: 0 }, start: { character: 0, line: 0 } },
-        severity: 2,
-        source: 'alint',
-      }])
-      expect(folder.diagnostics.get(reportUri)).toEqual([{
-        code: 'js/no-duplicated-helper',
-        message: 'helper is duplicated in date.ts',
-        range: { end: { character: WHOLE_LINE, line: 1 }, start: { character: 0, line: 1 } },
-        severity: 1,
-        source: 'alint',
-      }])
+      expect([
+        ...folder.diagnostics.keys(),
+      ].sort()).toEqual([dateUri, reportUri].sort())
+      expect(folder.diagnostics.get(dateUri)).toEqual([
+        {
+          code: 'js/no-duplicated-helper',
+          message: 'helper is duplicated in report.ts',
+          range: {
+            end: { character: 9, line: 0 },
+            start: { character: 0, line: 0 },
+          },
+          severity: 2,
+          source: 'alint',
+        },
+      ])
+      expect(folder.diagnostics.get(reportUri)).toEqual([
+        {
+          code: 'js/no-duplicated-helper',
+          message: 'helper is duplicated in date.ts',
+          range: {
+            end: { character: WHOLE_LINE, line: 1 },
+            start: { character: 0, line: 1 },
+          },
+          severity: 1,
+          source: 'alint',
+        },
+      ])
     }
     finally {
       runAlint.mockRestore()
@@ -220,12 +248,14 @@ describe('createFolderSession', () => {
   it('keeps the findings a failed run did produce', async () => {
     // One unreadable file must not clear the diagnostics of every other file.
     const { cwd, folderUri, io } = await createFolder()
-    const partial = runResultWith([{
-      filePath: join(cwd, 'date.ts'),
-      message: 'survived the failure',
-      ruleId: 'js/no-duplicated-helper',
-      severity: 'warn',
-    }])
+    const partial = runResultWith([
+      {
+        filePath: join(cwd, 'date.ts'),
+        message: 'survived the failure',
+        ruleId: 'js/no-duplicated-helper',
+        severity: 'warn',
+      },
+    ])
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockRejectedValue(
       new alintCore.AlintRunError('one file failed to read', partial),
     )
@@ -234,8 +264,12 @@ describe('createFolderSession', () => {
     try {
       await folder.refreshFromCache()
 
-      expect([...folder.diagnostics.values()].flat()).toHaveLength(1)
-      expect([...folder.diagnostics.values()].flat()[0]?.message).toBe('survived the failure')
+      expect([
+        ...folder.diagnostics.values(),
+      ].flat()).toHaveLength(1)
+      expect([
+        ...folder.diagnostics.values(),
+      ].flat()[0]?.message).toBe('survived the failure')
     }
     finally {
       runAlint.mockRestore()
@@ -251,12 +285,17 @@ describe('folderSession.refreshFile', () => {
     const { io, linkPath } = await createSymlinkedFolder()
     const resolvedCwd = await realpath(linkPath)
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
-    const folder = await createFolderSession({ folderUri: pathToFileURL(linkPath).toString(), io })
+    const folder = await createFolderSession({
+      folderUri: pathToFileURL(linkPath).toString(),
+      io,
+    })
 
     try {
       await folder.refreshFile(pathToFileURL(join(linkPath, 'date.ts')).toString())
 
-      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([join(resolvedCwd, 'date.ts')])
+      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([
+        join(resolvedCwd, 'date.ts'),
+      ])
     }
     finally {
       runAlint.mockRestore()
@@ -290,12 +329,14 @@ describe('folderSession.refreshFile', () => {
     const { cwd, folderUri, io } = await createFolder()
     const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
     const runAlint = vi.spyOn(alintCore, 'runAlint')
-      .mockResolvedValueOnce(runResultWith([{
-        filePath: join(cwd, 'date.ts'),
-        message: 'stale finding',
-        ruleId: 'js/no-duplicated-helper',
-        severity: 'warn',
-      }]))
+      .mockResolvedValueOnce(runResultWith([
+        {
+          filePath: join(cwd, 'date.ts'),
+          message: 'stale finding',
+          ruleId: 'js/no-duplicated-helper',
+          severity: 'warn',
+        },
+      ]))
       .mockResolvedValueOnce(runResultWith([]))
     const folder = await createFolderSession({ folderUri, io })
 
@@ -320,11 +361,26 @@ describe('folderSession.refreshFile', () => {
     const reportUri = pathToFileURL(join(cwd, 'report.ts')).toString()
     const runAlint = vi.spyOn(alintCore, 'runAlint')
       .mockResolvedValueOnce(runResultWith([
-        { filePath: join(cwd, 'date.ts'), message: 'on date', ruleId: 'r', severity: 'warn' },
-        { filePath: join(cwd, 'report.ts'), message: 'on report', ruleId: 'r', severity: 'warn' },
+        {
+          filePath: join(cwd, 'date.ts'),
+          message: 'on date',
+          ruleId: 'r',
+          severity: 'warn',
+        },
+        {
+          filePath: join(cwd, 'report.ts'),
+          message: 'on report',
+          ruleId: 'r',
+          severity: 'warn',
+        },
       ]))
       .mockResolvedValueOnce(runResultWith([
-        { filePath: join(cwd, 'date.ts'), message: 'still on date', ruleId: 'r', severity: 'warn' },
+        {
+          filePath: join(cwd, 'date.ts'),
+          message: 'still on date',
+          ruleId: 'r',
+          severity: 'warn',
+        },
       ]))
     const folder = await createFolderSession({ folderUri, io })
 
@@ -398,7 +454,12 @@ describe('folderSession.scheduleWorkspacePass', () => {
     const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
     const runAlint = vi.spyOn(alintCore, 'runAlint')
       .mockResolvedValueOnce(runResultWith([
-        { filePath: join(cwd, 'date.ts'), message: 'first', ruleId: 'r', severity: 'warn' },
+        {
+          filePath: join(cwd, 'date.ts'),
+          message: 'first',
+          ruleId: 'r',
+          severity: 'warn',
+        },
       ]))
       .mockResolvedValueOnce(runResultWith([]))
 
@@ -455,9 +516,15 @@ describe('folderSession.scheduleFilesPass', () => {
     vi.useFakeTimers()
 
     try {
-      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
-      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'report.ts')).toString()])
-      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
+      folder.scheduleFilesPass([
+        pathToFileURL(join(cwd, 'date.ts')).toString(),
+      ])
+      folder.scheduleFilesPass([
+        pathToFileURL(join(cwd, 'report.ts')).toString(),
+      ])
+      folder.scheduleFilesPass([
+        pathToFileURL(join(cwd, 'date.ts')).toString(),
+      ])
 
       expect(runAlint).not.toHaveBeenCalled()
 
@@ -466,7 +533,10 @@ describe('folderSession.scheduleFilesPass', () => {
 
       expect(runAlint).toHaveBeenCalledTimes(1)
       expect(runAlint.mock.calls[0]?.[0]?.files?.toSorted())
-        .toEqual([join(runCwd, 'date.ts'), join(runCwd, 'report.ts')])
+        .toEqual([
+          join(runCwd, 'date.ts'),
+          join(runCwd, 'report.ts'),
+        ])
       expect(runAlint.mock.calls[0]?.[0]?.cacheOnly).toBe(true)
       expect(runAlint.mock.calls[0]?.[0]?.projectTargets).toBe(false)
       expect(runAlint.mock.calls[0]?.[0]?.runner?.stats).toBe(false)
@@ -484,16 +554,23 @@ describe('folderSession.scheduleFilesPass', () => {
     const { io, linkPath } = await createSymlinkedFolder()
     const resolvedCwd = await realpath(linkPath)
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
-    const folder = await createFolderSession({ folderUri: pathToFileURL(linkPath).toString(), io })
+    const folder = await createFolderSession({
+      folderUri: pathToFileURL(linkPath).toString(),
+      io,
+    })
 
     vi.useFakeTimers()
 
     try {
-      folder.scheduleFilesPass([pathToFileURL(join(linkPath, 'date.ts')).toString()])
+      folder.scheduleFilesPass([
+        pathToFileURL(join(linkPath, 'date.ts')).toString(),
+      ])
       await vi.advanceTimersByTimeAsync(500)
       await vi.waitFor(() => expect(runAlint).toHaveBeenCalled())
 
-      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([join(resolvedCwd, 'date.ts')])
+      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([
+        join(resolvedCwd, 'date.ts'),
+      ])
     }
     finally {
       vi.useRealTimers()
@@ -522,7 +599,9 @@ describe('folderSession.scheduleFilesPass', () => {
       await vi.advanceTimersByTimeAsync(500)
       await vi.waitFor(() => expect(runAlint).toHaveBeenCalled())
 
-      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([join(runCwd, 'date.ts')])
+      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([
+        join(runCwd, 'date.ts'),
+      ])
     }
     finally {
       vi.useRealTimers()
@@ -539,7 +618,12 @@ describe('folderSession.scheduleFilesPass', () => {
     const changes = recordChanges()
     const runAlint = vi.spyOn(alintCore, 'runAlint')
       .mockResolvedValueOnce(runResultWith([
-        { filePath: join(cwd, 'notes.md'), message: 'stale', ruleId: 'r', severity: 'warn' },
+        {
+          filePath: join(cwd, 'notes.md'),
+          message: 'stale',
+          ruleId: 'r',
+          severity: 'warn',
+        },
       ]))
       .mockResolvedValue(runResultWith([]))
     const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
@@ -574,7 +658,12 @@ describe('folderSession.scheduleFilesPass', () => {
     const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
     const changes = recordChanges()
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
-      { filePath: join(cwd, 'date.ts'), message: 'on a deleted file', ruleId: 'r', severity: 'warn' },
+      {
+        filePath: join(cwd, 'date.ts'),
+        message: 'on a deleted file',
+        ruleId: 'r',
+        severity: 'warn',
+      },
     ]))
     const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
 
@@ -611,8 +700,18 @@ describe('folderSession.scheduleFilesPass', () => {
     await writeFile(join(cwd, 'src', 'nested.ts'), 'export const nested = 1\n')
 
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
-      { filePath: join(cwd, 'date.ts'), message: 'kept', ruleId: 'r', severity: 'warn' },
-      { filePath: join(cwd, 'src', 'nested.ts'), message: 'dropped', ruleId: 'r', severity: 'warn' },
+      {
+        filePath: join(cwd, 'date.ts'),
+        message: 'kept',
+        ruleId: 'r',
+        severity: 'warn',
+      },
+      {
+        filePath: join(cwd, 'src', 'nested.ts'),
+        message: 'dropped',
+        ruleId: 'r',
+        severity: 'warn',
+      },
     ]))
     const folder = await createFolderSession({ folderUri, io, onChanged: changes.onChanged })
 
@@ -624,7 +723,9 @@ describe('folderSession.scheduleFilesPass', () => {
 
       const passed = changes.next()
 
-      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'src')).toString()])
+      folder.scheduleFilesPass([
+        pathToFileURL(join(cwd, 'src')).toString(),
+      ])
       await vi.advanceTimersByTimeAsync(500)
 
       expect(await passed).toEqual([nestedUri])
@@ -661,7 +762,9 @@ describe('folderSession.scheduleFilesPass', () => {
       await vi.waitFor(() => expect(runAlint).toHaveBeenCalledTimes(1))
 
       vi.useFakeTimers()
-      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
+      folder.scheduleFilesPass([
+        pathToFileURL(join(cwd, 'date.ts')).toString(),
+      ])
       await vi.advanceTimersByTimeAsync(500)
 
       // The pass has started. Real time lets a pass that does not wait reach `runAlint`.
@@ -691,7 +794,9 @@ describe('folderSession.scheduleFilesPass', () => {
     vi.useFakeTimers()
 
     try {
-      folder.scheduleFilesPass([pathToFileURL(join(cwd, 'date.ts')).toString()])
+      folder.scheduleFilesPass([
+        pathToFileURL(join(cwd, 'date.ts')).toString(),
+      ])
       await folder.dispose()
       await vi.advanceTimersByTimeAsync(500)
 
@@ -792,12 +897,21 @@ describe('folderSession.runExplicit', () => {
     const { io, linkPath } = await createSymlinkedFolder()
     const resolvedCwd = await realpath(linkPath)
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([]))
-    const folder = await createFolderSession({ folderUri: pathToFileURL(linkPath).toString(), io })
+    const folder = await createFolderSession({
+      folderUri: pathToFileURL(linkPath).toString(),
+      io,
+    })
 
     try {
-      await folder.runExplicit({ inputs: [pathToFileURL(join(linkPath, 'date.ts')).toString()] })
+      await folder.runExplicit({
+        inputs: [
+          pathToFileURL(join(linkPath, 'date.ts')).toString(),
+        ],
+      })
 
-      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([join(resolvedCwd, 'date.ts')])
+      expect(runAlint.mock.calls[0]?.[0]?.files).toEqual([
+        join(resolvedCwd, 'date.ts'),
+      ])
       expect(runAlint.mock.calls[0]?.[0]?.projectTargets).toBe(false)
     }
     finally {
@@ -841,7 +955,11 @@ describe('folderSession.runExplicit', () => {
 
       return runResultWith([])
     })
-    const folder = await createFolderSession({ folderUri, io, onChanged: uris => seen.push(uris) })
+    const folder = await createFolderSession({
+      folderUri,
+      io,
+      onChanged: uris => seen.push(uris),
+    })
 
     try {
       await folder.runExplicit({})
@@ -858,7 +976,12 @@ describe('folderSession.runExplicit', () => {
   it('keeps the findings a failed run produced', async () => {
     const { cwd, folderUri, io } = await createFolder()
     const partial = runResultWith([
-      { filePath: join(cwd, 'date.ts'), message: 'paid for', ruleId: 'r', severity: 'warn' },
+      {
+        filePath: join(cwd, 'date.ts'),
+        message: 'paid for',
+        ruleId: 'r',
+        severity: 'warn',
+      },
     ])
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockRejectedValue(
       new alintCore.AlintRunError('a rule threw', partial),
@@ -868,7 +991,9 @@ describe('folderSession.runExplicit', () => {
     try {
       await folder.runExplicit({})
 
-      expect([...folder.diagnostics.values()].flat()[0]?.message).toBe('paid for')
+      expect([
+        ...folder.diagnostics.values(),
+      ].flat()[0]?.message).toBe('paid for')
     }
     finally {
       runAlint.mockRestore()
@@ -883,7 +1008,13 @@ describe('folderSession.runExplicit progress and cancellation', () => {
     const reported: Array<{ inputPath: string, percentage: number }> = []
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockImplementation(async (options) => {
       options?.progress?.onJobStart?.({
-        job: { id: 'j', index: 0, inputPath: 'date.ts', ruleId: 'r', target: { identity: 'file', kind: 'file' } },
+        job: {
+          id: 'j',
+          index: 0,
+          inputPath: 'date.ts',
+          ruleId: 'r',
+          target: { identity: 'file', kind: 'file' },
+        },
         progress: { jobsCompleted: 3, jobsTotal: 12 } as never,
       })
 
@@ -899,7 +1030,9 @@ describe('folderSession.runExplicit progress and cancellation', () => {
         }),
       })
 
-      expect(reported).toEqual([{ inputPath: 'date.ts', percentage: 25 }])
+      expect(reported).toEqual([
+        { inputPath: 'date.ts', percentage: 25 },
+      ])
     }
     finally {
       runAlint.mockRestore()
@@ -929,7 +1062,12 @@ describe('folderSession.runExplicit progress and cancellation', () => {
   it('publishes what a cancelled run already produced', async () => {
     const { cwd, folderUri, io } = await createFolder()
     const partial = runResultWith([
-      { filePath: join(cwd, 'date.ts'), message: 'paid for before cancel', ruleId: 'r', severity: 'warn' },
+      {
+        filePath: join(cwd, 'date.ts'),
+        message: 'paid for before cancel',
+        ruleId: 'r',
+        severity: 'warn',
+      },
     ])
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockRejectedValue(
       new alintCore.AlintAbortError(partial),
@@ -939,7 +1077,9 @@ describe('folderSession.runExplicit progress and cancellation', () => {
     try {
       await folder.runExplicit({})
 
-      expect([...folder.diagnostics.values()].flat()[0]?.message).toBe('paid for before cancel')
+      expect([
+        ...folder.diagnostics.values(),
+      ].flat()[0]?.message).toBe('paid for before cancel')
     }
     finally {
       runAlint.mockRestore()
@@ -1025,7 +1165,12 @@ describe('folderSession.clearCache', () => {
     const { cwd, folderUri, io } = await createFolder()
     const dateUri = pathToFileURL(join(cwd, 'date.ts')).toString()
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockResolvedValue(runResultWith([
-      { filePath: join(cwd, 'date.ts'), message: 'cached', ruleId: 'r', severity: 'warn' },
+      {
+        filePath: join(cwd, 'date.ts'),
+        message: 'cached',
+        ruleId: 'r',
+        severity: 'warn',
+      },
     ]))
     const folder = await createFolderSession({ folderUri, io })
     const cachePath = join(await realpath(cwd), '.project-alintcache')

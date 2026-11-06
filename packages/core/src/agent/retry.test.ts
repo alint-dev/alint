@@ -63,7 +63,9 @@ describe('withAgentRetry', () => {
 
     expect(retryEvents).toEqual([])
     await vi.advanceTimersByTimeAsync(500)
-    expect(retryEvents).toEqual([{ attempt: 1, maxAttempts: 3 }])
+    expect(retryEvents).toEqual([
+      { attempt: 1, maxAttempts: 3 },
+    ])
     await vi.advanceTimersByTimeAsync(1000)
     await expect(result).resolves.toEqual({ answer: 'ok' })
     expect(retryEvents).toEqual([

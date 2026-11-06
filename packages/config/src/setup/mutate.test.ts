@@ -321,7 +321,10 @@ describe('setup config mutations', () => {
     expect(duplicateModel.aliases).toEqual(['duplicate'])
     expect(duplicateModel.capabilities).toEqual(['vision'])
     expect(duplicateModel.defaultParams).toEqual({ quality: 'high' })
-    expectOriginalConfigUnchanged({ ...config, providers: config.providers.slice(0, 2) })
+    expectOriginalConfigUnchanged({
+      ...config,
+      providers: config.providers.slice(0, 2),
+    })
   })
 
   it('merges and replaces one provider header', () => {
@@ -394,18 +397,39 @@ describe('setup config mutations', () => {
   })
 
   it.each([
-    ['addProviderModels', (config: SetupConfig) => addProviderModels(config, 'unknown', ['model'])],
-    ['pruneProviderModels', (config: SetupConfig) => pruneProviderModels(config, 'unknown', new Set())],
-    ['removeProviderModels', (config: SetupConfig) => removeProviderModels(config, 'unknown', new Set())],
-    ['replaceSetupProvider', (config: SetupConfig) => replaceSetupProvider(config, {
-      endpoint: 'https://unknown.example/v1',
-      id: 'unknown',
-      models: [],
-      type: 'openai-compatible',
-    })],
-    ['setProviderEndpoint', (config: SetupConfig) => setProviderEndpoint(config, 'unknown', 'https://unknown.example/v1')],
-    ['setProviderHeader', (config: SetupConfig) => setProviderHeader(config, 'unknown', 'X-Test', 'true')],
-    ['unsetProviderHeader', (config: SetupConfig) => unsetProviderHeader(config, 'unknown', 'X-Test')],
+    [
+      'addProviderModels',
+      (config: SetupConfig) => addProviderModels(config, 'unknown', ['model']),
+    ],
+    [
+      'pruneProviderModels',
+      (config: SetupConfig) => pruneProviderModels(config, 'unknown', new Set()),
+    ],
+    [
+      'removeProviderModels',
+      (config: SetupConfig) => removeProviderModels(config, 'unknown', new Set()),
+    ],
+    [
+      'replaceSetupProvider',
+      (config: SetupConfig) => replaceSetupProvider(config, {
+        endpoint: 'https://unknown.example/v1',
+        id: 'unknown',
+        models: [],
+        type: 'openai-compatible',
+      }),
+    ],
+    [
+      'setProviderEndpoint',
+      (config: SetupConfig) => setProviderEndpoint(config, 'unknown', 'https://unknown.example/v1'),
+    ],
+    [
+      'setProviderHeader',
+      (config: SetupConfig) => setProviderHeader(config, 'unknown', 'X-Test', 'true'),
+    ],
+    [
+      'unsetProviderHeader',
+      (config: SetupConfig) => unsetProviderHeader(config, 'unknown', 'X-Test'),
+    ],
   ])('throws for an unknown provider in %s', (_name, mutate) => {
     const config = createSetupConfig()
 

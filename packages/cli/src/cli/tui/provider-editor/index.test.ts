@@ -8,8 +8,12 @@ import { runProviderEditor } from './index'
 
 const io = {
   cwd: '/workspace',
-  stderr: { write: vi.fn() },
-  stdout: { write: vi.fn() },
+  stderr: {
+    write: vi.fn(),
+  },
+  stdout: {
+    write: vi.fn(),
+  },
 }
 
 const source = {
@@ -44,7 +48,11 @@ const existingProvider: ProviderDefinition = {
       name: 'Existing',
       size: 'small',
     },
-    { aliases: ['default'], id: 'missing', name: 'Missing' },
+    {
+      aliases: ['default'],
+      id: 'missing',
+      name: 'Missing',
+    },
   ],
   type: 'openai-compatible',
 }
@@ -92,14 +100,16 @@ describe('runProviderEditor', () => {
     expect(result).toEqual({
       provider: {
         id: 'example-acp',
-        models: [{
-          args: ['--experimental-acp'],
-          capabilities: ['tool-call'],
-          command: 'example-agent',
-          driver: 'acp',
-          id: 'example',
-          name: 'Example Agent',
-        }],
+        models: [
+          {
+            args: ['--experimental-acp'],
+            capabilities: ['tool-call'],
+            command: 'example-agent',
+            driver: 'acp',
+            id: 'example',
+            name: 'Example Agent',
+          },
+        ],
       },
       status: 'confirmed',
     })
@@ -154,13 +164,17 @@ describe('runProviderEditor', () => {
       io,
       mode: 'update',
       source,
-    }, createPromptPort({ endpoint: vi.fn(async () => cancelled) }))
+    }, createPromptPort({
+      endpoint: vi.fn(async () => cancelled),
+    }))
 
     expect(result).toEqual({ status: 'cancelled' })
   })
 
   it('returns Back from the first editor prompt to its caller', async () => {
-    const promptPort = createPromptPort({ endpoint: vi.fn(async () => back) })
+    const promptPort = createPromptPort({
+      endpoint: vi.fn(async () => back),
+    })
 
     const result = await runProviderEditor({
       config,
@@ -220,7 +234,13 @@ describe('runProviderEditor', () => {
       config: { providers: [], version: 1 },
       io,
       mode: 'create',
-      source: { benchmarkConcurrency: 2, kind: 'openai-compatible', label: 'Manual model entry', probeModels: false, value: 'manual' },
+      source: {
+        benchmarkConcurrency: 2,
+        kind: 'openai-compatible',
+        label: 'Manual model entry',
+        probeModels: false,
+        value: 'manual',
+      },
     }, promptPort)
 
     expect(promptPort.probe).not.toHaveBeenCalled()
@@ -238,12 +258,20 @@ describe('runProviderEditor', () => {
 
     const result = await runProviderEditor({
       config: {
-        providers: [{
-          endpoint: 'https://other.example/v1',
-          id: 'other',
-          models: [{ aliases: ['default'], id: 'existing-default', name: 'Existing default' }],
-          type: 'openai-compatible',
-        }],
+        providers: [
+          {
+            endpoint: 'https://other.example/v1',
+            id: 'other',
+            models: [
+              {
+                aliases: ['default'],
+                id: 'existing-default',
+                name: 'Existing default',
+              },
+            ],
+            type: 'openai-compatible',
+          },
+        ],
         version: 1,
       },
       io,
@@ -304,7 +332,9 @@ describe('runProviderEditor', () => {
       ['X-Keep', 'X-New'],
     )
     expect(result).toMatchObject({
-      provider: { headers: { 'X-Keep': 'yes' } },
+      provider: {
+        headers: { 'X-Keep': 'yes' },
+      },
       status: 'confirmed',
     })
     expect(promptPort.headerInput).toHaveBeenCalledWith()
@@ -386,10 +416,15 @@ describe('runProviderEditor', () => {
         'X-Keep': 'yes',
       },
     }
-    const promptPort = createPromptPort({ headerInput: vi.fn(async () => submitted('')) })
+    const promptPort = createPromptPort({
+      headerInput: vi.fn(async () => submitted('')),
+    })
 
     await runProviderEditor({
-      config: { providers: [provider], version: 1 },
+      config: {
+        providers: [provider],
+        version: 1,
+      },
       existingProvider: provider,
       io,
       mode: 'update',
@@ -412,7 +447,12 @@ describe('runProviderEditor', () => {
       endpoint: 'https://old.example/v1',
       headers: { 'X-Old\u0085Header': 'old-secret' },
       id: 'old',
-      models: [{ aliases: ['default'], id: 'old\u2028model' }],
+      models: [
+        {
+          aliases: ['default'],
+          id: 'old\u2028model',
+        },
+      ],
       type: 'openai-compatible',
     }
     const promptPort = createPromptPort({
@@ -429,7 +469,10 @@ describe('runProviderEditor', () => {
     })
 
     await runProviderEditor({
-      config: { providers: [unsafeProvider], version: 1 },
+      config: {
+        providers: [unsafeProvider],
+        version: 1,
+      },
       existingProvider: unsafeProvider,
       io,
       mode: 'update',

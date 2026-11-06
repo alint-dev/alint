@@ -61,7 +61,12 @@ async function runStopGateCommand(
       return 0
     }
 
-    const lint = await runStopGateLint({ config: loaded.config, cwd, io, stopGate })
+    const lint = await runStopGateLint({
+      config: loaded.config,
+      cwd,
+      io,
+      stopGate,
+    })
 
     if (lint === undefined) {
       await removeStopGateReport(options.sessionId)
@@ -127,7 +132,9 @@ async function runStopGateCommand(
       findingsHash: fingerprintDiagnostics(lint.result.diagnostics),
       reportPath,
       schemaVersion: 2,
-      status: errorCount > 0 ? 'errors' : 'warnings',
+      status: errorCount > 0
+        ? 'errors'
+        : 'warnings',
       warningCount,
     })
     return 0

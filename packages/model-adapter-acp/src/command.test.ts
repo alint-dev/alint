@@ -45,20 +45,24 @@ agent({ name: 'command-agent' })
 
     const gateway = await startGateway({
       cwd,
-      models: [createCommandModel({
-        args: [agentPath],
-        command: process.execPath,
-        cwd,
-        env: { ALINT_AGENT_PROFILE: 'review' },
-        id: 'command-reviewer',
-        name: 'Command Reviewer',
-      })],
+      models: [
+        createCommandModel({
+          args: [agentPath],
+          command: process.execPath,
+          cwd,
+          env: { ALINT_AGENT_PROFILE: 'review' },
+          id: 'command-reviewer',
+          name: 'Command Reviewer',
+        }),
+      ],
     })
 
     try {
       const response = await fetch(new URL('chat/completions', gateway.endpoint), {
         body: JSON.stringify({
-          messages: [{ content: 'Review.', role: 'user' }],
+          messages: [
+            { content: 'Review.', role: 'user' },
+          ],
           model: 'command-reviewer',
         }),
         headers: { 'content-type': 'application/json' },
@@ -67,7 +71,11 @@ agent({ name: 'command-agent' })
 
       expect(response.status).toBe(200)
       expect(await response.json()).toMatchObject({
-        choices: [{ message: { content: `${processCwd}:review` } }],
+        choices: [
+          {
+            message: { content: `${processCwd}:review` },
+          },
+        ],
       })
     }
     finally {
@@ -90,23 +98,27 @@ agent({ name: 'command-agent' })
 
     const args = parseIntegrationArgs(process.env.ALINT_ACP_E2E_ARGS_JSON)
     const gateway = await startGateway({
-      models: [createCommandModel({
-        args,
-        command,
-        cwd: process.cwd(),
-        env: process.env,
-        id: 'real-agent',
-        name: 'Real ACP Agent',
-      })],
+      models: [
+        createCommandModel({
+          args,
+          command,
+          cwd: process.cwd(),
+          env: process.env,
+          id: 'real-agent',
+          name: 'Real ACP Agent',
+        }),
+      ],
     })
 
     try {
       const response = await fetch(new URL('chat/completions', gateway.endpoint), {
         body: JSON.stringify({
-          messages: [{
-            content: 'Reply with exactly ALINT_ACP_OK. Do not call tools or modify files.',
-            role: 'user',
-          }],
+          messages: [
+            {
+              content: 'Reply with exactly ALINT_ACP_OK. Do not call tools or modify files.',
+              role: 'user',
+            },
+          ],
           model: 'real-agent',
         }),
         headers: { 'content-type': 'application/json' },

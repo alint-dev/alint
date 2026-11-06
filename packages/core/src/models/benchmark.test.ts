@@ -11,13 +11,17 @@ const config: SetupConfig = {
     {
       endpoint: 'https://first.example/v1',
       id: 'first',
-      models: [{ id: 'fast' }],
+      models: [
+        { id: 'fast' },
+      ],
       type: 'openai-compatible',
     },
     {
       endpoint: 'https://second.example/v1',
       id: 'second',
-      models: [{ id: 'offline' }],
+      models: [
+        { id: 'offline' },
+      ],
       type: 'openai-compatible',
     },
   ],
@@ -37,13 +41,20 @@ describe('benchmarkModels', () => {
         {
           endpoint: 'https://first.example/v1',
           id: 'first',
-          models: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+          models: [
+            { id: 'a' },
+            { id: 'b' },
+            { id: 'c' },
+          ],
           type: 'openai-compatible',
         },
         {
           endpoint: 'https://second.example/v1',
           id: 'second',
-          models: [{ id: 'd' }, { id: 'e' }],
+          models: [
+            { id: 'd' },
+            { id: 'e' },
+          ],
           type: 'openai-compatible',
         },
       ],
@@ -61,7 +72,9 @@ describe('benchmarkModels', () => {
           Math.max(maxActiveByProvider.get(model.provider.id) ?? 0, providerActive),
         )
         maxActiveByModel.set(identity, Math.max(maxActiveByModel.get(identity) ?? 0, modelActive))
-        maxActive = Math.max(maxActive, [...activeByProvider.values()].reduce((sum, value) => sum + value, 0))
+        maxActive = Math.max(maxActive, [
+          ...activeByProvider.values(),
+        ].reduce((sum, value) => sum + value, 0))
 
         await new Promise<void>(resolve => queueMicrotask(resolve))
 
@@ -76,7 +89,9 @@ describe('benchmarkModels', () => {
     expect(maxActiveByProvider.get('first')).toBe(2)
     expect(maxActiveByProvider.get('second')).toBe(1)
     expect(maxActive).toBe(3)
-    expect([...maxActiveByModel.values()]).toEqual([1, 1, 1, 1, 1])
+    expect([
+      ...maxActiveByModel.values(),
+    ]).toEqual([1, 1, 1, 1, 1])
     expect(results.map(result => `${result.providerId}/${result.modelId}`)).toEqual([
       'first/a',
       'first/b',
@@ -103,12 +118,16 @@ describe('benchmarkModels', () => {
 
     try {
       const [result] = await benchmarkModels({
-        providers: [{
-          endpoint: `http://127.0.0.1:${address.port}/v1/`,
-          id: 'local',
-          models: [{ id: 'offline' }],
-          type: 'openai-compatible',
-        }],
+        providers: [
+          {
+            endpoint: `http://127.0.0.1:${address.port}/v1/`,
+            id: 'local',
+            models: [
+              { id: 'offline' },
+            ],
+            type: 'openai-compatible',
+          },
+        ],
         version: 1,
       }, { sampleCount: 1, seed: 123 })
 
@@ -117,7 +136,9 @@ describe('benchmarkModels', () => {
       expect(result?.success).toEqual({ attempted: 1, completed: 0 })
     }
     finally {
-      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+      await new Promise<void>((resolve, reject) => server.close(error => error
+        ? reject(error)
+        : resolve()))
     }
   })
 
@@ -128,7 +149,12 @@ describe('benchmarkModels', () => {
       expect(request.url).toBe('/v1/chat/completions')
       response.writeHead(200, { 'content-type': 'text/event-stream' })
       response.write(sse({
-        choices: [{ delta: { content: 'One', role: 'assistant' }, index: 0 }],
+        choices: [
+          {
+            delta: { content: 'One', role: 'assistant' },
+            index: 0,
+          },
+        ],
         created: 0,
         id: 'benchmark',
         model: 'fast',
@@ -137,7 +163,13 @@ describe('benchmarkModels', () => {
       }))
       setTimeout(() => {
         response.write(sse({
-          choices: [{ delta: { content: ' two' }, finish_reason: 'stop', index: 0 }],
+          choices: [
+            {
+              delta: { content: ' two' },
+              finish_reason: 'stop',
+              index: 0,
+            },
+          ],
           created: 0,
           id: 'benchmark',
           model: 'fast',
@@ -166,12 +198,16 @@ describe('benchmarkModels', () => {
 
     try {
       const [result] = await benchmarkModels({
-        providers: [{
-          endpoint: `http://127.0.0.1:${address.port}/v1/`,
-          id: 'local',
-          models: [{ id: 'fast' }],
-          type: 'openai-compatible',
-        }],
+        providers: [
+          {
+            endpoint: `http://127.0.0.1:${address.port}/v1/`,
+            id: 'local',
+            models: [
+              { id: 'fast' },
+            ],
+            type: 'openai-compatible',
+          },
+        ],
         version: 1,
       }, { sampleCount: 1, seed: 123 })
 
@@ -183,7 +219,9 @@ describe('benchmarkModels', () => {
       expect(result?.success).toEqual({ attempted: 3, completed: 3 })
     }
     finally {
-      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+      await new Promise<void>((resolve, reject) => server.close(error => error
+        ? reject(error)
+        : resolve()))
     }
   })
 
@@ -191,7 +229,13 @@ describe('benchmarkModels', () => {
     const server = createServer((_request, response) => {
       response.writeHead(200, { 'content-type': 'text/event-stream' })
       response.write(sse({
-        choices: [{ delta: { content: '', role: 'assistant' }, finish_reason: 'length', index: 0 }],
+        choices: [
+          {
+            delta: { content: '', role: 'assistant' },
+            finish_reason: 'length',
+            index: 0,
+          },
+        ],
         created: 0,
         id: 'benchmark',
         model: 'empty-output',
@@ -199,7 +243,13 @@ describe('benchmarkModels', () => {
       }))
       setTimeout(() => {
         response.write(sse({
-          choices: [{ delta: { content: '', role: 'assistant' }, finish_reason: 'length', index: 0 }],
+          choices: [
+            {
+              delta: { content: '', role: 'assistant' },
+              finish_reason: 'length',
+              index: 0,
+            },
+          ],
           created: 0,
           id: 'benchmark',
           model: 'empty-output',
@@ -226,12 +276,16 @@ describe('benchmarkModels', () => {
 
     try {
       const [result] = await benchmarkModels({
-        providers: [{
-          endpoint: `http://127.0.0.1:${address.port}/v1/`,
-          id: 'local',
-          models: [{ id: 'empty-output' }],
-          type: 'openai-compatible',
-        }],
+        providers: [
+          {
+            endpoint: `http://127.0.0.1:${address.port}/v1/`,
+            id: 'local',
+            models: [
+              { id: 'empty-output' },
+            ],
+            type: 'openai-compatible',
+          },
+        ],
         version: 1,
       }, { sampleCount: 1, seed: 123 })
 
@@ -244,7 +298,9 @@ describe('benchmarkModels', () => {
       expect(result?.throughput).toBeUndefined()
     }
     finally {
-      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+      await new Promise<void>((resolve, reject) => server.close(error => error
+        ? reject(error)
+        : resolve()))
     }
   })
 
@@ -252,7 +308,12 @@ describe('benchmarkModels', () => {
     const server = createServer((_request, response) => {
       response.writeHead(200, { 'content-type': 'text/event-stream' })
       response.write(sse({
-        choices: [{ delta: { content: 'Complete answer', role: 'assistant' }, index: 0 }],
+        choices: [
+          {
+            delta: { content: 'Complete answer', role: 'assistant' },
+            index: 0,
+          },
+        ],
         created: 0,
         id: 'benchmark',
         model: 'buffered-output',
@@ -280,12 +341,16 @@ describe('benchmarkModels', () => {
 
     try {
       const [result] = await benchmarkModels({
-        providers: [{
-          endpoint: `http://127.0.0.1:${address.port}/v1/`,
-          id: 'local',
-          models: [{ id: 'buffered-output' }],
-          type: 'openai-compatible',
-        }],
+        providers: [
+          {
+            endpoint: `http://127.0.0.1:${address.port}/v1/`,
+            id: 'local',
+            models: [
+              { id: 'buffered-output' },
+            ],
+            type: 'openai-compatible',
+          },
+        ],
         version: 1,
       }, { sampleCount: 1, seed: 123 })
 
@@ -293,7 +358,9 @@ describe('benchmarkModels', () => {
       expect(result?.throughput).toBeUndefined()
     }
     finally {
-      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+      await new Promise<void>((resolve, reject) => server.close(error => error
+        ? reject(error)
+        : resolve()))
     }
   })
 
@@ -310,7 +377,10 @@ describe('benchmarkModels', () => {
       { durationMs: 1_100, firstOutputMs: 100, outputTokens: 50 },
     ]
 
-    const [result] = await benchmarkModels({ ...config, providers: [config.providers[0]!] }, {
+    const [result] = await benchmarkModels({
+      ...config,
+      providers: [config.providers[0]!],
+    }, {
       onProgress: snapshot => progress.push(snapshot),
       request: async ({ prompt }) => {
         prompts.push(prompt)
@@ -337,13 +407,48 @@ describe('benchmarkModels', () => {
           sample: snapshot.active[0]?.sample,
           warmup: snapshot.active[0]?.warmup,
         })).toEqual([
-      { phase: 'repeat', results: 0, sample: 0, warmup: true },
-      { phase: 'repeat', results: 0, sample: 1, warmup: false },
-      { phase: 'repeat', results: 0, sample: 2, warmup: false },
-      { phase: 'repeat', results: 0, sample: 3, warmup: false },
-      { phase: 'non-repeat', results: 0, sample: 1, warmup: false },
-      { phase: 'non-repeat', results: 0, sample: 2, warmup: false },
-      { phase: 'non-repeat', results: 0, sample: 3, warmup: false },
+      {
+        phase: 'repeat',
+        results: 0,
+        sample: 0,
+        warmup: true,
+      },
+      {
+        phase: 'repeat',
+        results: 0,
+        sample: 1,
+        warmup: false,
+      },
+      {
+        phase: 'repeat',
+        results: 0,
+        sample: 2,
+        warmup: false,
+      },
+      {
+        phase: 'repeat',
+        results: 0,
+        sample: 3,
+        warmup: false,
+      },
+      {
+        phase: 'non-repeat',
+        results: 0,
+        sample: 1,
+        warmup: false,
+      },
+      {
+        phase: 'non-repeat',
+        results: 0,
+        sample: 2,
+        warmup: false,
+      },
+      {
+        phase: 'non-repeat',
+        results: 0,
+        sample: 3,
+        warmup: false,
+      },
       { active: [], results: 1 },
     ])
   })
@@ -362,12 +467,16 @@ describe('benchmarkModels', () => {
 
     try {
       const [result] = await benchmarkModels({
-        providers: [{
-          endpoint: `http://127.0.0.1:${address.port}/v1/`,
-          id: 'local',
-          models: [{ id: 'hung' }],
-          type: 'openai-compatible',
-        }],
+        providers: [
+          {
+            endpoint: `http://127.0.0.1:${address.port}/v1/`,
+            id: 'local',
+            models: [
+              { id: 'hung' },
+            ],
+            type: 'openai-compatible',
+          },
+        ],
         version: 1,
       }, { sampleCount: 1, seed: 123, timeoutMs: 20 })
 
@@ -375,7 +484,9 @@ describe('benchmarkModels', () => {
       expect(result?.success).toEqual({ attempted: 1, completed: 0 })
     }
     finally {
-      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+      await new Promise<void>((resolve, reject) => server.close(error => error
+        ? reject(error)
+        : resolve()))
     }
   })
 
@@ -396,7 +507,12 @@ describe('benchmarkModels', () => {
       seed: 123,
     })
 
-    expect(requestedModels).toEqual(['fast', 'offline', 'offline', 'offline'])
+    expect(requestedModels).toEqual([
+      'fast',
+      'offline',
+      'offline',
+      'offline',
+    ])
     expect(results[0]?.error).toBe('provider unavailable')
     expect(results[0]?.success).toEqual({ attempted: 1, completed: 0 })
     expect(results[1]?.error).toBeUndefined()

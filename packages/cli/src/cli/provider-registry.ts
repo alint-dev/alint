@@ -179,7 +179,9 @@ export const providerSetupSources: ProviderSetupSource[] = [
 ]
 
 export function buildModelsUrl(endpoint: string): string {
-  return new URL('models', endpoint.endsWith('/') ? endpoint : `${endpoint}/`).toString()
+  return new URL('models', endpoint.endsWith('/')
+    ? endpoint
+    : `${endpoint}/`).toString()
 }
 
 export function createProviderId(endpoint: string, existingIds: Set<string>): string {
@@ -220,7 +222,11 @@ export function findModels(config: SetupConfig, request: string): FlattenedModel
   }
 
   return candidates.filter((candidate) => {
-    const names = [candidate.model.id, candidate.model.name, ...(candidate.model.aliases ?? [])]
+    const names = [
+      candidate.model.id,
+      candidate.model.name,
+      ...(candidate.model.aliases ?? []),
+    ]
       .filter((name): name is string => name !== undefined)
 
     return names.some(name =>
@@ -234,7 +240,9 @@ export function findProviderSetupSource(value: ProviderSetupSource['value']): Pr
 }
 
 export function findProviderSetupSourceByEndpoint(endpoint: string | URL): OpenAICompatibleProviderSetupSource | undefined {
-  const normalizedEndpoint = endpoint instanceof URL ? endpoint.toString() : new URL(endpoint).toString()
+  const normalizedEndpoint = endpoint instanceof URL
+    ? endpoint.toString()
+    : new URL(endpoint).toString()
 
   return providerSetupSources.find((source): source is OpenAICompatibleProviderSetupSource =>
     source.kind === 'openai-compatible'
@@ -266,7 +274,9 @@ export function formatAmbiguousModels(request: string, candidates: FlattenedMode
     return formatDuplicateModelIdentity(duplicateIdentity)
   }
 
-  const choices = [...candidatesByIdentity.keys()]
+  const choices = [
+    ...candidatesByIdentity.keys(),
+  ]
 
   return `${[
     `ambiguous model "${escapeLineValue(request)}".`,
@@ -294,7 +304,15 @@ export function formatModelBenchmarkList(
       const benchmark = benchmarksByIdentity.get(`${provider.id}/${model.id}`)?.shift()
 
       return benchmark === undefined
-        ? [model.id, provider.id, model.name ?? model.id, 'n/a', 'n/a', 'n/a', '0/0']
+        ? [
+            model.id,
+            provider.id,
+            model.name ?? model.id,
+            'n/a',
+            'n/a',
+            'n/a',
+            '0/0',
+          ]
         : benchmarkRow(model.id, model.name ?? model.id, provider.id, benchmark, options.color === true)
     }),
   )
@@ -339,7 +357,15 @@ export function formatModelBenchmarkProgressFrame(
         return activeBenchmarkRow(model.id, model.name ?? model.id, provider.id, current, options)
       }
 
-      return [model.id, provider.id, model.name ?? model.id, 'pending', 'pending', 'pending', '0/0']
+      return [
+        model.id,
+        provider.id,
+        model.name ?? model.id,
+        'pending',
+        'pending',
+        'pending',
+        '0/0',
+      ]
     }),
     columns,
   ).trimEnd().split('\n')
@@ -353,7 +379,9 @@ export function formatModelBenchmarkProgressFrame(
     width: 12,
   })
 
-  const running = progress.active.length === 0 ? '' : ` · ${progress.active.length} running`
+  const running = progress.active.length === 0
+    ? ''
+    : ` · ${progress.active.length} running`
 
   const speedColumn = bodyRows[0]?.indexOf('repeat') ?? -1
 
@@ -550,16 +578,26 @@ function activeBenchmarkRow(
   current: ModelBenchmarkProgress['active'][number],
   options: FormatModelBenchmarkProgressListOptions,
 ): string[] {
-  const frame = options.color === true ? colors.cyan(options.frame) : options.frame
-  const active = current.warmup ? 'warm-up' : `${frame} ${current.sample}/${current.samples}`
+  const frame = options.color === true
+    ? colors.cyan(options.frame)
+    : options.frame
+  const active = current.warmup
+    ? 'warm-up'
+    : `${frame} ${current.sample}/${current.samples}`
 
   return [
     modelId,
     providerId,
     modelName,
-    current.phase === 'repeat' ? active : 'done',
-    current.phase === 'non-repeat' ? active : 'pending',
-    current.phase === 'non-repeat' ? 'measuring' : 'pending',
+    current.phase === 'repeat'
+      ? active
+      : 'done',
+    current.phase === 'non-repeat'
+      ? active
+      : 'pending',
+    current.phase === 'non-repeat'
+      ? 'measuring'
+      : 'pending',
     `${current.success.completed}/${current.success.attempted}`,
   ]
 }
@@ -571,15 +609,23 @@ function benchmarkRow(
   benchmark: ModelBenchmarkResult,
   color: boolean,
 ): string[] {
-  const errored = color ? colors.red('errored') : 'errored'
+  const errored = color
+    ? colors.red('errored')
+    : 'errored'
 
   return [
     modelId,
     providerId,
     modelName,
-    benchmark.error === undefined ? formatDuration(benchmark.repeatMs) : errored,
-    benchmark.error === undefined ? formatDuration(benchmark.nonRepeatMs) : errored,
-    benchmark.error === undefined ? formatThroughput(benchmark.throughput) : errored,
+    benchmark.error === undefined
+      ? formatDuration(benchmark.repeatMs)
+      : errored,
+    benchmark.error === undefined
+      ? formatDuration(benchmark.nonRepeatMs)
+      : errored,
+    benchmark.error === undefined
+      ? formatThroughput(benchmark.throughput)
+      : errored,
     `${benchmark.success.completed}/${benchmark.success.attempted}`,
   ]
 }
@@ -593,7 +639,15 @@ function formatBenchmarkTable(
   columns?: Record<number, { truncate: number, width: number }>,
 ): string {
   return formatTable([
-    ['id', 'provider', 'name', 'repeat', 'non-repeat', 'throughput', 'success'],
+    [
+      'id',
+      'provider',
+      'name',
+      'repeat',
+      'non-repeat',
+      'throughput',
+      'success',
+    ],
     ...rows,
   ], columns)
 }
@@ -630,7 +684,9 @@ function formatTable(
 }
 
 function formatThroughput(throughput: number | undefined): string {
-  return throughput === undefined ? 'n/a' : `${throughput.toFixed(1)} tok/s`
+  return throughput === undefined
+    ? 'n/a'
+    : `${throughput.toFixed(1)} tok/s`
 }
 
 function isModelRecord(value: unknown): value is Record<string, unknown> & { id: string } {

@@ -27,18 +27,45 @@ describe('source planning', () => {
     const commits: Array<undefined | { contentHash?: string, mode?: 'merge' | 'replace' }> = []
     const owner = createOwner(commits)
     const beginOwner = vi.fn(() => owner)
-    const cacheStore: CacheStore = { beginOwner, flush: async () => {}, location: '', reconcile: async () => {} }
+    const cacheStore: CacheStore = {
+      beginOwner,
+      flush: async () => {},
+      location: '',
+      reconcile: async () => {},
+    }
     const input = createInput(0, '/repo/demo.custom', async file => [
-      { file, identity: 'same', kind: 'symbol', language: 'custom', text: `${file.text}:first` },
-      { file, identity: 'same', kind: 'symbol', language: 'custom', text: `${file.text}:second` },
+      {
+        file,
+        identity: 'same',
+        kind: 'symbol',
+        language: 'custom',
+        text: `${file.text}:first`,
+      },
+      {
+        file,
+        identity: 'same',
+        kind: 'symbol',
+        language: 'custom',
+        text: `${file.text}:second`,
+      },
     ])
-    const src = createSourceRuntime({ readFile: async input => ({ contentHash: hashText(sentinel), language: 'custom', lines: [sentinel], path: sourcePath(input), text: sentinel }) })
+    const src = createSourceRuntime({
+      readFile: async input => ({
+        contentHash: hashText(sentinel),
+        language: 'custom',
+        lines: [sentinel],
+        path: sourcePath(input),
+        text: sentinel,
+      }),
+    })
     const scheduler = createScheduler(2)
 
     const result = await planSource(input, {
       cacheStore,
       cwd: '/repo',
-      ruleRuntimes: [createRuntime()],
+      ruleRuntimes: [
+        createRuntime(),
+      ],
       scheduler,
       src,
     })
@@ -53,7 +80,9 @@ describe('source planning', () => {
     expect(JSON.stringify(outcomes)).not.toContain(sentinel)
     expect(beginOwner).toHaveBeenCalledWith(
       { kind: 'file', path: '/repo/demo.custom' },
-      { contentHash: hashText(sentinel) },
+      {
+        contentHash: hashText(sentinel),
+      },
     )
     expect(commits).toEqual([undefined])
   })
@@ -66,15 +95,34 @@ describe('source planning', () => {
     })
 
     const result = await planSource(input, {
-      cacheStore: { beginOwner, flush: async () => {}, location: '', reconcile: async () => {} },
+      cacheStore: {
+        beginOwner,
+        flush: async () => {},
+        location: '',
+        reconcile: async () => {},
+      },
       cwd: '/repo',
-      ruleRuntimes: [createRuntime()],
+      ruleRuntimes: [
+        createRuntime(),
+      ],
       scheduler,
-      src: createSourceRuntime({ readFile: async input => ({ contentHash: hashText('text'), language: 'custom', lines: ['text'], path: sourcePath(input), text: 'text' }) }),
+      src: createSourceRuntime({
+        readFile: async input => ({
+          contentHash: hashText('text'),
+          language: 'custom',
+          lines: ['text'],
+          path: sourcePath(input),
+          text: 'text',
+        }),
+      }),
     })
     await scheduler.close()
 
-    expect(result.failure).toEqual({ file: { index: 0, path: '/repo/demo.custom' }, kind: 'extract', message: 'bad parser' })
+    expect(result.failure).toEqual({
+      file: { index: 0, path: '/repo/demo.custom' },
+      kind: 'extract',
+      message: 'bad parser',
+    })
     expect(result.project).toBeUndefined()
     expect(await result.outcomes).toEqual([])
     expect(beginOwner).not.toHaveBeenCalled()
@@ -83,22 +131,28 @@ describe('source planning', () => {
 
   it('reports unsupported rule metadata as a file planning failure', async () => {
     const scheduler = createScheduler(2)
-    const input = createInput(0, '/repo/demo.custom', file => [{
-      file,
-      identity: 'file',
-      kind: 'file',
-      language: 'custom',
-      metadata: metadataWithUnsupportedValue('unsupported', 1n),
-      text: file.text,
-    }])
+    const input = createInput(0, '/repo/demo.custom', file => [
+      {
+        file,
+        identity: 'file',
+        kind: 'file',
+        language: 'custom',
+        metadata: metadataWithUnsupportedValue('unsupported', 1n),
+        text: file.text,
+      },
+    ])
 
     const result = await planSource(input, {
       cacheStore: createCacheStore(createOwner([])),
       cwd: '/repo',
       projectSnapshots: false,
-      ruleRuntimes: [createRuntime()],
+      ruleRuntimes: [
+        createRuntime(),
+      ],
       scheduler,
-      src: createSourceRuntime({ readFile: async input => sourceFile(input) }),
+      src: createSourceRuntime({
+        readFile: async input => sourceFile(input),
+      }),
     })
     await scheduler.close()
 
@@ -113,7 +167,13 @@ describe('source planning', () => {
   it('plans later sources while scheduled rule jobs remain blocked', async () => {
     const releases: Array<() => void> = []
     const inputs = Array.from({ length: 20 }, (_, index) => createInput(index, `/repo/${index}.custom`, file => [
-      { file, identity: String(index), kind: 'symbol', language: 'custom', text: file.text },
+      {
+        file,
+        identity: String(index),
+        kind: 'symbol',
+        language: 'custom',
+        text: file.text,
+      },
     ]))
     const scheduler = createScheduler(20, async (job) => {
       await new Promise<void>(resolve => releases.push(resolve))
@@ -122,10 +182,14 @@ describe('source planning', () => {
 
     const results = await planSources(inputs, {
       cacheStore: createCacheStore(createOwner([])),
-      createRuleRuntimes: () => [createRuntime()],
+      createRuleRuntimes: () => [
+        createRuntime(),
+      ],
       cwd: '/repo',
       scheduler,
-      src: createSourceRuntime({ readFile: async input => sourceFile(input) }),
+      src: createSourceRuntime({
+        readFile: async input => sourceFile(input),
+      }),
     })
 
     await until(() => releases.length === 20)
@@ -145,12 +209,22 @@ describe('source planning', () => {
     let extractions = 0
     const inputs = Array.from({ length: 4 }, (_, index) => createInput(index, `/repo/${index}.custom`, (file) => {
       extractions += 1
-      return [{ file, identity: String(index), kind: 'symbol', language: 'custom', text: file.text }]
+      return [
+        {
+          file,
+          identity: String(index),
+          kind: 'symbol',
+          language: 'custom',
+          text: file.text,
+        },
+      ]
     }))
     const scheduler = createScheduler(1)
     const pending = planSources(inputs, {
       cacheStore: createCacheStore(createOwner([])),
-      createRuleRuntimes: () => [createRuntime()],
+      createRuleRuntimes: () => [
+        createRuntime(),
+      ],
       cwd: '/repo',
       scheduler,
       signal: controller.signal,
@@ -161,7 +235,13 @@ describe('source planning', () => {
           await new Promise<void>((resolve) => {
             releases.push(resolve)
           })
-          return { contentHash: hashText(path), language: 'custom', lines: [path], path, text: path }
+          return {
+            contentHash: hashText(path),
+            language: 'custom',
+            lines: [path],
+            path,
+            text: path,
+          }
         },
       }),
     })
@@ -181,7 +261,13 @@ describe('source planning', () => {
   it('yields during large planning bursts so timer-driven cancellation stops job admission', async () => {
     const controller = new AbortController()
     const inputs = Array.from({ length: 1_000 }, (_, index) => createInput(index, `/repo/${index}.custom`, file => [
-      { file, identity: String(index), kind: 'symbol', language: 'custom', text: file.text },
+      {
+        file,
+        identity: String(index),
+        kind: 'symbol',
+        language: 'custom',
+        text: file.text,
+      },
     ]))
     const scheduler = new RuleScheduler({
       clock: () => 1,
@@ -194,11 +280,15 @@ describe('source planning', () => {
 
     await planSources(inputs, {
       cacheStore: createCacheStore(createOwner([])),
-      createRuleRuntimes: () => [createRuntime()],
+      createRuleRuntimes: () => [
+        createRuntime(),
+      ],
       cwd: '/repo',
       scheduler,
       signal: controller.signal,
-      src: createSourceRuntime({ readFile: async input => sourceFile(input) }),
+      src: createSourceRuntime({
+        readFile: async input => sourceFile(input),
+      }),
     })
     await new Promise<void>(resolve => setTimeout(resolve, 10))
     await scheduler.close()
@@ -210,11 +300,23 @@ describe('source planning', () => {
 })
 
 function completed(job: Parameters<ConstructorParameters<typeof RuleScheduler>[0]['execute']>[0]) {
-  return { cache: 'miss' as const, diagnostics: [], jobRef: job.jobRef, orderKey: job.orderKey, state: 'completed' as const, usage: [] }
+  return {
+    cache: 'miss' as const,
+    diagnostics: [],
+    jobRef: job.jobRef,
+    orderKey: job.orderKey,
+    state: 'completed' as const,
+    usage: [],
+  }
 }
 
 function createCacheStore(owner: CacheOwnerTransaction): CacheStore {
-  return { beginOwner: () => owner, flush: async () => {}, location: '', reconcile: async () => {} }
+  return {
+    beginOwner: () => owner,
+    flush: async () => {},
+    location: '',
+    reconcile: async () => {},
+  }
 }
 
 function createInput(fileIndex: number, path: string, extract: PreparedInput['language']['extract']): PreparedInput {
@@ -230,14 +332,31 @@ function createInput(fileIndex: number, path: string, extract: PreparedInput['la
 }
 
 function createOwner(commits: Array<undefined | { contentHash?: string, mode?: 'merge' | 'replace' }>): CacheOwnerTransaction {
-  return { checkpoint: async () => {}, commit: metadata => commits.push(metadata), discard: () => {}, lookup: () => undefined, put: () => {} }
+  return {
+    checkpoint: async () => {},
+    commit: metadata => commits.push(metadata),
+    discard: () => {},
+    lookup: () => undefined,
+    put: () => {},
+  }
 }
 
 function createRuntime(): RuleRuntime {
-  const rule = defineRule({ create: () => ({ onTargetWith: () => {} }), languages: 'any' })
+  const rule = defineRule({
+    create: () => ({
+      onTargetWith: () => {},
+    }),
+    languages: 'any',
+  })
   return {
     cacheable: true,
-    enabledRule: { id: 'plugin/rule', localId: 'rule', options: [], rule, severity: 'warn' },
+    enabledRule: {
+      id: 'plugin/rule',
+      localId: 'rule',
+      options: [],
+      rule,
+      severity: 'warn',
+    },
     executionState: new AsyncLocalStorage(),
     handlers: rule.create({} as never),
     ruleHash: 'rule',
@@ -246,16 +365,29 @@ function createRuntime(): RuleRuntime {
 }
 
 function createScheduler(concurrency: number, execute = async (job: Parameters<ConstructorParameters<typeof RuleScheduler>[0]['execute']>[0]) => completed(job)) {
-  return new RuleScheduler({ clock: () => 1, concurrency, execute, progress: createRunProgress(20) })
+  return new RuleScheduler({
+    clock: () => 1,
+    concurrency,
+    execute,
+    progress: createRunProgress(20),
+  })
 }
 
 function sourceFile(input: Parameters<ReturnType<typeof createSourceRuntime>['readFile']>[0]) {
   const path = sourcePath(input)
-  return { contentHash: hashText(path), language: 'custom', lines: [path], path, text: path }
+  return {
+    contentHash: hashText(path),
+    language: 'custom',
+    lines: [path],
+    path,
+    text: path,
+  }
 }
 
 function sourcePath(input: Parameters<ReturnType<typeof createSourceRuntime>['readFile']>[0]): string {
-  return typeof input === 'string' ? input : input.path
+  return typeof input === 'string'
+    ? input
+    : input.path
 }
 
 async function until(predicate: () => boolean): Promise<void> {

@@ -11,8 +11,16 @@ import { findLintTargets } from '../src/cli/commands/lint/discovery'
 const artifactDirectoryCount = 50
 const artifactFilesPerDirectory = 400
 const sourceFileCount = 500
-const allFilesPattern: AlintConfig = [{ files: ['**/*'] }]
-const sourceFilesPattern: AlintConfig = [{ files: ['src/**/*.ts'] }]
+const allFilesPattern: AlintConfig = [
+  {
+    files: ['**/*'],
+  },
+]
+const sourceFilesPattern: AlintConfig = [
+  {
+    files: ['src/**/*.ts'],
+  },
+]
 
 let root: string
 

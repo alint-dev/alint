@@ -22,7 +22,20 @@ import { parseSince } from './since'
 const DEFAULT_RETENTION_MONTHS = 12
 const STATS_FILE_PATTERN = /^stats-(\d{4})-(\d{2})\.jsonl$/u
 const DAY_MS = 86_400_000
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_LABELS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
 
 export interface JsonlStatsStoreOptions {
   dir: string
@@ -56,7 +69,13 @@ function accumulate(
   totalTok: number,
   countRun: boolean,
 ): StatsGroupRow {
-  const row = rows.get(key) ?? { inTok: 0, key, outTok: 0, runs: 0, totalTok: 0 }
+  const row = rows.get(key) ?? {
+    inTok: 0,
+    key,
+    outTok: 0,
+    runs: 0,
+    totalTok: 0,
+  }
 
   row.inTok += inTok
   row.outTok += outTok
@@ -126,13 +145,22 @@ function fillBuckets(buckets: Map<number, StatsBucket>, interval: StatsInterval)
     return []
   }
 
-  const starts = [...buckets.keys()].sort((left, right) => left - right)
+  const starts = [
+    ...buckets.keys(),
+  ].sort((left, right) => left - right)
   const last = starts.at(-1)!
   const filled: StatsBucket[] = []
 
   for (let startMs = starts[0]!; startMs <= last; startMs = nextBucketStart(startMs, interval)) {
     filled.push(buckets.get(startMs)
-      ?? { inTok: 0, key: bucketLabel(startMs, interval), outTok: 0, runs: 0, startMs, totalTok: 0 })
+      ?? {
+        inTok: 0,
+        key: bucketLabel(startMs, interval),
+        outTok: 0,
+        runs: 0,
+        startMs,
+        totalTok: 0,
+      })
   }
 
   return filled
@@ -169,7 +197,9 @@ function nextBucketStart(startMs: number, interval: StatsInterval): number {
     return Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1)
   }
 
-  return startMs + (interval === 'week' ? 7 * DAY_MS : DAY_MS)
+  return startMs + (interval === 'week'
+    ? 7 * DAY_MS
+    : DAY_MS)
 }
 
 function parseRunLine(line: string): RunStat | undefined {
@@ -249,7 +279,9 @@ async function query(dir: string, filter: StatsQuery, now: () => number): Promis
 
   return {
     dimension,
-    rows: [...rows.values()].sort((left, right) => right.totalTok - left.totalTok),
+    rows: [
+      ...rows.values(),
+    ].sort((left, right) => right.totalTok - left.totalTok),
     totalIn,
     totalOut,
     totalRuns,
@@ -286,7 +318,14 @@ async function querySeries(dir: string, filter: StatsSeriesQuery, now: () => num
   for (const { slice, ts } of sliced) {
     const startMs = bucketStart(ts, interval)
     const bucket = buckets.get(startMs)
-      ?? { inTok: 0, key: bucketLabel(startMs, interval), outTok: 0, runs: 0, startMs, totalTok: 0 }
+      ?? {
+        inTok: 0,
+        key: bucketLabel(startMs, interval),
+        outTok: 0,
+        runs: 0,
+        startMs,
+        totalTok: 0,
+      }
 
     bucket.runs += 1
     bucket.inTok += slice.inTok
@@ -354,7 +393,9 @@ function recordKey(record: StatsUsageRecord, dimension: StatsDimension): string 
 }
 
 function ruleSet(rules: string[] | undefined): Set<string> | undefined {
-  return rules && rules.length > 0 ? new Set(rules) : undefined
+  return rules && rules.length > 0
+    ? new Set(rules)
+    : undefined
 }
 
 function runInWindow(run: RunStat, since: number | undefined, cwd: string | undefined): boolean {
@@ -410,7 +451,9 @@ async function statsFiles(dir: string): Promise<Array<{ month: number, name: str
     .map((name) => {
       const match = STATS_FILE_PATTERN.exec(name)
 
-      return match ? { month: Number(match[1]) * 12 + (Number(match[2]) - 1), name } : undefined
+      return match
+        ? { month: Number(match[1]) * 12 + (Number(match[2]) - 1), name }
+        : undefined
     })
     .filter((entry): entry is { month: number, name: string } => entry !== undefined)
     .sort((left, right) => left.month - right.month)

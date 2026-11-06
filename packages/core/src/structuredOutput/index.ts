@@ -107,7 +107,9 @@ export async function generateStructured<Schema extends GenericSchema>(
         abortSignal: options.signal,
         baseURL: options.model.provider.endpoint,
         headers: options.model.provider.headers,
-        messages: options.createMessages(previousError ? retryFeedbackFrom(toolName, previousError) : undefined),
+        messages: options.createMessages(previousError
+          ? retryFeedbackFrom(toolName, previousError)
+          : undefined),
         model: options.model.id,
         parallelToolCalls: false,
         temperature: options.temperature ?? 0,
@@ -126,7 +128,9 @@ export async function generateStructured<Schema extends GenericSchema>(
       options.signal?.throwIfAborted()
       const callError = `Tool call failed before validation: ${errorMessageFrom(error) ?? String(error)}`
 
-      previousError = isRetriableHttpError(error) ? undefined : callError
+      previousError = isRetriableHttpError(error)
+        ? undefined
+        : callError
       options.logger?.debug(`${options.operation} attempt ${attempt} failed while calling the model: ${callError}`)
 
       if (!isRetriableCallError(error) || attempt === maxAttempts) {
@@ -161,7 +165,9 @@ export async function generateStructured<Schema extends GenericSchema>(
 export function normalizeToolJsonSchema(schema: JsonSchema): JsonSchema {
   const normalized = normalizeJsonSchemaDefinition(schema)
 
-  return typeof normalized === 'boolean' ? {} : normalized
+  return typeof normalized === 'boolean'
+    ? {}
+    : normalized
 }
 
 /** Converts a valibot schema into provider-compliant strict tool parameters. */
@@ -290,7 +296,9 @@ function normalizeUsage(usage: unknown): NormalizedUsage | undefined {
 
 function numberFromRecord(record: Record<string, unknown>, key: string): number | undefined {
   const value = record[key]
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined
 }
 
 function parseStructuredResponse<Schema extends GenericSchema>(

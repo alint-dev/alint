@@ -11,7 +11,11 @@ describe('stop gate plugin state', () => {
   it('stores one state document per session in the plugin data directory', async () => {
     const directory = join(tmpdir(), `alint-plugin-state-${randomUUID()}`)
     const store = createStateStore(directory)
-    const state = { ...emptyState(), lintRounds: 3, updatedAt: '2026-01-01T00:00:00.000Z' }
+    const state = {
+      ...emptyState(),
+      lintRounds: 3,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }
 
     await store.save('session-1', state)
 

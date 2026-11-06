@@ -26,7 +26,9 @@ export function createPlainProgressReporter(options: PlainProgressReporterOption
     onRunEnd: (payload: RunEndPayload) => {
       const warnCount = countDiagnostics(payload.diagnostics, 'warn')
       const errorCount = countDiagnostics(payload.diagnostics, 'error')
-      const state = payload.execution.failed > 0 ? 'failed' : 'finished'
+      const state = payload.execution.failed > 0
+        ? 'failed'
+        : 'finished'
       const { cached, cancelled, completed, failed, skipped } = payload.execution
 
       writeLine(`alint ${state}: ${warnCount} warn, ${errorCount} error, ${payload.usage.totalTokens} tokens, ${completed} completed, ${cached} cached, ${failed} failed, ${cancelled} cancelled, ${skipped} skipped`)

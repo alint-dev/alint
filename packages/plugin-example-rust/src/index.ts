@@ -19,7 +19,9 @@ export function createRustPlugin() {
 }
 
 export function createTools(cwd: string): AgentTool[] {
-  return createFsTools(cwd, { ignore: [...DEFAULT_IGNORE_PATTERNS, '**/target/**'] })
+  return createFsTools(cwd, {
+    ignore: [...DEFAULT_IGNORE_PATTERNS, '**/target/**'],
+  })
 }
 
 export const rustPlugin = createRustPlugin()

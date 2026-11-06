@@ -56,7 +56,9 @@ export function collectSourceInfo(program: AstNode, comments: readonly unknown[]
   }
 
   for (const comment of comments) {
-    const range = isAstNode(comment) ? getRange(comment) : undefined
+    const range = isAstNode(comment)
+      ? getRange(comment)
+      : undefined
 
     if (range) {
       info.commentRanges.push(range)
@@ -106,17 +108,23 @@ export function functionInfo(
     commentRanges: rangesInside(info.commentRanges, range),
     declaredNames: [...declaredNames],
     exported,
-    identifierRanges: withOwnName(rangesInside([...info.identifierRanges.values()], range), node, range),
+    identifierRanges: withOwnName(rangesInside([
+      ...info.identifierRanges.values(),
+    ], range), node, range),
   }
 }
 
 function asNodeList(value: unknown): AstNode[] {
-  return Array.isArray(value) ? value.filter(isAstNode) : []
+  return Array.isArray(value)
+    ? value.filter(isAstNode)
+    : []
 }
 
 function bodyOf(node: AstNode): { arrowExpression: boolean, statements: AstNode[] } {
   // A method holds its parameters and body on the function expression under it, not on itself.
-  const callable = (node.type === 'MethodDefinition' ? asAstNode(node.value) : undefined) ?? node
+  const callable = (node.type === 'MethodDefinition'
+    ? asAstNode(node.value)
+    : undefined) ?? node
   const body = asAstNode(callable.body)
 
   if (!body) {
@@ -125,10 +133,16 @@ function bodyOf(node: AstNode): { arrowExpression: boolean, statements: AstNode[
 
   // `=> String(value)` is a bare expression, and the whole helper is that expression.
   if (callable.type === 'ArrowFunctionExpression' && body.type !== 'BlockStatement') {
-    return { arrowExpression: true, statements: [body] }
+    return {
+      arrowExpression: true,
+      statements: [body],
+    }
   }
 
-  return { arrowExpression: false, statements: asNodeList(body.body) }
+  return {
+    arrowExpression: false,
+    statements: asNodeList(body.body),
+  }
 }
 
 function callSiteOf(node: AstNode): CallSite | undefined {
@@ -141,7 +155,9 @@ function callSiteOf(node: AstNode): CallSite | undefined {
   if (callee.type === 'Identifier') {
     const range = nameRangeOf(callee)
 
-    return range && callee.name !== undefined ? { name: callee.name, range } : undefined
+    return range && callee.name !== undefined
+      ? { name: callee.name, range }
+      : undefined
   }
 
   // A computed call (`handlers[key]()`) names nothing a reader could count, and tree-sitter's query
@@ -151,9 +167,13 @@ function callSiteOf(node: AstNode): CallSite | undefined {
   }
 
   const property = asAstNode(callee.property)
-  const range = property ? nameRangeOf(property) : undefined
+  const range = property
+    ? nameRangeOf(property)
+    : undefined
 
-  return range && property?.name !== undefined ? { name: property.name, range } : undefined
+  return range && property?.name !== undefined
+    ? { name: property.name, range }
+    : undefined
 }
 
 /** A nested block is how a branch or a loop is written, so it disqualifies a single-expression body. */
@@ -198,7 +218,10 @@ function nameRangeOf(node: AstNode): SourceRange | undefined {
     return undefined
   }
 
-  return { end: Math.min(range.end, range.start + node.name.length), start: range.start }
+  return {
+    end: Math.min(range.end, range.start + node.name.length),
+    start: range.start,
+  }
 }
 
 /*
@@ -380,8 +403,12 @@ function walk(node: AstNode, info: SourceInfo): void {
  * A declared function's name is already there, hence the dedupe by start offset.
  */
 function withOwnName(ranges: SourceRange[], node: AstNode, outer: SourceRange): SourceRange[] {
-  const nameNode = asAstNode(node.id) ?? (node.type === 'MethodDefinition' ? asAstNode(node.key) : undefined)
-  const name = nameNode ? nameRangeOf(nameNode) : undefined
+  const nameNode = asAstNode(node.id) ?? (node.type === 'MethodDefinition'
+    ? asAstNode(node.key)
+    : undefined)
+  const name = nameNode
+    ? nameRangeOf(nameNode)
+    : undefined
 
   if (!name || name.start < outer.start || name.end > outer.end) {
     return ranges

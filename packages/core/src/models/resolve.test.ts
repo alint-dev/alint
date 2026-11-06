@@ -77,7 +77,10 @@ const sameProviderCollisionRegistry: SetupConfig = {
       id: 'first',
       models: [
         { id: 'qwen' },
-        { aliases: ['qwen'], id: 'other' },
+        {
+          aliases: ['qwen'],
+          id: 'other',
+        },
       ],
       type: 'openai-compatible',
     },

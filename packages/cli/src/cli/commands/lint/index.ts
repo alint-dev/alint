@@ -79,8 +79,12 @@ async function runLintCommand(
     return 2
   }
 
-  const cwd = options.dirty ? await findGitRoot(io.cwd) : io.cwd
-  const runIo = cwd === io.cwd ? io : { ...io, cwd }
+  const cwd = options.dirty
+    ? await findGitRoot(io.cwd)
+    : io.cwd
+  const runIo = cwd === io.cwd
+    ? io
+    : { ...io, cwd }
 
   if (options.config) {
     await assertConfigExists(cwd, options.config)
@@ -180,7 +184,9 @@ async function runLintCommand(
     }
 
     writeResult(result)
-    return visibleResult(result).diagnostics.some(diagnostic => diagnostic.severity === 'error') ? 1 : 0
+    return visibleResult(result).diagnostics.some(diagnostic => diagnostic.severity === 'error')
+      ? 1
+      : 0
   }
   finally {
     await session.shutdown()

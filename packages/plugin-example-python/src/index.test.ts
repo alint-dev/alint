@@ -71,7 +71,9 @@ function createRuleContext(): RuleContext {
         contentHash: createHash('sha256').update(sourceText).digest('hex'),
         language: 'plaintext',
         lines: sourceText.split('\n'),
-        path: typeof file === 'string' ? file : file.path,
+        path: typeof file === 'string'
+          ? file
+          : file.path,
         text: sourceText,
       }),
     }),

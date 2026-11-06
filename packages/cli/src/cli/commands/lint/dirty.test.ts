@@ -16,7 +16,13 @@ describe('lint --dirty', () => {
     await writeFile(join(io.cwd, 'untracked.ts'), 'untracked\n', 'utf8')
     await writeFile(join(io.cwd, 'ignored.ts'), 'ignored\n', 'utf8')
 
-    const exitCode = await executeCli(['node', 'alint', '--dirty', '--format', 'json'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      '--dirty',
+      '--format',
+      'json',
+    ], io)
     const diagnostics = JSON.parse(io.stdoutText).diagnostics as Array<{ filePath: string }>
 
     expect(exitCode).toBe(0)
@@ -35,7 +41,13 @@ describe('lint --dirty', () => {
     await mkdir(nested)
     io.cwd = nested
 
-    const exitCode = await executeCli(['node', 'alint', '--dirty', '--format', 'json'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      '--dirty',
+      '--format',
+      'json',
+    ], io)
     const diagnostics = JSON.parse(io.stdoutText).diagnostics as Array<{ filePath: string }>
 
     expect(exitCode).toBe(0)
@@ -71,7 +83,13 @@ describe('lint --dirty', () => {
     await git(io.cwd, ['commit', '-m', 'add line fixture'])
     await writeFile(join(io.cwd, 'clean.ts'), 'first\nchanged\nthird\n', 'utf8')
 
-    const exitCode = await executeCli(['node', 'alint', '--dirty', '--format', 'json'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      '--dirty',
+      '--format',
+      'json',
+    ], io)
     const diagnostics = JSON.parse(io.stdoutText).diagnostics as Array<{ message: string }>
 
     expect(exitCode).toBe(0)
@@ -88,7 +106,13 @@ describe('lint --dirty', () => {
     await git(io.cwd, ['commit', '-m', 'add line fixture'])
     await writeFile(join(io.cwd, 'clean.ts'), 'first\nchanged\nthird\n', 'utf8')
 
-    const exitCode = await executeCli(['node', 'alint', '--dirty', '--format', 'json'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      '--dirty',
+      '--format',
+      'json',
+    ], io)
     const diagnostics = JSON.parse(io.stdoutText).diagnostics as Array<{ message: string }>
 
     expect(exitCode).toBe(2)
@@ -136,9 +160,13 @@ async function createRepository(configSource = config()): Promise<TestIo> {
   const io: TestIo = {
     cwd,
     env: { ...process.env, CI: 'true', XDG_CONFIG_HOME: configHome },
-    stderr: { write: chunk => io.stderrText += chunk },
+    stderr: {
+      write: chunk => io.stderrText += chunk,
+    },
     stderrText: '',
-    stdout: { write: chunk => io.stdoutText += chunk },
+    stdout: {
+      write: chunk => io.stdoutText += chunk,
+    },
     stdoutText: '',
   }
   await git(cwd, ['init'])

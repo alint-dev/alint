@@ -9,7 +9,9 @@ export function resolveRuleFilter(value: string | string[] | undefined): string[
     return undefined
   }
 
-  const patterns = (Array.isArray(value) ? value : [value])
+  const patterns = (Array.isArray(value)
+    ? value
+    : [value])
     .flatMap(entry => entry.split(','))
     .map(entry => entry.trim())
     .filter(entry => entry !== '')
@@ -18,5 +20,7 @@ export function resolveRuleFilter(value: string | string[] | undefined): string[
     throw new Error('--rule requires a rule id, a rule name, or a glob pattern.')
   }
 
-  return [...new Set(patterns)]
+  return [
+    ...new Set(patterns),
+  ]
 }

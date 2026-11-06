@@ -65,7 +65,9 @@ export async function executeStopGate(
     throw incompatibleAlintError()
   }
 
-  if (result.exitCode !== (envelope.status === 'runtime-error' ? 1 : 0)) {
+  if (result.exitCode !== (envelope.status === 'runtime-error'
+    ? 1
+    : 0)) {
     throw new Error(`alint Stop Gate returned status "${envelope.status}" with unexpected exit code ${result.exitCode ?? 'unknown'}.`)
   }
 
@@ -125,7 +127,9 @@ export function parseEnvelope(stdout: string): StopGateEnvelope | undefined {
       ? {
           ...base,
           message: value.message,
-          ...(typeof value.reportPath === 'string' ? { reportPath: value.reportPath } : {}),
+          ...(typeof value.reportPath === 'string'
+            ? { reportPath: value.reportPath }
+            : {}),
           status: value.status,
         }
       : undefined
@@ -200,7 +204,9 @@ export async function probeStopGateConfig(
 
     if (result.stdout.trim().length === 0) {
       const detail = truncateStderr(result.stderr.trim())
-      const stderrContext = detail.length === 0 ? '' : ` alint wrote to stderr: ${detail}`
+      const stderrContext = detail.length === 0
+        ? ''
+        : ` alint wrote to stderr: ${detail}`
 
       throw new Error(`alint exited successfully but produced no Stop Gate configuration output. Run \`alint config integrations stop-gate show\` manually and make sure it writes the resolved configuration to stdout.${stderrContext}`)
     }

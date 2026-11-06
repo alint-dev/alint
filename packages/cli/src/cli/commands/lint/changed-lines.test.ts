@@ -15,7 +15,14 @@ describe('dirty result filtering', () => {
     ])
 
     const filtered = filterResultToChangedLines(result, {
-      changedLines: new Map([['input.ts', [{ endLine: 2, startLine: 2 }]]]),
+      changedLines: new Map([
+        [
+          'input.ts',
+          [
+            { endLine: 2, startLine: 2 },
+          ],
+        ],
+      ]),
       cwd: '/repo',
     })
 
@@ -35,7 +42,9 @@ function diagnostic(message: string, startLine?: number, endLine?: number, fileP
     loc: startLine === undefined
       ? undefined
       : {
-          end: endLine === undefined ? undefined : { column: 0, line: endLine },
+          end: endLine === undefined
+            ? undefined
+            : { column: 0, line: endLine },
           start: { column: 0, line: startLine },
         },
     message,

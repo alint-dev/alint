@@ -59,7 +59,9 @@ export function buildNeedlessHelperPrompt(helpers: readonly IndexedHelper[]): st
     '',
     ...helpers.map((helper, position) => [
       `--- helper ${position + 1}  ${helper.name}  (${helper.language})`,
-      `called ${helper.usageCount === 1 ? 'once' : `${helper.usageCount} times`} in the workspace, by name; ${helper.exported ? 'exported' : 'private to its file'}`,
+      `called ${helper.usageCount === 1
+        ? 'once'
+        : `${helper.usageCount} times`} in the workspace, by name; ${helper.exported ? 'exported' : 'private to its file'}`,
       helper.text,
     ].join('\n')),
   ].join('\n')

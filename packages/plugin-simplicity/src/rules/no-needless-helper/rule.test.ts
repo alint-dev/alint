@@ -53,7 +53,9 @@ beforeEach(async () => {
 
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   baseURL = `http://127.0.0.1:${(server.address() as AddressInfo).port}/v1`
-  close = async () => new Promise((done, fail) => server.close(error => error ? fail(error) : done()))
+  close = async () => new Promise((done, fail) => server.close(error => error
+    ? fail(error)
+    : done()))
 })
 
 afterEach(async () => {
@@ -62,18 +64,25 @@ afterEach(async () => {
 
 function completion(reported: Finding[]): unknown {
   return {
-    choices: [{
-      finish_reason: 'tool_calls',
-      message: {
-        content: null,
-        role: 'assistant',
-        tool_calls: [{
-          function: { arguments: JSON.stringify({ findings: reported }), name: 'reportFindings' },
-          id: 'call_1',
-          type: 'function',
-        }],
+    choices: [
+      {
+        finish_reason: 'tool_calls',
+        message: {
+          content: null,
+          role: 'assistant',
+          tool_calls: [
+            {
+              function: {
+                arguments: JSON.stringify({ findings: reported }),
+                name: 'reportFindings',
+              },
+              id: 'call_1',
+              type: 'function',
+            },
+          ],
+        },
       },
-    }],
+    ],
     usage: { completion_tokens: 5, prompt_tokens: 11, total_tokens: 16 },
   }
 }
@@ -86,14 +95,21 @@ function createRun(cwd: string = FIXTURES_DIR): Run {
   return {
     contextFor: (settings = {}): RuleContext => createFixtureContext({
       cwd,
-      logger: { debug: (...args) => void debug.push(args.join(' ')) },
+      logger: {
+        debug: (...args) => void debug.push(args.join(' ')),
+      },
       model: () => Promise.resolve({
         aliases: [],
         capabilities: ['tool-call'],
         id: 'test-model',
         name: 'test-model',
         params: {},
-        provider: { endpoint: baseURL, headers: {}, id: 'test-provider', type: 'openai-compatible' },
+        provider: {
+          endpoint: baseURL,
+          headers: {},
+          id: 'test-provider',
+          type: 'openai-compatible',
+        },
       }),
       report: diagnostic => void diagnostics.push(diagnostic),
       settings,
@@ -110,7 +126,10 @@ function createRun(cwd: string = FIXTURES_DIR): Run {
 async function createWorkspace(): Promise<string> {
   const cwd = await mkdtemp(join(tmpdir(), 'simplicity-needless-'))
 
-  await cp(FIXTURES_DIR, cwd, { filter: source => basename(source) !== '.alint', recursive: true })
+  await cp(FIXTURES_DIR, cwd, {
+    filter: source => basename(source) !== '.alint',
+    recursive: true,
+  })
 
   return cwd
 }
@@ -144,7 +163,12 @@ function judgePrompt(): string {
 }
 
 /* The cache is off by default: with it on, a run would write a decision into the fixture workspace and answer the next test from disk instead of the server. The cache tests turn it on, against a copy. */
-async function lint(run: Run, relativePath: string, settings: Record<string, unknown> = { simplicity: { cache: false, ignores: ['**/*.config.ts'] } }): Promise<void> {
+async function lint(run: Run, relativePath: string, settings: Record<string, unknown> = {
+  simplicity: {
+    cache: false,
+    ignores: ['**/*.config.ts'],
+  },
+}): Promise<void> {
   const path = resolve(run.cwd, relativePath)
   const target: FileTarget = {
     file: { contentHash: 'unused', language: 'plaintext', path },
@@ -196,7 +220,12 @@ describe('no-needless-helper, choosing what to ask about', () => {
   it('spends nothing when the judge is off', async () => {
     const run = createRun()
 
-    await lint(run, 'ts/needless.ts', { simplicity: { ignores: ['**/*.config.ts'], judge: false } })
+    await lint(run, 'ts/needless.ts', {
+      simplicity: {
+        ignores: ['**/*.config.ts'],
+        judge: false,
+      },
+    })
 
     expect(requests).toStrictEqual([])
     expect(run.diagnostics).toStrictEqual([])
@@ -206,7 +235,9 @@ describe('no-needless-helper, choosing what to ask about', () => {
 describe('no-needless-helper, reporting', () => {
   it('reports what the judge found, at the helper\'s line', async () => {
     const nameLength = fixtureHelper(await createFixtureIndex(), 'ts/needless.ts', 'nameLength')
-    findings = [{ helper: 1, name: 'nameLength', reason: 'Reads one property; `entry.name.length` says the same thing.' }]
+    findings = [
+      { helper: 1, name: 'nameLength', reason: 'Reads one property; `entry.name.length` says the same thing.' },
+    ]
 
     const run = createRun()
     await lint(run, 'ts/needless.ts')
@@ -221,7 +252,9 @@ describe('no-needless-helper, reporting', () => {
 
   // A model that miscounts must not land a diagnostic on the wrong function.
   it('reports at the line the index knows, not the line the model claimed', async () => {
-    findings = [{ helper: 99, name: 'parse', reason: 'Forwards to JSON.parse unchanged.' }]
+    findings = [
+      { helper: 99, name: 'parse', reason: 'Forwards to JSON.parse unchanged.' },
+    ]
 
     const index = await createFixtureIndex()
     const run = createRun()
@@ -232,7 +265,9 @@ describe('no-needless-helper, reporting', () => {
   })
 
   it('drops a finding for a helper it never showed the judge', async () => {
-    findings = [{ helper: 1, name: 'aFunctionThatDoesNotExist', reason: 'Invented.' }]
+    findings = [
+      { helper: 1, name: 'aFunctionThatDoesNotExist', reason: 'Invented.' },
+    ]
 
     const run = createRun()
     await lint(run, 'ts/needless.ts')
@@ -279,7 +314,9 @@ describe('no-needless-helper, resolving a finding to the helper it is about', ()
   })
 
   it('drops a finding for a name no candidate carries', () => {
-    expect(resolveFinding([indexedHelper()], { helper: 1, name: 'invented' })).toStrictEqual({ outcome: 'unknown' })
+    expect(resolveFinding([
+      indexedHelper(),
+    ], { helper: 1, name: 'invented' })).toStrictEqual({ outcome: 'unknown' })
   })
 })
 
@@ -316,38 +353,63 @@ describe('no-needless-helper, what the judge is shown', () => {
 
 describe('no-needless-helper, what a remembered decision is stamped with', () => {
   it('is the same key for the same helpers, asked the same question', () => {
-    const candidates = [indexedHelper()]
+    const candidates = [
+      indexedHelper(),
+    ]
 
-    expect(judgeKey(undefined, candidates)).toBe(judgeKey(undefined, [indexedHelper()]))
+    expect(judgeKey(undefined, candidates)).toBe(judgeKey(undefined, [
+      indexedHelper(),
+    ]))
   })
 
   // Why this rule cannot use the core's per-target cache: a call added in a file nobody is
   // linting moves the count, and the count is most of why a short helper is or is not needless.
   it('moves when nothing changed but the number of times the workspace calls a helper', () => {
-    const before = judgeKey(undefined, [indexedHelper({ usageCount: 1 })])
-    const after = judgeKey(undefined, [indexedHelper({ usageCount: 40 })])
+    const before = judgeKey(undefined, [
+      indexedHelper({ usageCount: 1 }),
+    ])
+    const after = judgeKey(undefined, [
+      indexedHelper({ usageCount: 40 }),
+    ])
 
     expect(after).not.toBe(before)
   })
 
   it('moves when a candidate\'s text changes, when one appears, and when the answer is asked for in another language', () => {
-    const base = judgeKey(undefined, [indexedHelper()])
+    const base = judgeKey(undefined, [
+      indexedHelper(),
+    ])
 
-    expect(judgeKey(undefined, [indexedHelper({ text: 'function parse(text: string): unknown {\n  return YAML.parse(text)\n}' })])).not.toBe(base)
-    expect(judgeKey(undefined, [indexedHelper(), indexedHelper({ line: 13, name: 'nameLength' })])).not.toBe(base)
-    expect(judgeKey('zh-CN', [indexedHelper()])).not.toBe(base)
+    expect(judgeKey(undefined, [
+      indexedHelper({ text: 'function parse(text: string): unknown {\n  return YAML.parse(text)\n}' }),
+    ])).not.toBe(base)
+    expect(judgeKey(undefined, [
+      indexedHelper(),
+      indexedHelper({ line: 13, name: 'nameLength' }),
+    ])).not.toBe(base)
+    expect(judgeKey('zh-CN', [
+      indexedHelper(),
+    ])).not.toBe(base)
   })
 
   // The line is deliberately left out of the key: a helper that only moved is the same helper,
   // and its diagnostic is pinned from the index rather than from what was remembered.
   it('does not move when a helper only changed line', () => {
-    expect(judgeKey(undefined, [indexedHelper({ id: 'ts/helpers.ts:44', line: 44 })]))
-      .toBe(judgeKey(undefined, [indexedHelper({ id: 'ts/helpers.ts:19', line: 19 })]))
+    expect(judgeKey(undefined, [
+      indexedHelper({ id: 'ts/helpers.ts:44', line: 44 }),
+    ]))
+      .toBe(judgeKey(undefined, [
+        indexedHelper({ id: 'ts/helpers.ts:19', line: 19 }),
+      ]))
   })
 })
 
 describe('no-needless-helper, remembering a decision', () => {
-  const CACHED = { simplicity: { ignores: ['**/*.config.ts'] } }
+  const CACHED = {
+    simplicity: {
+      ignores: ['**/*.config.ts'],
+    },
+  }
 
   let cwd: string
   let nameLengthLine: number
@@ -355,7 +417,9 @@ describe('no-needless-helper, remembering a decision', () => {
   beforeEach(async () => {
     cwd = await createWorkspace()
     nameLengthLine = fixtureHelper(await createFixtureIndex(), 'ts/needless.ts', 'nameLength').line
-    findings = [{ helper: 1, name: 'nameLength', reason: 'Reads one property; `entry.name.length` says the same thing.' }]
+    findings = [
+      { helper: 1, name: 'nameLength', reason: 'Reads one property; `entry.name.length` says the same thing.' },
+    ]
   })
 
   afterEach(async () => {
@@ -413,7 +477,12 @@ describe('no-needless-helper, remembering a decision', () => {
   })
 
   it('judges every run when the cache is turned off', async () => {
-    const off = { simplicity: { cache: false, ignores: ['**/*.config.ts'] } }
+    const off = {
+      simplicity: {
+        cache: false,
+        ignores: ['**/*.config.ts'],
+      },
+    }
 
     await lint(createRun(cwd), 'ts/needless.ts', off)
     await lint(createRun(cwd), 'ts/needless.ts', off)

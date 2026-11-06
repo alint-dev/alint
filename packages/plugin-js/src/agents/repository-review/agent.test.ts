@@ -9,7 +9,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RepositoryReviewProtocolError, reviewRepository } from './agent'
 
-vi.mock('@alint-js/tools-fs', () => ({ createTools: vi.fn() }))
+vi.mock('@alint-js/tools-fs', () => ({
+  createTools: vi.fn(),
+}))
 
 const mockedCreateTools = vi.mocked(createTools)
 const source = 'export const parse = (value: string) => value.trim()'
@@ -36,7 +38,9 @@ function createContext(agent: AgentAdapter, recordUsage = vi.fn()): RuleContext 
     cwd: '/repo',
     id: 'js/repository-review',
     localId: 'repository-review',
-    logger: { debug: () => {} },
+    logger: {
+      debug: () => {},
+    },
     metering: { recordUsage },
     model: async () => ({
       aliases: [],
@@ -44,7 +48,12 @@ function createContext(agent: AgentAdapter, recordUsage = vi.fn()): RuleContext 
       id: 'model',
       name: 'model',
       params: {},
-      provider: { endpoint: '', headers: {}, id: 'provider', type: 'openai-compatible' },
+      provider: {
+        endpoint: '',
+        headers: {},
+        id: 'provider',
+        type: 'openai-compatible',
+      },
     }),
     options: [],
     report: () => {},
@@ -54,7 +63,9 @@ function createContext(agent: AgentAdapter, recordUsage = vi.fn()): RuleContext 
         contentHash: createHash('sha256').update(source).digest('hex'),
         language: 'typescript',
         lines: [source],
-        path: typeof file === 'string' ? file : file.path,
+        path: typeof file === 'string'
+          ? file
+          : file.path,
         text: source,
       }),
     }),
@@ -64,9 +75,16 @@ function createContext(agent: AgentAdapter, recordUsage = vi.fn()): RuleContext 
 function filesystemTool(name: string): AgentTool {
   return {
     description: name,
-    execute: async () => name === 'read_file' ? 'supporting source' : 'src/support.ts:1',
+    execute: async () => name === 'read_file'
+      ? 'supporting source'
+      : 'src/support.ts:1',
     name,
-    parameters: { additionalProperties: false, properties: {}, required: [], type: 'object' },
+    parameters: {
+      additionalProperties: false,
+      properties: {},
+      required: [],
+      type: 'object',
+    },
   }
 }
 
@@ -107,15 +125,17 @@ describe('reviewRepository', () => {
       await toolNamed(request, 'search_in_files').execute({ query: 'parse' })
       await toolNamed(request, 'read_file').execute({ path: 'src/support.ts' })
       await toolNamed(request, 'submit_review').execute({
-        findings: [{
-          category: 'coupling',
-          futureFailure: 'A format change would require both files to change.',
-          line: 1,
-          message: 'Two files own one policy.',
-          proof: 'src/parse.ts:1 duplicates src/support.ts:1.',
-          relatedLocations: ['src/support.ts:1'],
-          suggestion: 'Move the policy to one owner.',
-        }],
+        findings: [
+          {
+            category: 'coupling',
+            futureFailure: 'A format change would require both files to change.',
+            line: 1,
+            message: 'Two files own one policy.',
+            proof: 'src/parse.ts:1 duplicates src/support.ts:1.',
+            relatedLocations: ['src/support.ts:1'],
+            suggestion: 'Move the policy to one owner.',
+          },
+        ],
       })
 
       return {
@@ -140,15 +160,17 @@ describe('reviewRepository', () => {
     let rejected: unknown
     const agent: AgentAdapter = async (request) => {
       rejected = await toolNamed(request, 'submit_review').execute({
-        findings: [{
-          category: 'unsupported',
-          futureFailure: null,
-          line: 2,
-          message: 'Invalid.',
-          proof: 'Invalid.',
-          relatedLocations: [],
-          suggestion: 'Invalid.',
-        }],
+        findings: [
+          {
+            category: 'unsupported',
+            futureFailure: null,
+            line: 2,
+            message: 'Invalid.',
+            proof: 'Invalid.',
+            relatedLocations: [],
+            suggestion: 'Invalid.',
+          },
+        ],
       })
       await toolNamed(request, 'submit_review').execute({ findings: [] })
       return { answer: 'done' }

@@ -8,12 +8,16 @@ type AlintFileFailure = Extract<AlintRunFailure, { file: unknown }>
 type AlintRuleFailure = Extract<AlintRunFailure, { job: unknown }>
 
 export function formatCancelledError(error: AlintRunCancelledError, color: boolean): string {
-  const label = color ? colors.red('error') : 'error'
+  const label = color
+    ? colors.red('error')
+    : 'error'
   return `${label} ${error.message}\n`
 }
 
 export function formatRunError(error: AlintRunError, color: boolean): string {
-  const label = color ? colors.red('error') : 'error'
+  const label = color
+    ? colors.red('error')
+    : 'error'
   const fileFailures = error.failures.filter((failure): failure is AlintFileFailure => 'file' in failure)
   const ruleFailures = error.failures.filter((failure): failure is AlintRuleFailure => 'job' in failure)
   const groups = groupFailuresByRule(ruleFailures)
@@ -21,10 +25,18 @@ export function formatRunError(error: AlintRunError, color: boolean): string {
     `${label} ${error.message}`,
     '',
     ...(fileFailures.length > 0
-      ? [`Failed Files ${fileFailures.length}`, '', ...formatFileFailures(fileFailures, color)]
+      ? [
+          `Failed Files ${fileFailures.length}`,
+          '',
+          ...formatFileFailures(fileFailures, color),
+        ]
       : []),
     ...(groups.length > 0
-      ? [`Failed Rules ${groups.length}`, '', ...formatFailureGroups(groups, color)]
+      ? [
+          `Failed Rules ${groups.length}`,
+          '',
+          ...formatFailureGroups(groups, color),
+        ]
       : []),
   ]
 
@@ -34,14 +46,20 @@ export function formatRunError(error: AlintRunError, color: boolean): string {
 function formatFailureGroups(groups: Array<[string, AlintRuleFailure[]]>, color: boolean): string[] {
   const lines: string[] = []
   for (const [ruleId, group] of groups) {
-    const failLabel = color ? colors.bgRed(colors.bold(' FAIL ')) : 'FAIL'
-    const targetLabel = group.length === 1 ? 'target' : 'targets'
+    const failLabel = color
+      ? colors.bgRed(colors.bold(' FAIL '))
+      : 'FAIL'
+    const targetLabel = group.length === 1
+      ? 'target'
+      : 'targets'
     lines.push(`${failLabel} ${ruleId} ${group.length} ${targetLabel}`)
     for (const failure of group) {
       lines.push(`  ${formatTarget(failure)}`)
       lines.push(`    [${failure.kind}] ${failure.message}`)
       for (const cause of failure.causes) {
-        const code = cause.code === undefined ? '' : `[${cause.code}] `
+        const code = cause.code === undefined
+          ? ''
+          : `[${cause.code}] `
         lines.push(`      Caused by: ${code}${cause.message}`)
       }
     }
@@ -53,7 +71,9 @@ function formatFailureGroups(groups: Array<[string, AlintRuleFailure[]]>, color:
 function formatFileFailures(failures: AlintFileFailure[], color: boolean): string[] {
   const lines: string[] = []
   for (const failure of failures) {
-    const failLabel = color ? colors.bgRed(colors.bold(' FAIL ')) : 'FAIL'
+    const failLabel = color
+      ? colors.bgRed(colors.bold(' FAIL '))
+      : 'FAIL'
     lines.push(`${failLabel} ${failure.file.path}`)
     lines.push(`  [${failure.kind}] ${failure.message}`)
     lines.push('')

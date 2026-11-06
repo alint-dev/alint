@@ -11,22 +11,31 @@ describe('setup config loading and merging', () => {
   it('merges ACP-driven provider models by id with project models first', () => {
     const merged = mergeSetupConfigs(
       {
-        providers: [{
-          id: 'coding-agents',
-          models: [
-            { command: 'global-codex', driver: 'acp', id: 'codex' },
-            { command: 'global-gemini', driver: 'acp', id: 'gemini' },
-          ],
-        }],
+        providers: [
+          {
+            id: 'coding-agents',
+            models: [
+              { command: 'global-codex', driver: 'acp', id: 'codex' },
+              { command: 'global-gemini', driver: 'acp', id: 'gemini' },
+            ],
+          },
+        ],
         version: 1,
       },
       {
-        providers: [{
-          id: 'coding-agents',
-          models: [
-            { args: ['--project'], command: 'project-codex', driver: 'acp', id: 'codex' },
-          ],
-        }],
+        providers: [
+          {
+            id: 'coding-agents',
+            models: [
+              {
+                args: ['--project'],
+                command: 'project-codex',
+                driver: 'acp',
+                id: 'codex',
+              },
+            ],
+          },
+        ],
         version: 1,
       },
     )
@@ -34,7 +43,12 @@ describe('setup config loading and merging', () => {
     expect(merged.providers[0]).toEqual({
       id: 'coding-agents',
       models: [
-        { args: ['--project'], command: 'project-codex', driver: 'acp', id: 'codex' },
+        {
+          args: ['--project'],
+          command: 'project-codex',
+          driver: 'acp',
+          id: 'codex',
+        },
         { command: 'global-gemini', driver: 'acp', id: 'gemini' },
       ],
     })
@@ -43,11 +57,25 @@ describe('setup config loading and merging', () => {
   it('allows ACP-driven models under different providers', () => {
     const merged = mergeSetupConfigs(
       {
-        providers: [{ id: 'global-acp', models: [{ command: 'global-agent', driver: 'acp', id: 'global' }] }],
+        providers: [
+          {
+            id: 'global-acp',
+            models: [
+              { command: 'global-agent', driver: 'acp', id: 'global' },
+            ],
+          },
+        ],
         version: 1,
       },
       {
-        providers: [{ id: 'project-acp', models: [{ command: 'project-agent', driver: 'acp', id: 'project' }] }],
+        providers: [
+          {
+            id: 'project-acp',
+            models: [
+              { command: 'project-agent', driver: 'acp', id: 'project' },
+            ],
+          },
+        ],
         version: 1,
       },
     )
@@ -58,17 +86,34 @@ describe('setup config loading and merging', () => {
   it('inherits an ACP driver when a later scope overrides only shared model fields', () => {
     const merged = mergeSetupConfigs(
       {
-        providers: [{
-          id: 'local',
-          models: [{ command: 'codex-acp', driver: 'acp', id: 'codex', name: 'Global Codex' }],
-        }],
+        providers: [
+          {
+            id: 'local',
+            models: [
+              {
+                command: 'codex-acp',
+                driver: 'acp',
+                id: 'codex',
+                name: 'Global Codex',
+              },
+            ],
+          },
+        ],
         version: 1,
       },
       {
-        providers: [{
-          id: 'local',
-          models: [{ aliases: ['default'], id: 'codex', name: 'Project Codex' }],
-        }],
+        providers: [
+          {
+            id: 'local',
+            models: [
+              {
+                aliases: ['default'],
+                id: 'codex',
+                name: 'Project Codex',
+              },
+            ],
+          },
+        ],
         version: 1,
       },
     )
@@ -110,7 +155,9 @@ describe('setup config loading and merging', () => {
           {
             endpoint: 'http://localhost:11434/v1',
             id: 'ollama',
-            models: [{ id: 'global:qwen', name: 'qwen:8b' }],
+            models: [
+              { id: 'global:qwen', name: 'qwen:8b' },
+            ],
             type: 'openai-compatible',
           },
         ],
@@ -121,7 +168,9 @@ describe('setup config loading and merging', () => {
           {
             endpoint: 'http://localhost:11434/v1',
             id: 'ollama',
-            models: [{ id: 'project:qwen', name: 'qwen:32b' }],
+            models: [
+              { id: 'project:qwen', name: 'qwen:32b' },
+            ],
             type: 'openai-compatible',
           },
         ],
@@ -139,7 +188,12 @@ describe('setup config loading and merging', () => {
           {
             endpoint: 'http://global.example/v1',
             id: 'global',
-            models: [{ capabilities: ['code-review'], id: 'global:qwen' }],
+            models: [
+              {
+                capabilities: ['code-review'],
+                id: 'global:qwen',
+              },
+            ],
             type: 'openai-compatible',
           },
         ],
@@ -150,7 +204,12 @@ describe('setup config loading and merging', () => {
           {
             endpoint: 'http://project.example/v1',
             id: 'project',
-            models: [{ capabilities: ['code-review'], id: 'project:qwen' }],
+            models: [
+              {
+                capabilities: ['code-review'],
+                id: 'project:qwen',
+              },
+            ],
             type: 'openai-compatible',
           },
         ],
@@ -344,7 +403,9 @@ describe('setup config loading and merging', () => {
         {
           endpoint: 'http://localhost:11434/v1',
           id: 'ollama',
-          models: [{ id: 'local:qwen', name: 'qwen:8b' }],
+          models: [
+            { id: 'local:qwen', name: 'qwen:8b' },
+          ],
           type: 'openai-compatible',
         },
       ],

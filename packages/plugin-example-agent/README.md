@@ -32,7 +32,9 @@ export default [
   {
     agent: createApeiraAdapter(),
     extends: ['agent-example/recommended'],
-    plugins: { 'agent-example': createAgentExamplePlugin() },
+    plugins: {
+      'agent-example': createAgentExamplePlugin()
+    },
   },
 ]
 ```

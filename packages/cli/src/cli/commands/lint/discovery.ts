@@ -102,14 +102,18 @@ export async function findLintTargets(options: FindFilesOptions): Promise<LintTa
     globInputPaths = true,
     inputs,
   } = options
-  const gitignore = shouldFilterGitignoredFiles(config) ? new Gitignore() : undefined
+  const gitignore = shouldFilterGitignoredFiles(config)
+    ? new Gitignore()
+    : undefined
   const targets = await resolveInputFiles({
     config,
     cwd,
     errorOnUnmatchedPattern,
     gitignore,
     globInputPaths,
-    inputs: inputs.length > 0 ? inputs : ['.'],
+    inputs: inputs.length > 0
+      ? inputs
+      : ['.'],
   })
 
   if (!gitignore || targets.files.length === 0) {
@@ -148,7 +152,9 @@ export async function statPath(path: string): Promise<Stats | undefined> {
 
 function collectGlobalIgnorePatterns(config: AlintConfig): string[] {
   return normalizeConfig(config).flatMap(item =>
-    isGlobalIgnoreItem(item) ? [...item.ignores] : [],
+    isGlobalIgnoreItem(item)
+      ? [...item.ignores]
+      : [],
   )
 }
 
@@ -166,7 +172,9 @@ function getGlobParent(input: string): string {
   }
 
   const parent = parentSegments.join('/')
-  return parent === '' ? '.' : parent
+  return parent === ''
+    ? '.'
+    : parent
 }
 
 function isGlobalIgnoreItem(item: AlintConfigItem): item is AlintConfigItem & { ignores: readonly string[] } {
@@ -278,8 +286,12 @@ async function resolveInputFiles(options: ResolveInputFilesOptions): Promise<Lin
   }
 
   return {
-    directories: [...new Set(directories)],
-    files: [...new Set(candidates)],
+    directories: [
+      ...new Set(directories),
+    ],
+    files: [
+      ...new Set(candidates),
+    ],
   }
 }
 

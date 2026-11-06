@@ -22,15 +22,24 @@ export function createFixtureContext(overrides: Partial<RuleContext> = {}): Rule
     cwd: FIXTURES_DIR,
     id: 'simplicity/no-duplicated-helper',
     localId: 'no-duplicated-helper',
-    logger: { debug: () => {} },
-    metering: { recordUsage: () => {} },
+    logger: {
+      debug: () => {},
+    },
+    metering: {
+      recordUsage: () => {},
+    },
     model: () => Promise.resolve({
       aliases: [],
       capabilities: ['tool-call'],
       id: 'test-model',
       name: 'test-model',
       params: {},
-      provider: { endpoint: 'http://127.0.0.1:0/v1', headers: {}, id: 'test-provider', type: 'openai-compatible' },
+      provider: {
+        endpoint: 'http://127.0.0.1:0/v1',
+        headers: {},
+        id: 'test-provider',
+        type: 'openai-compatible',
+      },
     }),
     options: [],
     report: () => {},
@@ -58,10 +67,12 @@ export async function createFixtureIndex(): Promise<RepoIndex> {
  * and Rust, which only resolve once `@alint-js/languages` is registered.
  */
 export function createFixtureRuntime(): SourceRuntime {
-  const config = defineConfig([{
-    files: ['**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs,rs,go,py}'],
-    plugins: { languages: languagesPlugin },
-  }])
+  const config = defineConfig([
+    {
+      files: ['**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs,rs,go,py}'],
+      plugins: { languages: languagesPlugin },
+    },
+  ])
 
   // The extractor needs the runtime that is being built around it. Reading `src` through a getter
   // defers that until a rule extracts something, long after this has returned. `runAlint` does the

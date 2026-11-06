@@ -33,11 +33,15 @@ export interface UnregisteredLanguage {
  * matches no file, so leaving it at a warning would let a run pass having silently checked nothing.
  */
 export function missingLanguageDiagnostics(missing: ReadonlyMap<string, MissingLanguage>): Diagnostic[] {
-  return [...missing.entries()]
+  return [
+    ...missing.entries(),
+  ]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([languageId, entry]) => {
       const ruleIds = [...entry.ruleIds].sort()
-      const subject = ruleIds.length === 1 ? `Rule "${ruleIds[0]}" needs` : `Rules ${ruleIds.map(id => `"${id}"`).join(', ')} need`
+      const subject = ruleIds.length === 1
+        ? `Rule "${ruleIds[0]}" needs`
+        : `Rules ${ruleIds.map(id => `"${id}"`).join(', ')} need`
 
       return {
         filePath: entry.filePath,
@@ -58,7 +62,10 @@ export function recordMissingLanguage(
   const existing = into.get(languageId)
 
   if (existing === undefined) {
-    into.set(languageId, { filePath: path, ruleIds: new Set([ruleId]) })
+    into.set(languageId, {
+      filePath: path,
+      ruleIds: new Set([ruleId]),
+    })
 
     return
   }
@@ -87,19 +94,27 @@ export function recordUnregistered(
   into.set(key, {
     count: (existing?.count ?? 0) + 1,
     // Files prepare in list order; the smallest path keeps the anchor deterministic regardless.
-    filePath: existing !== undefined && existing.filePath < path ? existing.filePath : path,
+    filePath: existing !== undefined && existing.filePath < path
+      ? existing.filePath
+      : path,
     // Two config groups may set different severities for one extension; the stricter wins.
-    severity: existing?.severity === 'error' ? 'error' : severity,
+    severity: existing?.severity === 'error'
+      ? 'error'
+      : severity,
   })
 }
 
 /** One diagnostic per extension, sorted, for the run to prepend to its results. */
 export function unregisteredLanguageDiagnostics(unregistered: ReadonlyMap<string, UnregisteredLanguage>): Diagnostic[] {
-  return [...unregistered.entries()]
+  return [
+    ...unregistered.entries(),
+  ]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([extension, entry]) => ({
       filePath: entry.filePath,
-      message: `No language is registered for "${extension}": ${entry.count} ${entry.count === 1 ? 'file was' : 'files were'} handled as plain text. Register one through a plugin's "languages", or pin \`language: 'plaintext'\` to accept plain text.`,
+      message: `No language is registered for "${extension}": ${entry.count} ${entry.count === 1
+        ? 'file was'
+        : 'files were'} handled as plain text. Register one through a plugin's "languages", or pin \`language: 'plaintext'\` to accept plain text.`,
       ruleId: UNREGISTERED_LANGUAGE_RULE,
       severity: entry.severity,
     }))
@@ -108,5 +123,7 @@ export function unregisteredLanguageDiagnostics(unregistered: ReadonlyMap<string
 export function unregisteredLanguageSeverity(linterOptions: Record<string, unknown>): 'error' | 'off' | 'warn' {
   const value = linterOptions.reportUnregisteredLanguages
 
-  return value === 'error' || value === 'off' ? value : 'warn'
+  return value === 'error' || value === 'off'
+    ? value
+    : 'warn'
 }

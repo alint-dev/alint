@@ -48,24 +48,38 @@ export async function findDirtyChanges(cwd: string): Promise<DirtyChanges> {
   ]
   const [tracked, untracked, patch, stagedEntries] = await Promise.all([
     runGit(cwd, changedFileArgs),
-    runGit(cwd, ['ls-files', '--others', '--exclude-standard', '-z']),
+    runGit(cwd, [
+      'ls-files',
+      '--others',
+      '--exclude-standard',
+      '-z',
+    ]),
     runGit(cwd, changedLinePatchArgs),
     runGit(cwd, ['ls-files', '--stage', '-z']),
   ])
   const gitlinks = parseGitlinks(stagedEntries)
   const trackedFiles = withoutGitlinks(parseNullSeparatedPaths(tracked), gitlinks)
   const untrackedFiles = withoutGitlinks(parseNullSeparatedPaths(untracked), gitlinks)
-  const files = [...new Set([...trackedFiles, ...untrackedFiles])].sort()
+  const files = [
+    ...new Set([
+      ...trackedFiles,
+      ...untrackedFiles,
+    ]),
+  ].sort()
   const changedLines = changedLinesFromPatch(patch, gitlinks)
 
   await Promise.all(untrackedFiles.map(async (file) => {
     const content = await readFile(resolve(cwd, file), 'utf8')
     const lineCount = content.length === 0
       ? 0
-      : content.split('\n').length - (content.endsWith('\n') ? 1 : 0)
+      : content.split('\n').length - (content.endsWith('\n')
+        ? 1
+        : 0)
 
     if (lineCount > 0) {
-      changedLines.set(file, [{ endLine: lineCount, startLine: 1 }])
+      changedLines.set(file, [
+        { endLine: lineCount, startLine: 1 },
+      ])
     }
   }))
 
@@ -89,7 +103,9 @@ function changedLinesFromPatch(patch: string, gitlinks: ReadonlySet<string>): Ma
     const path = file.newFileName === undefined || file.newFileName === '/dev/null'
       ? undefined
       // Git names the new side of a patch `b/<path>`.
-      : file.newFileName.startsWith('b/') ? file.newFileName.slice(2) : file.newFileName
+      : file.newFileName.startsWith('b/')
+        ? file.newFileName.slice(2)
+        : file.newFileName
 
     if (path === undefined || isWithinGitlink(path, gitlinks)) {
       continue

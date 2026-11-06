@@ -28,7 +28,9 @@ export const testOnlyProductionWrapperRule = defineRule({
             suggestion: finding.suggestion,
           },
           filePath: target.file.path,
-          loc: { start: { column: 0, line: finding.line } },
+          loc: {
+            start: { column: 0, line: finding.line },
+          },
           message: finding.message,
         })
       }

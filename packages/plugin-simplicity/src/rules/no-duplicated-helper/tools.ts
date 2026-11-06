@@ -77,7 +77,10 @@ function createFindSimilarTool(index: RepoIndex): AgentTool {
       additionalProperties: false,
       properties: {
         id: { description: 'Helper id, as `path:line`.', type: 'string' },
-        limit: { description: 'How many to return. Null for 10.', type: ['number', 'null'] },
+        limit: {
+          description: 'How many to return. Null for 10.',
+          type: ['number', 'null'],
+        },
       },
       required: ['id', 'limit'],
       type: 'object',
@@ -146,9 +149,18 @@ function createListHelpersTool(index: RepoIndex): AgentTool {
     parameters: {
       additionalProperties: false,
       properties: {
-        directory: { description: 'Keep only helpers whose path starts with this, e.g. `packages/cli/`. Null for all.', type: ['string', 'null'] },
-        language: { description: 'One of: go, javascript, python, rust, tsx, typescript. Null for all.', type: ['string', 'null'] },
-        name_contains: { description: 'Keep only helpers whose name contains this, case-insensitively. Null for all.', type: ['string', 'null'] },
+        directory: {
+          description: 'Keep only helpers whose path starts with this, e.g. `packages/cli/`. Null for all.',
+          type: ['string', 'null'],
+        },
+        language: {
+          description: 'One of: go, javascript, python, rust, tsx, typescript. Null for all.',
+          type: ['string', 'null'],
+        },
+        name_contains: {
+          description: 'Keep only helpers whose name contains this, case-insensitively. Null for all.',
+          type: ['string', 'null'],
+        },
       },
       required: ['directory', 'language', 'name_contains'],
       type: 'object',
@@ -262,7 +274,10 @@ function createSearchHelperBodiesTool(index: RepoIndex): AgentTool {
     parameters: {
       additionalProperties: false,
       properties: {
-        language: { description: 'One of: go, javascript, python, rust, tsx, typescript. Null for all.', type: ['string', 'null'] },
+        language: {
+          description: 'One of: go, javascript, python, rust, tsx, typescript. Null for all.',
+          type: ['string', 'null'],
+        },
         query: { description: 'A literal fragment of code to look for inside helper bodies.', type: 'string' },
       },
       required: ['language', 'query'],

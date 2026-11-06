@@ -126,10 +126,14 @@ function report(ctx: RuleContext, index: RepoIndex, findings: readonly AgentFind
       evidence: {
         match: 'reimplemented',
         reason: finding.reason,
-        twins: [{ filePath: twin.filePath, line: twin.line, name: twin.name }],
+        twins: [
+          { filePath: twin.filePath, line: twin.line, name: twin.name },
+        ],
       },
       filePath: helper.filePath,
-      loc: { start: { column: 0, line: helper.line } },
+      loc: {
+        start: { column: 0, line: helper.line },
+      },
       message: `Helper "${helper.name}" duplicates "${twin.name}" at ${twin.id}: ${finding.reason}`,
     })
   }
@@ -150,7 +154,9 @@ function reportFingerprinted(
       twins: twins.map(twin => ({ filePath: twin.filePath, line: twin.line, name: twin.name })),
     },
     filePath: helper.filePath,
-    loc: { start: { column: 0, line: helper.line } },
+    loc: {
+      start: { column: 0, line: helper.line },
+    },
     message: match === 'exact'
       ? `Helper "${helper.name}" is also defined at ${where}.`
       : `Helper "${helper.name}" is a renamed copy of ${twins.map(twin => `"${twin.name}"`).join(', ')} at ${where}; only the names it declares differ.`,
@@ -189,7 +195,11 @@ async function review(
     const result = await agent({
       instructions: duplicatedHelperInstructions,
       model,
-      prompt: buildDuplicatedHelperPrompt({ candidates: nearest(index, helpers), filePath, helpers }),
+      prompt: buildDuplicatedHelperPrompt({
+        candidates: nearest(index, helpers),
+        filePath,
+        helpers,
+      }),
       tools: createDuplicateTools({ findings, index, reviewing: helpers }),
     })
 

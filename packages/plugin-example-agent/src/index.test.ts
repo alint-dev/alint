@@ -56,7 +56,9 @@ function createRuleContext(agent?: AgentAdapter): RuleContext {
         contentHash: createHash('sha256').update(sourceText).digest('hex'),
         language: 'plaintext',
         lines: sourceText.split('\n'),
-        path: typeof file === 'string' ? file : file.path,
+        path: typeof file === 'string'
+          ? file
+          : file.path,
         text: sourceText,
       }),
     }),
@@ -190,7 +192,9 @@ describe('reinvented-helper tools', () => {
     let requestedPath: string | undefined
     const tool = createReadFileTool({
       readFile: async (filePath) => {
-        const path = typeof filePath === 'string' ? filePath : filePath.path
+        const path = typeof filePath === 'string'
+          ? filePath
+          : filePath.path
         requestedPath = path
         const text = 'export const clamp = 1'
         return {

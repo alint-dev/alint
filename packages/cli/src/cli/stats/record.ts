@@ -30,7 +30,9 @@ function readOperation(metadata: unknown): string | undefined {
 
   const operation = (metadata as { operation?: unknown }).operation
 
-  return typeof operation === 'string' ? operation : undefined
+  return typeof operation === 'string'
+    ? operation
+    : undefined
 }
 
 function toStatsUsageRecord(record: InferenceUsageRecord): StatsUsageRecord {

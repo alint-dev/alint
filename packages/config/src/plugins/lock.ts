@@ -223,7 +223,9 @@ function matchesReference(entry: ParsedPluginLockEntry, reference: StaticPluginR
 }
 
 function parsePluginLockFileValue(value: unknown): PluginLockFile {
-  const parsedValue = typeof value === 'string' ? JSON.parse(value) as unknown : value
+  const parsedValue = typeof value === 'string'
+    ? JSON.parse(value) as unknown
+    : value
 
   if (
     typeof parsedValue === 'object'
@@ -269,5 +271,7 @@ function parsePluginLockFileValue(value: unknown): PluginLockFile {
 function resolveDirectoryLockIdentity(path: string, cwd: string): string {
   // Foreign absolute paths remain lexical identities here. Package resolution separately decides
   // whether a directory is accessible through the current host filesystem.
-  return isAbsolute(path) || win32.isAbsolute(path) ? path : resolve(cwd, path)
+  return isAbsolute(path) || win32.isAbsolute(path)
+    ? path
+    : resolve(cwd, path)
 }

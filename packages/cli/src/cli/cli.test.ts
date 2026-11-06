@@ -31,7 +31,14 @@ function clearCiEnv(env: NodeJS.ProcessEnv | undefined): void {
     return
   }
 
-  for (const key of ['BUILDKITE', 'CI', 'CIRCLECI', 'GITHUB_ACTIONS', 'GITLAB_CI', 'TF_BUILD']) {
+  for (const key of [
+    'BUILDKITE',
+    'CI',
+    'CIRCLECI',
+    'GITHUB_ACTIONS',
+    'GITLAB_CI',
+    'TF_BUILD',
+  ]) {
     delete env[key]
   }
 }
@@ -511,7 +518,9 @@ describe('interactive setup navigation', () => {
   })
 
   it('adds an explicit back option and recognizes text back input', () => {
-    expect(withBackOption([{ label: 'Ollama', value: 'ollama' }])).toEqual([
+    expect(withBackOption([
+      { label: 'Ollama', value: 'ollama' },
+    ])).toEqual([
       { label: 'Ollama', value: 'ollama' },
       { label: 'Back', value: '__alint_back__' },
     ])
@@ -539,7 +548,9 @@ describe('executeCli', () => {
       diagnostics: [
         {
           filePath: '/repo/src/demo.ts',
-          loc: { start: { column: 3, line: 12 } },
+          loc: {
+            start: { column: 3, line: 12 },
+          },
           message: 'Problem found',
           ruleId: 'company/problem',
           severity,
@@ -560,7 +571,13 @@ describe('executeCli', () => {
     const io = await createTestIo()
     const outputPath = await writeRunOutputFixture(io.cwd)
 
-    const exitCode = await executeCli(['node', 'alint', 'output', 'inspect', outputPath], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'output',
+      'inspect',
+      outputPath,
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toContain('/repo/src/demo.ts')
@@ -576,7 +593,13 @@ describe('executeCli', () => {
     const io = await createTestIo()
     const outputPath = await writeRunOutputFixture(io.cwd, 'alint-output.json', 'error')
 
-    const exitCode = await executeCli(['node', 'alint', 'output', 'inspect', outputPath], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'output',
+      'inspect',
+      outputPath,
+    ], io)
 
     expect(exitCode).toBe(1)
     expect(io.stdoutText).toContain('error')
@@ -609,7 +632,12 @@ describe('executeCli', () => {
     clearCiEnv(io.env)
     await writeStatsFixture(io.cwd)
 
-    await executeCli(['node', 'alint', '--no-stats', 'demo.ts'], io)
+    await executeCli([
+      'node',
+      'alint',
+      '--no-stats',
+      'demo.ts',
+    ], io)
 
     // The stats dir is only created on write, so its absence proves nothing was recorded.
     await expect(readdir(statsDirOf(io))).rejects.toThrow()
@@ -649,7 +677,9 @@ describe('executeCli', () => {
       diagnostics: [
         {
           filePath: '/repo/src/demo.ts',
-          loc: { start: { column: 3, line: 12 } },
+          loc: {
+            start: { column: 3, line: 12 },
+          },
           message: 'Problem found',
           ruleId: 'company/problem',
           severity: 'warn',
@@ -689,7 +719,13 @@ describe('executeCli', () => {
     const outputPath = join(io.cwd, 'broken.json')
     await writeFile(outputPath, '{')
 
-    const exitCode = await executeCli(['node', 'alint', 'output', 'inspect', outputPath], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'output',
+      'inspect',
+      outputPath,
+    ], io)
 
     expect(exitCode).toBe(2)
     expect(io.stdoutText).toBe('')
@@ -701,7 +737,13 @@ describe('executeCli', () => {
     const outputPath = join(io.cwd, 'invalid-output.json')
     await writeFile(outputPath, JSON.stringify({ diagnostics: {} }))
 
-    const exitCode = await executeCli(['node', 'alint', 'output', 'inspect', outputPath], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'output',
+      'inspect',
+      outputPath,
+    ], io)
 
     expect(exitCode).toBe(2)
     expect(io.stdoutText).toBe('')
@@ -712,7 +754,13 @@ describe('executeCli', () => {
     const io = await createTestIo()
     const outputPath = join(io.cwd, 'missing.json')
 
-    const exitCode = await executeCli(['node', 'alint', 'output', 'inspect', outputPath], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'output',
+      'inspect',
+      outputPath,
+    ], io)
 
     expect(exitCode).toBe(2)
     expect(io.stdoutText).toBe('')
@@ -757,7 +805,13 @@ describe('executeCli', () => {
   it('prints output inspect usage and options in output inspect help', async () => {
     const io = await createTestIo()
 
-    const exitCode = await executeCli(['node', 'alint', 'output', 'inspect', '--help'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'output',
+      'inspect',
+      '--help',
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toContain('Read a saved alint JSON run result and render it with a reporter.')
@@ -797,7 +851,13 @@ describe('executeCli', () => {
   it('prints description for config inspect help', async () => {
     const io = await createTestIo()
 
-    const exitCode = await executeCli(['node', 'alint', 'config', 'inspect', '--help'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'config',
+      'inspect',
+      '--help',
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toContain('Inspect resolved config for a file')
@@ -810,7 +870,14 @@ describe('executeCli', () => {
     const io = await createTestIo()
     await writeFile(join(io.cwd, 'empty.config.ts'), 'export default [{ rules: {} }]\n', 'utf8')
 
-    const exitCode = await executeCli(['node', 'alint', '--config', 'empty.config.ts', 'plugin', 'install'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      '--config',
+      'empty.config.ts',
+      'plugin',
+      'install',
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toBe('No static plugins configured. Wrote empty plugin lock.\n')
@@ -865,7 +932,13 @@ local = "./plugins/local-plugin"
   it('prints only direct nested config subcommands in config models help', async () => {
     const io = await createTestIo()
 
-    const exitCode = await executeCli(['node', 'alint', 'config', 'models', '--help'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'config',
+      'models',
+      '--help',
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toContain('Inspect, list, and probe model entries from alint setup configuration.')
@@ -881,7 +954,14 @@ local = "./plugins/local-plugin"
   it('prints nested command usage and options in config models probe help', async () => {
     const io = await createTestIo()
 
-    const exitCode = await executeCli(['node', 'alint', 'config', 'models', 'probe', '--help'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'config',
+      'models',
+      'probe',
+      '--help',
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toContain('Probe an OpenAI-compatible models endpoint before saving it in setup config.')
@@ -899,7 +979,14 @@ local = "./plugins/local-plugin"
   it('prints the live benchmark option in config models list help', async () => {
     const io = await createTestIo()
 
-    const exitCode = await executeCli(['node', 'alint', 'config', 'models', 'list', '--help'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      'config',
+      'models',
+      'list',
+      '--help',
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stdoutText).toContain('$ alint config models list')
@@ -1104,7 +1191,10 @@ local = "./plugins/local-plugin"
 
   it('returns 2 when config models probe cannot read OpenAI-compatible models', async () => {
     const io = await createTestIo()
-    const server = await withModelsServer(() => ({ body: { data: [] }, status: 500 }))
+    const server = await withModelsServer(() => ({
+      body: { data: [] },
+      status: 500,
+    }))
 
     try {
       const exitCode = await executeCli([
@@ -1256,7 +1346,10 @@ local = "./plugins/local-plugin"
           endpoint: 'http://localhost:11434/v1',
           headers: { Authorization: 'Bearer secret' },
           id: 'ollama',
-          models: [{ id: 'qwen:8b' }, { id: 'qwen:32b' }],
+          models: [
+            { id: 'qwen:8b' },
+            { id: 'qwen:32b' },
+          ],
           type: 'openai-compatible',
         },
       ],
@@ -1292,7 +1385,9 @@ local = "./plugins/local-plugin"
             'HTTP-Referer': 'https://example.test',
           },
           id: 'openrouter',
-          models: [{ id: 'openai/gpt-4.1-mini' }],
+          models: [
+            { id: 'openai/gpt-4.1-mini' },
+          ],
           type: 'openai-compatible',
         },
       ],
@@ -1336,7 +1431,12 @@ local = "./plugins/local-plugin"
   it('probes provider reachability and model count', async () => {
     const io = await createTestIo()
     const server = await withModelsServer(() => ({
-      body: { data: [{ id: 'one' }, { id: 'two' }] },
+      body: {
+        data: [
+          { id: 'one' },
+          { id: 'two' },
+        ],
+      },
     }))
 
     try {
@@ -1959,7 +2059,13 @@ export default [
 ]
 `)
 
-    const code = await executeCli(['node', 'alint', '--format', 'json', 'src/**/*.ts'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      '--format',
+      'json',
+      'src/**/*.ts',
+    ], io)
     const diagnostics = JSON.parse(io.stdoutText).diagnostics
 
     expect(code).toBe(0)
@@ -2002,7 +2108,13 @@ export default [
 ]
 `)
 
-    const code = await executeCli(['node', 'alint', '--format', 'json', join(io.cwd, 'src/**/*.ts')], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      '--format',
+      'json',
+      join(io.cwd, 'src/**/*.ts'),
+    ], io)
     const diagnostics = JSON.parse(io.stdoutText).diagnostics
 
     expect(code).toBe(0)
@@ -2041,7 +2153,13 @@ export default [
 ]
 `)
 
-    const code = await executeCli(['node', 'alint', '--format', 'json', 'src/*.ts'], io)
+    const code = await executeCli([
+      'node',
+      'alint',
+      '--format',
+      'json',
+      'src/*.ts',
+    ], io)
     const diagnostics = JSON.parse(io.stdoutText).diagnostics
 
     expect(code).toBe(0)
@@ -2482,7 +2600,13 @@ export default [
       await chmod(gitignoredDir, 0o000)
       gitignoredDirLocked = true
 
-      const code = await executeCli(['node', 'alint', '--format', 'json', 'src'], io)
+      const code = await executeCli([
+        'node',
+        'alint',
+        '--format',
+        'json',
+        'src',
+      ], io)
       const diagnostics = JSON.parse(io.stdoutText).diagnostics
 
       expect(code).toBe(0)
@@ -2534,7 +2658,12 @@ export default [
       await chmod(gitignoredDir, 0o000)
       gitignoredDirLocked = true
 
-      const code = await executeCli(['node', 'alint', 'ignored', 'gitignored'], io)
+      const code = await executeCli([
+        'node',
+        'alint',
+        'ignored',
+        'gitignored',
+      ], io)
 
       expect(code).toBe(0)
       expect(io.stdoutText).toBe('')
@@ -3270,9 +3399,30 @@ export default [
       io.stderrText += chunk
     }
     const result: RunResult = {
-      diagnostics: [{ filePath: join(io.cwd, 'demo.ts'), message: 'completed finding', ruleId: 'company/review', severity: 'warn' }],
-      execution: { cached: 0, cancelled: 0, completed: 1, failed: 0, planned: 1, queued: 0, running: 0, skipped: 0 },
-      usage: { inputTokens: 0, outputTokens: 0, records: [], totalTokens: 0 },
+      diagnostics: [
+        {
+          filePath: join(io.cwd, 'demo.ts'),
+          message: 'completed finding',
+          ruleId: 'company/review',
+          severity: 'warn',
+        },
+      ],
+      execution: {
+        cached: 0,
+        cancelled: 0,
+        completed: 1,
+        failed: 0,
+        planned: 1,
+        queued: 0,
+        running: 0,
+        skipped: 0,
+      },
+      usage: {
+        inputTokens: 0,
+        outputTokens: 0,
+        records: [],
+        totalTokens: 0,
+      },
     }
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockRejectedValue(
       new alintCore.AlintCachePersistenceError(result, new Error('cache lease unavailable')),
@@ -3282,7 +3432,13 @@ export default [
       await writeFile(join(io.cwd, 'demo.ts'), 'export function load() {}\n')
       await writeFile(join(io.cwd, 'alint.config.ts'), 'export default [{ files: [\'**/*.ts\'] }]\n')
 
-      const exitCode = await executeCli(['node', 'alint', '--format', 'json', 'demo.ts'], io)
+      const exitCode = await executeCli([
+        'node',
+        'alint',
+        '--format',
+        'json',
+        'demo.ts',
+      ], io)
 
       expect(exitCode).toBe(1)
       expect(JSON.parse(io.stdoutText)).toEqual(result)
@@ -3384,14 +3540,30 @@ export default [
     const io = await createTestIo()
     clearCiEnv(io.env)
     const result: RunResult = {
-      diagnostics: [{
-        filePath: join(io.cwd, 'demo.ts'),
-        message: 'Finding before cancellation',
-        ruleId: 'company/review',
-        severity: 'warn',
-      }],
-      execution: { cached: 0, cancelled: 1, completed: 0, failed: 0, planned: 1, queued: 0, running: 0, skipped: 0 },
-      usage: { inputTokens: 0, outputTokens: 0, records: [], totalTokens: 0 },
+      diagnostics: [
+        {
+          filePath: join(io.cwd, 'demo.ts'),
+          message: 'Finding before cancellation',
+          ruleId: 'company/review',
+          severity: 'warn',
+        },
+      ],
+      execution: {
+        cached: 0,
+        cancelled: 1,
+        completed: 0,
+        failed: 0,
+        planned: 1,
+        queued: 0,
+        running: 0,
+        skipped: 0,
+      },
+      usage: {
+        inputTokens: 0,
+        outputTokens: 0,
+        records: [],
+        totalTokens: 0,
+      },
     }
     const runAlint = vi.spyOn(alintCore, 'runAlint').mockRejectedValue(new alintCore.AlintRunCancelledError(result))
 
@@ -3407,7 +3579,13 @@ export default [
       expect(io.stderrText).not.toContain('Finding before cancellation')
       const statsFiles = await readdir(statsDirOf(io))
       const statsRecord = JSON.parse((await readFile(join(statsDirOf(io), statsFiles[0]!), 'utf8')).trim())
-      expect(statsRecord.ruleCounts).toEqual({ cached: 0, cancelled: 1, completed: 0, failed: 0, planned: 1 })
+      expect(statsRecord.ruleCounts).toEqual({
+        cached: 0,
+        cancelled: 1,
+        completed: 0,
+        failed: 0,
+        planned: 1,
+      })
     }
     finally {
       runAlint.mockRestore()
@@ -3604,7 +3782,13 @@ export default [
     const io = await createTestIo()
     await writeRuleFilterFixture(io.cwd)
 
-    const exitCode = await executeCli(['node', 'alint', '--rule', 'company/kept-rule', 'demo.ts'], io)
+    const exitCode = await executeCli([
+      'node',
+      'alint',
+      '--rule',
+      'company/kept-rule',
+      'demo.ts',
+    ], io)
 
     expect(exitCode).toBe(0)
     expect(io.stderrText).toBe('')
@@ -3616,7 +3800,13 @@ export default [
     const io = await createTestIo()
     await writeRuleFilterFixture(io.cwd)
 
-    await expect(executeCli(['node', 'alint', '--rule', 'company/missing', 'demo.ts'], io)).rejects.toThrow(
+    await expect(executeCli([
+      'node',
+      'alint',
+      '--rule',
+      'company/missing',
+      'demo.ts',
+    ], io)).rejects.toThrow(
       'No enabled rule matched --rule "company/missing". Enabled rules: company/kept-rule, company/other-rule.',
     )
   })

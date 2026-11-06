@@ -33,8 +33,12 @@ function createContext() {
     cwd: '/repo',
     id: 'example/no-redundant-binding',
     localId: 'no-redundant-binding',
-    logger: { debug: () => {} },
-    metering: { recordUsage: () => {} },
+    logger: {
+      debug: () => {},
+    },
+    metering: {
+      recordUsage: () => {},
+    },
     model: async () => ({
       aliases: [],
       capabilities: ['tool-call'],
@@ -56,7 +60,9 @@ function createContext() {
         contentHash: createHash('sha256').update(source).digest('hex'),
         language: 'plaintext',
         lines: source.split('\n'),
-        path: typeof file === 'string' ? file : file.path,
+        path: typeof file === 'string'
+          ? file
+          : file.path,
         text: source,
       }),
     }),
@@ -100,14 +106,44 @@ describe('redundantBindingRule', () => {
 
   it('allows discovered lines, preserves separate declarations, and reports each line once', async () => {
     mockedJudgeSource.mockResolvedValueOnce([
-      { confidence: 'high', line: 2, message: 'candidate left', suggestion: 'verify left' },
-      { confidence: 'high', line: 4, message: 'candidate right', suggestion: 'verify right' },
+      {
+        confidence: 'high',
+        line: 2,
+        message: 'candidate left',
+        suggestion: 'verify left',
+      },
+      {
+        confidence: 'high',
+        line: 4,
+        message: 'candidate right',
+        suggestion: 'verify right',
+      },
     ])
     mockedVerifyRedundantBindings.mockResolvedValueOnce([
-      { confidence: 'high', line: 2, message: 'left is redundant', suggestion: 'Use the source directly.' },
-      { confidence: 'medium', line: 2, message: 'duplicate left', suggestion: 'Use the source directly.' },
-      { confidence: 'medium', line: 4, message: 'right is redundant', suggestion: 'Use the source directly.' },
-      { confidence: 'high', line: 99, message: 'not discovered', suggestion: 'Ignore this.' },
+      {
+        confidence: 'high',
+        line: 2,
+        message: 'left is redundant',
+        suggestion: 'Use the source directly.',
+      },
+      {
+        confidence: 'medium',
+        line: 2,
+        message: 'duplicate left',
+        suggestion: 'Use the source directly.',
+      },
+      {
+        confidence: 'medium',
+        line: 4,
+        message: 'right is redundant',
+        suggestion: 'Use the source directly.',
+      },
+      {
+        confidence: 'high',
+        line: 99,
+        message: 'not discovered',
+        suggestion: 'Ignore this.',
+      },
     ])
     const { context, diagnostics } = createContext()
 
@@ -129,7 +165,9 @@ describe('redundantBindingRule', () => {
           suggestion: 'Use the source directly.',
         },
         filePath: '/repo/source.ts',
-        loc: { start: { column: 0, line: 2 } },
+        loc: {
+          start: { column: 0, line: 2 },
+        },
         message: 'left is redundant',
       },
       {
@@ -138,7 +176,9 @@ describe('redundantBindingRule', () => {
           suggestion: 'Use the source directly.',
         },
         filePath: '/repo/source.ts',
-        loc: { start: { column: 0, line: 4 } },
+        loc: {
+          start: { column: 0, line: 4 },
+        },
         message: 'right is redundant',
       },
     ])

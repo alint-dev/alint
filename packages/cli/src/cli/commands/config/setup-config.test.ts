@@ -16,8 +16,12 @@ async function createTestIo(): Promise<CliIo> {
   return {
     cwd,
     env: { XDG_CONFIG_HOME: configHome },
-    stderr: { write: () => {} },
-    stdout: { write: () => {} },
+    stderr: {
+      write: () => {},
+    },
+    stdout: {
+      write: () => {},
+    },
   }
 }
 
@@ -26,12 +30,19 @@ describe('loadRunSetupConfig', () => {
     const io = await createTestIo()
 
     await writeSetupConfig(getGlobalSetupConfigPath(io.env), {
-      providers: [{
-        endpoint: 'https://global.example/v1',
-        id: 'global',
-        models: [{ aliases: ['default'], id: 'global-default' }],
-        type: 'openai-compatible',
-      }],
+      providers: [
+        {
+          endpoint: 'https://global.example/v1',
+          id: 'global',
+          models: [
+            {
+              aliases: ['default'],
+              id: 'global-default',
+            },
+          ],
+          type: 'openai-compatible',
+        },
+      ],
       version: 1,
     })
     await writeSetupConfig(getProjectSetupConfigPath(io.cwd), {
@@ -51,21 +62,32 @@ describe('loadRunSetupConfig', () => {
     const io = await createTestIo()
 
     await writeSetupConfig(getGlobalSetupConfigPath(io.env), {
-      providers: [{
-        endpoint: 'https://global.example/v1',
-        id: 'global',
-        models: [{ aliases: ['default'], id: 'global-default' }],
-        type: 'openai-compatible',
-      }],
+      providers: [
+        {
+          endpoint: 'https://global.example/v1',
+          id: 'global',
+          models: [
+            {
+              aliases: ['default'],
+              id: 'global-default',
+            },
+          ],
+          type: 'openai-compatible',
+        },
+      ],
       version: 1,
     })
     await writeSetupConfig(getProjectSetupConfigPath(io.cwd), {
-      providers: [{
-        endpoint: 'https://project.example/v1',
-        id: 'project',
-        models: [{ id: 'project-model' }],
-        type: 'openai-compatible',
-      }],
+      providers: [
+        {
+          endpoint: 'https://project.example/v1',
+          id: 'project',
+          models: [
+            { id: 'project-model' },
+          ],
+          type: 'openai-compatible',
+        },
+      ],
       version: 1,
     })
 
@@ -79,10 +101,14 @@ describe('loadRunSetupConfig', () => {
     const io = await createTestIo()
 
     await writeSetupConfig(getProjectSetupConfigPath(io.cwd), {
-      providers: [{
-        id: 'acp',
-        models: [{ command: 'codex-acp', driver: 'acp', id: 'codex' }],
-      }],
+      providers: [
+        {
+          id: 'acp',
+          models: [
+            { command: 'codex-acp', driver: 'acp', id: 'codex' },
+          ],
+        },
+      ],
       version: 1,
     })
 

@@ -22,8 +22,16 @@ describe('config array resolution', () => {
       ],
     },
     rules: {
-      'file-review': defineRule({ create: () => ({ onTargetWith: () => {} }) }),
-      'strict-review': defineRule({ create: () => ({ onTargetWith: () => {} }) }),
+      'file-review': defineRule({
+        create: () => ({
+          onTargetWith: () => {},
+        }),
+      }),
+      'strict-review': defineRule({
+        create: () => ({
+          onTargetWith: () => {},
+        }),
+      }),
     },
   })
 
@@ -32,7 +40,13 @@ describe('config array resolution', () => {
     const second = { name: 'second' }
     const third = { name: 'third' }
 
-    expect(normalizeConfig([first, [second, [third]]])).toEqual([first, second, third])
+    expect(normalizeConfig([
+      first,
+      [
+        second,
+        [third],
+      ],
+    ])).toEqual([first, second, third])
   })
 
   it('does not enable rules from plugin registration alone', () => {
@@ -230,11 +244,15 @@ describe('config array resolution', () => {
   it('supports nested AND file patterns', () => {
     const result = resolveConfigForFile('/repo/src/main.go', [
       {
-        files: [['src/**', '**/*.go']],
+        files: [
+          ['src/**', '**/*.go'],
+        ],
         rules: { 'review/file-review': 'warn' },
       },
       {
-        files: [['src/**', '**/*.swift']],
+        files: [
+          ['src/**', '**/*.swift'],
+        ],
         rules: { 'review/strict-review': 'warn' },
       },
     ], { cwd: '/repo' })
@@ -296,8 +314,12 @@ describe('config array resolution', () => {
   })
 
   it('shallow merges config objects and applies later scalar fields', () => {
-    const firstProcessor = { preprocess: () => [] }
-    const secondProcessor = { preprocess: () => [] }
+    const firstProcessor = {
+      preprocess: () => [],
+    }
+    const secondProcessor = {
+      preprocess: () => [],
+    }
     const result = resolveConfigForFile('/repo/main.go', [
       {
         language: 'plaintext',
@@ -305,7 +327,10 @@ describe('config array resolution', () => {
         linterOptions: { noInlineConfig: true },
         processor: firstProcessor,
         runner: { agentRetries: 1, ruleConcurrency: 1, timeoutMs: 100 },
-        settings: { review: { depth: 'light' }, shared: true },
+        settings: {
+          review: { depth: 'light' },
+          shared: true,
+        },
       },
       {
         language: 'go',
@@ -313,7 +338,9 @@ describe('config array resolution', () => {
         linterOptions: { reportUnusedDisableDirectives: 'warn' },
         processor: secondProcessor,
         runner: { agentRetries: 3, timeoutMs: 200 },
-        settings: { review: { depth: 'strict' } },
+        settings: {
+          review: { depth: 'strict' },
+        },
       },
     ], { cwd: '/repo' })
 
@@ -325,7 +352,10 @@ describe('config array resolution', () => {
       reportUnusedDisableDirectives: 'warn',
     })
     expect(result.config.runner).toEqual({ agentRetries: 3, ruleConcurrency: 1, timeoutMs: 200 })
-    expect(result.config.settings).toEqual({ review: { depth: 'strict' }, shared: true })
+    expect(result.config.settings).toEqual({
+      review: { depth: 'strict' },
+      shared: true,
+    })
   })
 
   it('resolves the agent adapter as a last-write-wins scalar field', () => {
@@ -363,8 +393,12 @@ describe('config array resolution', () => {
     const otherPlugin = definePlugin({ rules: {} })
 
     expect(() => resolveConfigForFile('/repo/main.go', [
-      { plugins: { review: plugin } },
-      { plugins: { review: otherPlugin } },
+      {
+        plugins: { review: plugin },
+      },
+      {
+        plugins: { review: otherPlugin },
+      },
     ], { cwd: '/repo' })).toThrow('Duplicate plugin alias "review".')
   })
 
@@ -380,7 +414,11 @@ describe('config array resolution', () => {
   it('throws for circular config extends', () => {
     const recursivePlugin = definePlugin({
       configs: {
-        recommended: [{ extends: ['review/recommended'] }],
+        recommended: [
+          {
+            extends: ['review/recommended'],
+          },
+        ],
       },
     })
 

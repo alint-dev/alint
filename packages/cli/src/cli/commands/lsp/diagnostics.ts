@@ -17,7 +17,9 @@ export function toLspDiagnostic(diagnostic: Diagnostic): LspDiagnostic {
     code: diagnostic.ruleId,
     message: diagnostic.message,
     range: toRange(diagnostic),
-    severity: diagnostic.severity === 'error' ? 1 : 2,
+    severity: diagnostic.severity === 'error'
+      ? 1
+      : 2,
     source: 'alint',
   }
 }
@@ -31,7 +33,10 @@ function toRange(diagnostic: Diagnostic): LspRange {
 
   // A file-level diagnostic has no position. Any other line would point at unrelated code.
   if (!loc) {
-    return { end: { character: 0, line: 0 }, start: { character: 0, line: 0 } }
+    return {
+      end: { character: 0, line: 0 },
+      start: { character: 0, line: 0 },
+    }
   }
 
   const line = toLineIndex(loc.start.line)
@@ -45,7 +50,10 @@ function toRange(diagnostic: Diagnostic): LspRange {
   }
 
   return {
-    end: { character: loc.end.column, line: toLineIndex(loc.end.line) },
+    end: {
+      character: loc.end.column,
+      line: toLineIndex(loc.end.line),
+    },
     start: { character: loc.start.column, line },
   }
 }

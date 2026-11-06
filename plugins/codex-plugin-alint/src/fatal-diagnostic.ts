@@ -22,13 +22,19 @@ export function reportFatalFailure(context: string, error: unknown): void {
   const detail = errorMessageFrom(error) ?? 'unknown error'
   const diagnostic = writeFatalDiagnostic(context, detail)
   const failureDetail = `${context}: ${detail}`
-  const failure = `alint-plugin: Stop Gate hook runtime error. ${failureDetail}${terminalPunctuation.test(failureDetail) ? '' : '.'}`
+  const failure = `alint-plugin: Stop Gate hook runtime error. ${failureDetail}${terminalPunctuation.test(failureDetail)
+    ? ''
+    : '.'}`
   const writeError = diagnostic.writeError ?? 'unknown error'
   const guidance = diagnostic.path === undefined
-    ? `The error diagnostic could not be saved: ${writeError}${terminalPunctuation.test(writeError) ? '' : '.'} Explain this failure to the user.`
+    ? `The error diagnostic could not be saved: ${writeError}${terminalPunctuation.test(writeError)
+      ? ''
+      : '.'} Explain this failure to the user.`
     : `Read the error details at "${diagnostic.path}", then explain to the user how to fix the hook failure.${diagnostic.cleanupError === undefined
       ? ''
-      : ` Old diagnostic cleanup also failed: ${diagnostic.cleanupError}${terminalPunctuation.test(diagnostic.cleanupError) ? '' : '.'}`}`
+      : ` Old diagnostic cleanup also failed: ${diagnostic.cleanupError}${terminalPunctuation.test(diagnostic.cleanupError)
+        ? ''
+        : '.'}`}`
 
   writeSync(
     process.stderr.fd,

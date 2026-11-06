@@ -32,12 +32,18 @@ export async function activate(_context: ExtensionContext): Promise<void> {
     'alint',
     // The server is the alint the workspace installs, run on the user's own Node. Its cache keys
     // and cwd then match a terminal run. No native binding loads inside the extension host.
-    { args: ['lsp'], command, transport: TransportKind.stdio },
+    {
+      args: ['lsp'],
+      command,
+      transport: TransportKind.stdio,
+    },
     {
       // Broad on purpose. Plugins register languages, so only the alint config knows what alint
       // lints. The sync does not limit a run. It starts the refresh on save, and it records which
       // documents are open.
-      documentSelector: [{ scheme: 'file' }],
+      documentSelector: [
+        { scheme: 'file' },
+      ],
       middleware: { executeCommand: interceptCommand },
     },
   )
@@ -151,6 +157,11 @@ async function resolveAlintBinary(): Promise<string | undefined> {
  */
 function withExecutableSuffixes(command: string): string[] {
   return process.platform === 'win32'
-    ? [`${command}.cmd`, `${command}.exe`, `${command}.bat`, command]
+    ? [
+        `${command}.cmd`,
+        `${command}.exe`,
+        `${command}.bat`,
+        command,
+      ]
     : [command]
 }

@@ -81,7 +81,10 @@ export async function reviewRepository<Category extends string>(
         source: formatSourceWithLineNumbers(file.text),
       }),
     ].join('\n\n'),
-    tools: [...withNumberedReads(createTools(ctx.cwd)), submission.tool],
+    tools: [
+      ...withNumberedReads(createTools(ctx.cwd)),
+      submission.tool,
+    ],
   })
 
   if (result.usage) {
@@ -124,7 +127,9 @@ function deduplicateFindings<Category extends string>(
 }
 
 function repositoryRelativePath(cwd: string, filePath: string): string {
-  const relativePath = cwd && isAbsolute(filePath) ? relative(cwd, filePath) : filePath
+  const relativePath = cwd && isAbsolute(filePath)
+    ? relative(cwd, filePath)
+    : filePath
   return normalize(relativePath).split(sep).join('/')
 }
 

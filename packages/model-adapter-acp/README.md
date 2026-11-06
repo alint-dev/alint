@@ -34,12 +34,14 @@ import { createCommandModel, startGateway } from '@alint-js/model-adapter-acp'
 
 const gateway = await startGateway({
   cwd: process.cwd(),
-  models: [createCommandModel({
-    command: 'codex-acp',
-    cwd: process.cwd(),
-    id: 'codex',
-    name: 'Codex ACP',
-  })],
+  models: [
+    createCommandModel({
+      command: 'codex-acp',
+      cwd: process.cwd(),
+      id: 'codex',
+      name: 'Codex ACP',
+    })
+  ],
 })
 
 console.info(gateway.endpoint)
@@ -57,14 +59,16 @@ import { serve } from 'h3/node'
 const app = createGateway({
   cwd: process.cwd(),
   mcpBaseUrl: 'http://127.0.0.1:7419',
-  models: [{
-    id: 'reviewer',
-    name: 'Review Agent',
-    openConnection: async () => ({
-      kind: 'stream',
-      stream: await openYourAcpStream(),
-    }),
-  }],
+  models: [
+    {
+      id: 'reviewer',
+      name: 'Review Agent',
+      openConnection: async () => ({
+        kind: 'stream',
+        stream: await openYourAcpStream(),
+      }),
+    }
+  ],
 })
 
 const server = await serve(app, { hostname: '127.0.0.1', port: 7419 }).ready()

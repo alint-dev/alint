@@ -35,7 +35,9 @@ function stableStringify(value: unknown): string {
     const record = value as Record<string, unknown>
     return `{${Object.keys(record).sort().flatMap((key) => {
       const property = record[key]
-      return property === undefined ? [] : [`${JSON.stringify(key)}:${stableStringify(property)}`]
+      return property === undefined
+        ? []
+        : [`${JSON.stringify(key)}:${stableStringify(property)}`]
     }).join(',')}}`
   }
   return JSON.stringify(value)

@@ -96,7 +96,10 @@ describe('language registry', () => {
 
   it('allows registering the same language object more than once', () => {
     const registry = createBuiltInLanguageRegistry()
-    const language = createLanguage({ extensions: ['.demo'], name: 'demo' })
+    const language = createLanguage({
+      extensions: ['.demo'],
+      name: 'demo',
+    })
 
     registerLanguage(registry, language)
     registerLanguage(registry, language)
@@ -107,14 +110,20 @@ describe('language registry', () => {
 
   it('throws when duplicate extensions point to different language owners', () => {
     const registry = createBuiltInLanguageRegistry()
-    const language = createLanguage({ extensions: ['.ts'], name: 'typed' })
+    const language = createLanguage({
+      extensions: ['.ts'],
+      name: 'typed',
+    })
 
     expect(() => registerLanguage(registry, language)).toThrow('Duplicate language extension ".ts".')
   })
 
   it('does not register language or extensions when a later extension conflicts', () => {
     const registry = createBuiltInLanguageRegistry()
-    const language = createLanguage({ extensions: ['.free', '.ts'], name: 'typed' })
+    const language = createLanguage({
+      extensions: ['.free', '.ts'],
+      name: 'typed',
+    })
 
     expect(() => registerLanguage(registry, language)).toThrow('Duplicate language extension ".ts".')
     expect(registry.languages.has('typed')).toBe(false)

@@ -23,7 +23,10 @@ describe('createPublisher', () => {
   it('publishes open files before closed ones in the same flush', async () => {
     // The user is looking at the open document. It must not wait for the rest of the workspace.
     const order: string[] = []
-    const publisher = createPublisher({ flushMs: 200, publish: uri => order.push(uri) })
+    const publisher = createPublisher({
+      flushMs: 200,
+      publish: uri => order.push(uri),
+    })
 
     publisher.setOpen('file:///open.ts', true)
     publisher.queue('file:///closed.ts')
@@ -73,7 +76,10 @@ describe('createPublisher', () => {
 
   it('tracks open state so a closed file loses its priority', async () => {
     const order: string[] = []
-    const publisher = createPublisher({ flushMs: 200, publish: uri => order.push(uri) })
+    const publisher = createPublisher({
+      flushMs: 200,
+      publish: uri => order.push(uri),
+    })
 
     publisher.setOpen('file:///a.ts', true)
     publisher.setOpen('file:///a.ts', false)

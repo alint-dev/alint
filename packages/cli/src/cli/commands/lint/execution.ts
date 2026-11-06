@@ -26,7 +26,9 @@ export type LintExecutionOptions = SessionTargetSelection & {
 export async function executeLint(options: LintExecutionOptions): Promise<RunResult> {
   const runner = resolveRunnerConfig(options.session.runner, options.runnerOptions)
   const statsTarget = resolveStatsWrite(runner?.stats, options.io.env)
-  const statsCollector = statsTarget ? createStatsCollector() : undefined
+  const statsCollector = statsTarget
+    ? createStatsCollector()
+    : undefined
   const persistStats = async (result: RunResult): Promise<void> => {
     if (statsTarget && statsCollector) {
       await writeRunStats(statsTarget, statsCollector, result, options.session.cwd)

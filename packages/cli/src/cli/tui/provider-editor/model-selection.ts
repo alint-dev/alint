@@ -14,7 +14,9 @@ export function applyDefaultAlias(config: SetupConfig, target: DefaultAliasTarge
     ...config,
     providers: config.providers.map(provider => ({
       ...provider,
-      headers: provider.headers === undefined ? undefined : { ...provider.headers },
+      headers: provider.headers === undefined
+        ? undefined
+        : { ...provider.headers },
       models: provider.models.map((model) => {
         const aliasesWithoutDefault = (model.aliases ?? []).filter(alias => alias !== 'default')
         const aliases = provider.id === target.providerId && model.id === target.modelId
@@ -23,7 +25,9 @@ export function applyDefaultAlias(config: SetupConfig, target: DefaultAliasTarge
 
         return {
           ...cloneModel(model),
-          aliases: aliases.length > 0 ? aliases : undefined,
+          aliases: aliases.length > 0
+            ? aliases
+            : undefined,
         }
       }),
     })),
@@ -52,7 +56,9 @@ export function applyHeaderSelection(
 
   const headers = Object.fromEntries(headersByName.values())
 
-  return Object.keys(headers).length > 0 ? headers : undefined
+  return Object.keys(headers).length > 0
+    ? headers
+    : undefined
 }
 
 export function createDefaultModelCandidates(
@@ -111,8 +117,12 @@ export function createModelOptions(
   const discovered = new Set(discoveredIds)
   const existing = firstModelsById(provider)
   const optionIds = new Set(existing.keys())
-  const options: ModelOption[] = [...existing.values()].map(model => ({
-    hint: discovered.has(model.id) ? undefined : 'not reported by provider',
+  const options: ModelOption[] = [
+    ...existing.values(),
+  ].map(model => ({
+    hint: discovered.has(model.id)
+      ? undefined
+      : 'not reported by provider',
     label: model.id,
     value: model.id,
   }))
@@ -144,7 +154,9 @@ export function modelsFromSelection(
 
     selected.add(modelId)
     const model = existing.get(modelId)
-    models.push(model === undefined ? { id: modelId, name: modelId } : cloneModel(model))
+    models.push(model === undefined
+      ? { id: modelId, name: modelId }
+      : cloneModel(model))
   }
 
   return models
@@ -157,9 +169,15 @@ export function normalizeHeaderName(name: string): string {
 function cloneModel(model: SetupModelDefinition): SetupModelDefinition {
   return {
     ...model,
-    aliases: model.aliases === undefined ? undefined : [...model.aliases],
-    capabilities: model.capabilities === undefined ? undefined : [...model.capabilities],
-    defaultParams: model.defaultParams === undefined ? undefined : { ...model.defaultParams },
+    aliases: model.aliases === undefined
+      ? undefined
+      : [...model.aliases],
+    capabilities: model.capabilities === undefined
+      ? undefined
+      : [...model.capabilities],
+    defaultParams: model.defaultParams === undefined
+      ? undefined
+      : { ...model.defaultParams },
   }
 }
 

@@ -32,14 +32,21 @@ export function formatMetric(row: StatsGroupRow, metric: StatsMetric, exact = fa
 }
 
 export function formatMetricValue(value: number, metric: StatsMetric, exact = false): string {
-  return metric === 'runs' ? String(value) : formatTokens(value, exact)
+  return metric === 'runs'
+    ? String(value)
+    : formatTokens(value, exact)
 }
 
 export function formatStatsAggregate(aggregate: StatsAggregate, options: FormatStatsOptions = {}): string {
-  const paint: Paint = (text, style) => options.color === true ? style(text) : text
+  const paint: Paint = (text, style) => options.color === true
+    ? style(text)
+    : text
   const metric = options.metric ?? 'tokens'
   const exact = options.exact === true
-  const lines = [summaryLine(aggregate, paint, exact), '']
+  const lines = [
+    summaryLine(aggregate, paint, exact),
+    '',
+  ]
 
   if (aggregate.rows.length === 0) {
     lines.push('No stats recorded yet.')
@@ -47,7 +54,13 @@ export function formatStatsAggregate(aggregate: StatsAggregate, options: FormatS
     return `${lines.join('\n')}\n`
   }
 
-  const header = [DIMENSION_LABEL[aggregate.dimension], 'runs', 'input', 'output', 'total']
+  const header = [
+    DIMENSION_LABEL[aggregate.dimension],
+    'runs',
+    'input',
+    'output',
+    'total',
+  ]
   const rows = sortRows(aggregate.rows, metric).map(row => [
     row.key,
     String(row.runs),
@@ -60,9 +73,13 @@ export function formatStatsAggregate(aggregate: StatsAggregate, options: FormatS
   const renderRow = (cells: string[], isHeader: boolean): string =>
     cells
       .map((cell, index) => {
-        const aligned = index === 0 ? cell.padEnd(widths[index]) : cell.padStart(widths[index])
+        const aligned = index === 0
+          ? cell.padEnd(widths[index])
+          : cell.padStart(widths[index])
 
-        return isHeader ? paint(aligned, colors.bold) : aligned
+        return isHeader
+          ? paint(aligned, colors.bold)
+          : aligned
       })
       .join('  ')
 
@@ -88,7 +105,9 @@ export function formatTokens(value: number, exact = false): string {
 }
 
 export function metricValue(row: StatsGroupRow, metric: StatsMetric): number {
-  return metric === 'runs' ? row.runs : row.totalTok
+  return metric === 'runs'
+    ? row.runs
+    : row.totalTok
 }
 
 export function sortRows(rows: StatsGroupRow[], metric: StatsMetric): StatsGroupRow[] {
@@ -96,7 +115,9 @@ export function sortRows(rows: StatsGroupRow[], metric: StatsMetric): StatsGroup
 }
 
 export function summaryLine(totals: StatsTotals, paint: Paint, exact = false): string {
-  const runLabel = totals.totalRuns === 1 ? 'run' : 'runs'
+  const runLabel = totals.totalRuns === 1
+    ? 'run'
+    : 'runs'
 
   return `${totals.totalRuns} ${runLabel} — ${formatTokens(totals.totalIn, exact)} in / ${formatTokens(totals.totalOut, exact)} out / ${paint(`${formatTokens(totals.totalTok, exact)} total`, colors.cyan)}`
 }

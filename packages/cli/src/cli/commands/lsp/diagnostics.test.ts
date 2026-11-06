@@ -15,7 +15,10 @@ describe('toLspDiagnostic', () => {
   it('converts a 1-based line to 0-based and leaves the column alone', () => {
     const result = toLspDiagnostic({
       ...base,
-      loc: { end: { column: 12, line: 4 }, start: { column: 2, line: 4 } },
+      loc: {
+        end: { column: 12, line: 4 },
+        start: { column: 2, line: 4 },
+      },
     })
 
     expect(result.range.start).toEqual({ character: 2, line: 3 })
@@ -23,7 +26,12 @@ describe('toLspDiagnostic', () => {
   })
 
   it('ends at the whole-line sentinel when loc.end is missing', () => {
-    const result = toLspDiagnostic({ ...base, loc: { start: { column: 4, line: 2 } } })
+    const result = toLspDiagnostic({
+      ...base,
+      loc: {
+        start: { column: 4, line: 2 },
+      },
+    })
 
     expect(result.range.start).toEqual({ character: 0, line: 1 })
     expect(result.range.end).toEqual({ character: WHOLE_LINE, line: 1 })
@@ -52,7 +60,12 @@ describe('toLspDiagnostic', () => {
   })
 
   it('never returns a negative line for a line-1 finding', () => {
-    const result = toLspDiagnostic({ ...base, loc: { start: { column: 0, line: 1 } } })
+    const result = toLspDiagnostic({
+      ...base,
+      loc: {
+        start: { column: 0, line: 1 },
+      },
+    })
 
     expect(result.range.start.line).toBe(0)
   })
@@ -60,7 +73,10 @@ describe('toLspDiagnostic', () => {
   it('keeps a multi-line range spanning both lines', () => {
     const result = toLspDiagnostic({
       ...base,
-      loc: { end: { column: 1, line: 9 }, start: { column: 0, line: 4 } },
+      loc: {
+        end: { column: 1, line: 9 },
+        start: { column: 0, line: 4 },
+      },
     })
 
     expect(result.range.start).toEqual({ character: 0, line: 3 })

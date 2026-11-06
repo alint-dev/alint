@@ -21,7 +21,9 @@ async function main(): Promise<void> {
       .sort()
       .map(path => join(root, path))
     const functionRule = defineRule({
-      create: () => ({ onTargetFunction: () => {} }),
+      create: () => ({
+        onTargetFunction: () => {},
+      }),
       languages: 'any',
     })
     const projectRule = defineRule({
@@ -69,7 +71,10 @@ async function main(): Promise<void> {
             'benchmark/project': 'warn',
           },
         },
-        { files: ['**/*.mock'], language: 'benchmark/mock' },
+        {
+          files: ['**/*.mock'],
+          language: 'benchmark/mock',
+        },
       ]),
       cwd: root,
       files,
@@ -111,13 +116,15 @@ async function main(): Promise<void> {
       languages: {
         blocked: {
           extensions: ['.blocked'],
-          extract: file => [{
-            file,
-            identity: 'file',
-            kind: 'file',
-            language: 'benchmark/blocked',
-            text: file.text,
-          }],
+          extract: file => [
+            {
+              file,
+              identity: 'file',
+              kind: 'file',
+              language: 'benchmark/blocked',
+              text: file.text,
+            },
+          ],
           name: 'benchmark/blocked',
         },
       },
@@ -126,8 +133,14 @@ async function main(): Promise<void> {
     let planningProgress: ProgressSnapshot | undefined
     const result = await runAlint({
       config: defineConfig([
-        { plugins: { benchmark: plugin }, rules: { 'benchmark/blocked': 'warn' } },
-        { files: ['**/*.blocked'], language: 'benchmark/blocked' },
+        {
+          plugins: { benchmark: plugin },
+          rules: { 'benchmark/blocked': 'warn' },
+        },
+        {
+          files: ['**/*.blocked'],
+          language: 'benchmark/blocked',
+        },
       ]),
       cwd: root,
       files,

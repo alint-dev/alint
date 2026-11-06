@@ -17,7 +17,9 @@ export interface CreateToolsOptions {
 }
 
 export function createTools(cwd: string, options: CreateToolsOptions = {}): AgentTool[] {
-  const baseIgnore = options.ignore === undefined ? DEFAULT_IGNORE_PATTERNS : toStringArray(options.ignore)
+  const baseIgnore = options.ignore === undefined
+    ? DEFAULT_IGNORE_PATTERNS
+    : toStringArray(options.ignore)
 
   return [
     {
@@ -65,7 +67,11 @@ function fileSearchParameters(requiresQuery: boolean): Record<string, unknown> {
     directory: nullableStringSchema(),
     ignore: stringOrStringArraySchema(),
     patterns: stringOrStringArraySchema(),
-    ...(requiresQuery ? { query: { type: 'string' } } : {}),
+    ...(requiresQuery
+      ? {
+          query: { type: 'string' },
+        }
+      : {}),
   }
 
   return {
@@ -79,7 +85,10 @@ function fileSearchParameters(requiresQuery: boolean): Record<string, unknown> {
 function getListOptions(input: unknown, baseIgnore: readonly string[]): SearchOptions {
   return {
     directory: getStringProperty(input, 'directory'),
-    ignore: [...baseIgnore, ...toStringArray(getStringOrStringArrayProperty(input, 'ignore'))],
+    ignore: [
+      ...baseIgnore,
+      ...toStringArray(getStringOrStringArrayProperty(input, 'ignore')),
+    ],
     patterns: getStringOrStringArrayProperty(input, 'patterns'),
   }
 }
@@ -117,7 +126,9 @@ function getStringProperty(input: unknown, key: string): string | undefined {
 
   const value = (input as Record<string, unknown>)[key]
 
-  return typeof value === 'string' ? value : undefined
+  return typeof value === 'string'
+    ? value
+    : undefined
 }
 
 function nullableStringSchema(): Record<string, unknown> {

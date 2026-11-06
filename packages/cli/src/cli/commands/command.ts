@@ -76,7 +76,9 @@ function collectCommandOptions(node: CommandNode): CommandOption[] {
     }
   }
 
-  return [...options.values()]
+  return [
+    ...options.values(),
+  ]
 }
 
 function commandPattern(node: CommandNode): string {
@@ -84,7 +86,10 @@ function commandPattern(node: CommandNode): string {
     return node.arguments ?? node.name
   }
 
-  return [node.name, node.children ? '[...args]' : node.arguments]
+  return [
+    node.name,
+    node.children ? '[...args]' : node.arguments,
+  ]
     .filter(Boolean)
     .join(' ')
 }
@@ -195,7 +200,9 @@ function formatCommandHelp(
         ...normalizedSections.slice(usageIndex + 1),
       ]
 
-  return optionSection ? [...withCommands, optionSection] : withCommands
+  return optionSection
+    ? [...withCommands, optionSection]
+    : withCommands
 }
 
 function formatExamples(examples: readonly string[]): string {
@@ -232,7 +239,10 @@ function formatOptionsSection(options: readonly CommandOption[]): undefined | { 
 }
 
 function formatUnknownCommand(path: readonly string[], args: readonly string[]): string {
-  return [...path, ...args].filter(Boolean).join(' ')
+  return [
+    ...path,
+    ...args,
+  ].filter(Boolean).join(' ')
 }
 
 function formatUsagePattern(path: readonly string[], node: CommandNode): string {

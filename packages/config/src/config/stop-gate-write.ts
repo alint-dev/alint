@@ -58,7 +58,9 @@ export async function setStopGateConfig(
   }
 
   const document: StaticConfigDocument = loaded.configFile === undefined
-    ? { config: { group: [] } }
+    ? {
+        config: { group: [] },
+      }
     : parseStaticConfigDocument(await readFile(configFile, 'utf8'))
   const stopGates: Record<string, unknown>[] = []
   for (const group of document.config.group) {

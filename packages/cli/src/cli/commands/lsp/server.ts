@@ -53,7 +53,10 @@ export async function startLspServer(io: CliIo): Promise<number> {
 
   const publisher = createPublisher({
     flushMs: PUBLISH_FLUSH_MS,
-    publish: uri => connection.sendDiagnostics({ diagnostics: diagnosticsFor(uri), uri }),
+    publish: uri => connection.sendDiagnostics({
+      diagnostics: diagnosticsFor(uri),
+      uri,
+    }),
   })
 
   const openFolder = async (folderUri: string): Promise<void> => {
@@ -151,7 +154,9 @@ export async function startLspServer(io: CliIo): Promise<number> {
       // and set a `basePath`, and a watcher glob can express none of that. Each folder filters the
       // events with the matcher that discovery uses instead.
       void connection.client.register(DidChangeWatchedFilesNotification.type, {
-        watchers: [{ globPattern: '**/*' }],
+        watchers: [
+          { globPattern: '**/*' },
+        ],
       })
     }
 
@@ -179,7 +184,9 @@ export async function startLspServer(io: CliIo): Promise<number> {
 
   // A saved file is on disk, so the pass reads it and the client sends no text.
   connection.onDidSaveTextDocument(({ textDocument }) => {
-    void Promise.all([...folders.values()].map(async (folder) => {
+    void Promise.all([
+      ...folders.values(),
+    ].map(async (folder) => {
       try {
         for (const uri of await folder.refreshFile(textDocument.uri)) {
           publisher.queue(uri)
@@ -206,7 +213,9 @@ export async function startLspServer(io: CliIo): Promise<number> {
 
   connection.onExecuteCommand(async ({ arguments: args, command }) => {
     if (command === CLEAR_CACHE_COMMAND) {
-      await Promise.all([...folders.values()].map(async (folder) => {
+      await Promise.all([
+        ...folders.values(),
+      ].map(async (folder) => {
         try {
           for (const uri of await folder.clearCache()) {
             publisher.queue(uri)
@@ -241,7 +250,9 @@ export async function startLspServer(io: CliIo): Promise<number> {
     const controller = new AbortController()
 
     reporter.begin(
-      inputs === undefined ? 'Running alint on the workspace' : 'Running alint on the current file',
+      inputs === undefined
+        ? 'Running alint on the workspace'
+        : 'Running alint on the current file',
       0,
       undefined,
       true,
@@ -249,7 +260,9 @@ export async function startLspServer(io: CliIo): Promise<number> {
     reporter.token.onCancellationRequested(() => controller.abort())
 
     try {
-      await Promise.all([...folders.values()].map(async (folder) => {
+      await Promise.all([
+        ...folders.values(),
+      ].map(async (folder) => {
         try {
           await folder.runExplicit({
             inputs,
@@ -318,7 +331,9 @@ export async function startLspServer(io: CliIo): Promise<number> {
   connection.onShutdown(async () => {
     publisher.dispose()
     // Disposal stops the ACP gateway. Without it, the port and its child processes stay open.
-    await Promise.all([...folders.values()].map(folder => folder.dispose()))
+    await Promise.all([
+      ...folders.values(),
+    ].map(folder => folder.dispose()))
     folders.clear()
   })
 
@@ -348,7 +363,9 @@ function isFileUri(uri: string): boolean {
 /** A client can send `workspaceFolders`, the older `rootUri`, or both. The caller dedupes. */
 function resolveFolderUris(params: InitializeParams): string[] {
   const uris = params.workspaceFolders?.map(folder => folder.uri)
-    ?? (params.rootUri === null ? [] : [params.rootUri])
+    ?? (params.rootUri === null
+      ? []
+      : [params.rootUri])
 
   return uris.filter(isFileUri)
 }

@@ -11,7 +11,10 @@ export interface CreateDeclarativePluginOptions {
 
 export function createDeclarativePlugin(options: CreateDeclarativePluginOptions): PluginDefinition {
   return {
-    rules: Object.fromEntries(options.rules.map(rule => [rule.name, createDeclarativeRule(rule)])),
+    rules: Object.fromEntries(options.rules.map(rule => [
+      rule.name,
+      createDeclarativeRule(rule),
+    ])),
   }
 }
 

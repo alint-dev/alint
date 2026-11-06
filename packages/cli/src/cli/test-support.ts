@@ -20,6 +20,11 @@ export function runResultWith(diagnostics: Diagnostic[] = []): RunResult {
       running: 0,
       skipped: 0,
     },
-    usage: { inputTokens: 0, outputTokens: 0, records: [], totalTokens: 0 },
+    usage: {
+      inputTokens: 0,
+      outputTokens: 0,
+      records: [],
+      totalTokens: 0,
+    },
   }
 }
