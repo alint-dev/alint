@@ -121,6 +121,7 @@ question.
 
 - **`simplicity/no-duplicated-helper`**: a small helper is defined in two or more places.
 - **`simplicity/no-needless-helper`**: a one-line helper that does not earn its existence.
+- **`simplicity/no-reinvented-helper`**: a small helper that a utility library of the repository already exports.
 
 Rule ids carry the prefix you give the plugin in `plugins`, which is `simplicity/` in
 every example here.
@@ -185,6 +186,53 @@ its keep. The same three lines, two rules, opposite decisions.
 
 It costs one model call per file rather than an agent loop, because everything the
 judgement needs is already in hand and there is nothing to search for.
+
+## `no-reinvented-helper`
+
+`no-duplicated-helper` finds a helper written twice in the workspace. This rule finds a helper
+that the workspace did not need to write: a utility library that the repository already depends
+on exports the same function.
+
+```
+Helper "clampValue" reimplements `clamp` from `es-toolkit`. Both bound a number to a range.
+```
+
+It has no default, because only the repository knows which libraries it chose. Name them in
+the rule options, and the rule is off until you do:
+
+```js
+import simplicityPlugin from '@alint-js/plugin-simplicity'
+
+import { defineConfig } from '@alint-js/cli'
+
+export default defineConfig([
+  {
+    files: ['**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}'],
+    plugins: { simplicity: simplicityPlugin },
+    rules: {
+      'simplicity/no-reinvented-helper': [
+        'warn',
+        {
+          libraries: ['es-toolkit']
+        }
+      ],
+    },
+  },
+])
+```
+
+It reads the export names from the library itself, loaded from the linted workspace, so they
+match the installed version. A finding that names a helper outside the file, a library outside
+the options, or an export that the library does not have is dropped: the model can invent all
+three. Loading a library runs its top-level code, so list only the libraries you trust.
+
+It disagrees with `no-needless-helper` on purpose. `clamp(value, low, high)` earns its
+existence there, because the name says more than the body. Here it is still reported when the
+library exports `clamp`, because the workspace can import the name instead of keeping the body.
+
+It uses the same index of small helpers and the same `settings.simplicity` options. It costs one
+model call per file that has a helper, and the core cache keeps the verdict until the file or the
+options change. A library upgrade that adds an export does not reach a cached file.
 
 ## Usage
 

@@ -23,7 +23,7 @@ const settingsSchema = object({
 
 export type SimplicitySettings = InferOutput<typeof settingsSchema>
 
-export function readSimplicitySettings(ctx: RuleContext): SimplicitySettings {
+export function readSimplicitySettings(ctx: RuleContext<readonly unknown[]>): SimplicitySettings {
   const configured = ctx.settings.simplicity ?? {}
 
   // valibot's `object()` accepts an array, so `settings.simplicity: []` would pass and silently
