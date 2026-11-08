@@ -2,6 +2,7 @@ import { definePlugin } from '@alint-js/plugin'
 
 import { duplicatedHelperRule } from './rules/no-duplicated-helper'
 import { needlessHelperRule } from './rules/no-needless-helper'
+import { reinventedHelperRule } from './rules/no-reinvented-helper'
 
 export { alphaFingerprint, exactFingerprint, normalizedBody, tokenize, tokenOverlap } from './fingerprint'
 export type { IndexedHelper, RepoIndex, RepoIndexOptions, ReviewCache } from './repo'
@@ -19,6 +20,13 @@ export {
   needlessHelperResponseSchema,
   needlessHelperRule,
 } from './rules/no-needless-helper'
+export type { ReinventedHelperOptions } from './rules/no-reinvented-helper'
+export {
+  buildReinventedHelperPrompt,
+  reinventedHelperPrompt,
+  reinventedHelperResponseSchema,
+  reinventedHelperRule,
+} from './rules/no-reinvented-helper'
 export type { SimplicitySettings } from './rules/shared/settings'
 
 export const simplicityPlugin = definePlugin({
@@ -45,6 +53,8 @@ export const simplicityPlugin = definePlugin({
   rules: {
     'no-duplicated-helper': duplicatedHelperRule,
     'no-needless-helper': needlessHelperRule,
+    // Not in `recommended`: it has no default, because only the repository knows its libraries.
+    'no-reinvented-helper': reinventedHelperRule,
   },
 })
 

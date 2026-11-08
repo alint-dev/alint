@@ -4,6 +4,7 @@ import { inlineMiniatureNormalizerRule } from './rules/inline-miniature-normaliz
 import { configFileTestsRule } from './rules/no-config-file-tests'
 import { duplicatedKnowledgeRule } from './rules/no-duplicated-knowledge'
 import { mixedLayersWithoutAbstractionRule } from './rules/no-mixed-layers-without-abstraction'
+import { mixedLibrariesRule } from './rules/no-mixed-libraries'
 import { overlappingEntrypointsRule } from './rules/no-overlapping-entrypoints'
 import { privateSchemaToolkitRule } from './rules/no-private-schema-toolkit'
 import { redundantBindingRule } from './rules/no-redundant-binding'
@@ -19,6 +20,7 @@ export { inlineMiniatureNormalizerRule } from './rules/inline-miniature-normaliz
 export { configFileTestsRule } from './rules/no-config-file-tests'
 export { duplicatedKnowledgeRule } from './rules/no-duplicated-knowledge'
 export { mixedLayersWithoutAbstractionRule } from './rules/no-mixed-layers-without-abstraction'
+export { mixedLibrariesRule } from './rules/no-mixed-libraries'
 export { overlappingEntrypointsRule } from './rules/no-overlapping-entrypoints'
 export { privateSchemaToolkitRule } from './rules/no-private-schema-toolkit'
 export { redundantBindingRule } from './rules/no-redundant-binding'
@@ -51,6 +53,7 @@ export default definePlugin({
     'no-config-file-tests': configFileTestsRule,
     'no-duplicated-knowledge': duplicatedKnowledgeRule,
     'no-mixed-layers-without-abstraction': mixedLayersWithoutAbstractionRule,
+    'no-mixed-libraries': mixedLibrariesRule,
     'no-overlapping-entrypoints': overlappingEntrypointsRule,
     'no-private-schema-toolkit': privateSchemaToolkitRule,
     'no-redundant-binding': redundantBindingRule,

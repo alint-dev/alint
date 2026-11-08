@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import plugin, {
   configFileTestsRule,
   duplicatedKnowledgeRule,
+  mixedLibrariesRule,
   overlappingEntrypointsRule,
   redundantCatchRule,
   singleUseMaterializationRule,
@@ -53,5 +54,10 @@ describe('@alint-js/plugin-js registry', () => {
     }
 
     expect(plugin.rules?.['no-config-file-tests']).toBe(configFileTestsRule)
+  })
+
+  it('registers no-mixed-libraries without enabling it in recommended', () => {
+    expect(plugin.rules?.['no-mixed-libraries']).toBe(mixedLibrariesRule)
+    expect(RECOMMENDED_RULES).not.toHaveProperty('js/no-mixed-libraries')
   })
 })

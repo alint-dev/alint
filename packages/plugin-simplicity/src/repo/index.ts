@@ -65,7 +65,7 @@ export function helpersIn(index: RepoIndex, filePath: string): IndexedHelper[] {
   return index.helpers.filter(helper => helper.filePath === filePath)
 }
 
-export async function repoIndexFor(ctx: RuleContext, options: RepoIndexOptions): Promise<RepoIndex> {
+export async function repoIndexFor(ctx: RuleContext<readonly unknown[]>, options: RepoIndexOptions): Promise<RepoIndex> {
   const existing = indexes.get(ctx.src)
 
   if (existing !== undefined) {
@@ -110,7 +110,7 @@ export function twinsOf(
   return (bucket.get(fingerprint) ?? []).filter(other => other.id !== helper.id)
 }
 
-async function buildRepoIndex(ctx: RuleContext, options: RepoIndexOptions): Promise<RepoIndex> {
+async function buildRepoIndex(ctx: RuleContext<readonly unknown[]>, options: RepoIndexOptions): Promise<RepoIndex> {
   const index: RepoIndex = {
     byAlpha: new Map(),
     byExact: new Map(),
@@ -192,7 +192,7 @@ function functionInfoOf(target: SourceTarget): FunctionInfo | undefined {
 }
 
 async function helpersOf(
-  ctx: RuleContext,
+  ctx: RuleContext<readonly unknown[]>,
   filePath: string,
   options: RepoIndexOptions,
   calls: Map<string, number>,
