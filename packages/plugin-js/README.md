@@ -33,6 +33,44 @@ The five opt-in rules require both a configured model and an agent adapter capab
 
 `js/no-config-file-tests` is not repository-aware and needs no agent adapter: it judges the test file it is handed, so a configured model is enough.
 
+## Workspace-wide review
+
+`js/no-mixed-libraries` reports the imports of a library when the workspace also uses another library for the same job, for example `zod` and `valibot`. It is registered but not enabled by `recommended`.
+
+1. It reads the external package imports of every JavaScript, TypeScript, and Vue file in the workspace. Packages that a workspace `package.json` names, type packages, and built-in modules are left out.
+2. It sends the package names, their file counts, and the directories that import them most to the model, one time for each run. The model groups the packages that do the same job.
+3. It drops a group that names a package that no file imports, and a group that an `allow` set covers.
+4. It reports each import of a replaced package, only in the files that the run lints.
+
+It needs a configured model, but no agent adapter. Its verdict depends on every file in the workspace, so the core cache is off for it.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `preferred` | `[]` | Packages that the repository has chosen. A preferred package becomes the canonical member of its group. |
+| `allow` | `[]` | Sets of packages that can coexist, for example `[['hono', 'h3']]`. |
+
+```ts
+export default defineConfig([
+  {
+    files: ['**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts,vue}'],
+    plugins: { js: jsPlugin },
+    rules: {
+      'js/no-mixed-libraries': [
+        'warn',
+        {
+          allow: [
+            ['hono', 'h3']
+          ],
+          preferred: ['valibot']
+        }
+      ],
+    },
+  },
+])
+```
+
+Use it to find the libraries that a migration can remove, or to review a change that adds an import. Do not use it to ban a known library: ESLint `no-restricted-imports` does that without a model.
+
 ## How to use
 
 Use the default export with the `js` plugin name because the bundled preset refers to `js/*` rule IDs.
